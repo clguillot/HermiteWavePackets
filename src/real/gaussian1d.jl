@@ -36,6 +36,11 @@ end
     return G.λ * myexp(-G.a/2 * (x - G.q)^2)
 end
 
+# Evaluates a gaussian at every point in x
+@inline function (G::Gaussian1D)(x::SVector{N, T}) where{N, T<:Number}
+    return @. G.λ * myexp(-G.a/2 * (x - G.q)^2)
+end
+
 #=
     TRANSFORMATIONS
 =#
@@ -83,10 +88,10 @@ end
 
 # Computes the convolution product of two gaussians
 @inline function convolution(G1::Gaussian1D, G2::Gaussian1D)
-    λ1, a1, q1 = G1.λ, G1.a, G1.q
+    _, a1, q1 = G1.λ, G1.a, G1.q
     λ2, a2, q2 = G2.λ, G2.a, G2.q
     a, q = gaussian_convolution_arg(a1, q1, a2, q2)
-    λ = integral(Gaussian1D(λ1, a1, q1) * Gaussian1D(λ2, a2, q - q2))
+    λ = integral(G1 * Gaussian1D(λ2, a2, q - q2))
     return Gaussian1D(λ, a, q)
 end
 

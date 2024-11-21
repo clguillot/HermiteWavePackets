@@ -3,6 +3,13 @@ import Base.copy
 import Base.zero
 import Base.conj
 
+export ComplexGaussian1D
+export integral
+export fourier
+export inv_fourier
+export convolution
+export dot_L2
+
 #=
     Represents the complex gaussian function
         λ*exp(-z/2*(x-q)²)*exp(ipx)
@@ -142,7 +149,11 @@ end
 
 # Computes the convolution product of two gaussians
 @inline function convolution(G1::ComplexGaussian1D, G2::ComplexGaussian1D)
-    return inv_fourier(fourier(G1) * fourier(G2))
+    _, z1, q1, p1 = G1.λ, G1.z, G1.q, G1.p
+    λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
+    z, q, p = complex_gaussian_convolution_product_arg(z1, q1, p1, z2, q2, p2)
+    λ = mycis(q * (p2 - p)) * integral(G1 * ComplexGaussian1D(λ2, z2, q - q2, -p2))
+    return ComplexGaussian1D(λ, z, q, p)
 end
 
 # Computes the L² product of two gaussians

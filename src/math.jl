@@ -14,7 +14,7 @@ end
     s, c = sincos(x)
     return complex(c, s)
 end
-@inline function mycis(z::Real)
+@inline function mycis(z::Complex)
     er = exp(-imag(z))
     s, c = sincos(real(z))
     return complex(er * c, er * s)

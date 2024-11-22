@@ -1,3 +1,7 @@
+export hermite_quadrature
+export hermite_transform_matrix
+export hermite_discrete_transform
+
 #=
     Reminder :
     -hermiteh(n, x) computes Hₙ(x)
@@ -37,9 +41,9 @@ end
     Returns a vector containing the value of the integral of the N first hermite functions
 =#
 function hermite_integral(a::Real, q::Real, ::Val{N}) where{N}
-    T = fitting_float(promote_type(a, q))
-    U0 = hermite_primitive_integral(T, N)
-    return a^(1/4) .* SVector{N}(U0)
+    T = fitting_float(promote_type(typeof(a), typeof(q)))
+    U0 = hermite_primitive_integral(T, Val(N))
+    return a^(-1/4) .* SVector{N}(U0)
 end
 
 
@@ -51,11 +55,15 @@ end
 
 #=
     Computes two lists w and x of N weights and nodes such that the quadrature formula
-        ∫dx f(x)exp(-x²) ≈ ∑ⱼ wⱼf(xⱼ) (j=1,...,N)
-    is exact for any polynomial f up to degree 2N-1
+        ∫dx f(x) ≈ ∑ⱼ wⱼf(xⱼ) (j=1,...,N)
+    is exact for any function of the form f(x)exp(-x²)
 =#
-@generated function hermite_primitive_integral_quadrature(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32, Float64}}
+@generated function hermite_primitive_quadrature(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32, Float64}}
     x0, w0 = gausshermite(N)
+    for j in eachindex(w0)
+        w0[j] *= exp(x0[j]^2)
+    end
+
     x0 = SizedVector{N}(T.(x0))
     w0 = SizedVector{N}(T.(w0))
 
@@ -63,13 +71,13 @@ end
 end
 
 #=
-    Computes two lists w and x of N weights and nodes such that the quadrature formula
+    Computes two lists x, w of N weights and nodes such that the quadrature formula
         ∫dx f(x)exp(-a(x-q)²) ≈ ∑ⱼ wⱼf(xⱼ) (j=1,...,N)
     is exact for any polynomial f up to degree 2N-1
 =#
-function hermite_integral_quadrature(a::Real, q::Real, ::Val{N}) where{N}
+function hermite_quadrature(a::Real, q::Real, ::Val{N}) where{N}
     T = fitting_float(promote_type(typeof(a), typeof(q)))    
-    x0, w0 = hermite_integral_weight(T, Val(N))
+    x0, w0 = hermite_primitive_quadrature(T, Val(N))
 
     c = a^(-1/2)
     x = SVector{N}(x0) .* c .+ q
@@ -86,7 +94,7 @@ end
 =#
 
 #=
-    Let x, w = hermite_integral_quadrature(1, 0, N)
+    Let x, w = hermite_quadrature(1, 0, N)
     This functions returns x, M where
     - x are the gausshermite quadrature points
     - M is a matrix of size N×N that transforms the values of a function
@@ -94,19 +102,19 @@ end
      In other words, if φ(x) = ∑ₙ λₙψₙ(1, 0, x) and Φ = (φ(x[n+1]))ₙ (n=0,...,N-1), then
         MΦ = Λ, with Λ=(λₙ)ₙ
 =#
-@generated function hermite_primitive_transform_matrix(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32, Float64}}
-    x, _ = hermite_integral_quadrature(a, q, N)
+@generated function hermite_primitive_discrete_transform(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32, Float64}}
+    x, _ = hermite_primitive_quadrature(T, Val(N))
 
     M = zeros(T, N, N)
 
     if N > 0
         b = T(sqrt(2))
-        @. M[1, :] = T(π^(-1/4)) * myexp(-x^2 / 2)
+        @. M[:, 1] = T(π^(-1/4)) * exp(-x^2 / 2)
         if N > 1
-            @. M[:, 2] = b * x * M[1, :]
+            @. M[:, 2] = b * x * M[:, 1]
 
             for k=3:N
-                @. M[k, :] = (b * x * M[k-1, :] - sqrt(k-2) * M[k-2, :]) / sqrt(k-1)
+                @. M[:, k] = (b * x * M[:, k-1] - T(sqrt(k-2)) * M[:, k-2]) / T(sqrt(k-1))
             end
         end
     end
@@ -126,9 +134,9 @@ end
      In other words, if φ(x) = ∑ₙ λₙψₙ(a, q, x) and Φ = (φ(x[n+1]))ₙ (n=0,...,N-1), then
         MΦ = Λ, with Λ=(λₙ)ₙ
 =#
-function hermite_transform_matrix(a::Real, q::Real, ::Val{N}) where{N}
-    T = fitting_float(promote_type(a, q))
-    x0, M0 = hermite_primitive_transform_matrix(T, Val(N))
+function hermite_discrete_transform(a::Real, q::Real, ::Val{N}) where{N}
+    T = fitting_float(promote_type(typeof(a), typeof(q)))
+    x0, M0 = hermite_primitive_discrete_transform(T, Val(N))
 
     x = SVector{N}(x0) .* a^(-1/2) .+ q
     M = SMatrix{N, N}(M0) .* a^(-1/4)

@@ -3,7 +3,7 @@ function test_hermite()
 
     println("Testing Hermite:")
 
-    nb_reps = 13
+    nb_reps = 50
 
     #ψₙ(a, q, x) = (a/π)^(1/4) / sqrt(2ⁿn!) * Hₙ(√a*x) * exp(-z(x - q)²/2) * exp(ipx)
     function ψ(a, q, n, x)
@@ -24,6 +24,7 @@ function test_hermite()
             val2 = dot(conj(Λ), [ψ(a, q, n, x) for n=0:N-1])
             err = max(err, abs(val - val2) / abs(val))
         end
+
         println("Error evaluate = $err")
     end
 
@@ -31,23 +32,42 @@ function test_hermite()
         err = 0.0
         for _=1:nb_reps
             N = 16
+            x = 4.0 * (rand() - 0.5)
             Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             H = HermiteFct1D(Λ, a, q)
 
-            M = 300
-            X = 16
+            Hc = conj(H)
+
+            err = max(err, abs(Hc(x) - conj(H(x))) / abs(Hc(x)))
+        end
+
+        println("Error conjugate = $err")
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 32
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            a = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            H = HermiteFct1D(Λ, a, q)
+
+            M = 400
+            X = 20
             h = 2 * X / M
             x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F = x -> H(x)
+            I = BigFloat(0.0)
+            F = y -> H(y)
             for k=1:M
                 x = -X + (k - 0.5) * h
                 I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
             end
+            I = ComplexF64(I)
 
-            x, w = hermite_quadrature(a/2, q, Val(N))
+            x, w = ComplexHermiteFct.hermite_quadrature(a/2, q, Val(N))
             I_exact = dot(w, F.(x))
 
             err = max(err, abs(I - I_exact) / abs(I_exact))
@@ -65,7 +85,7 @@ function test_hermite()
             q = 4 * (rand() - 0.5)
             H = HermiteFct1D(Λ, a, q)
 
-            x, M = hermite_discrete_transform(a, q, Val(N))
+            x, M = ComplexHermiteFct.hermite_discrete_transform(a, q, Val(N))
             U = M * evaluate(H, x)
 
             err = max(err, norm(U - Λ) / norm(Λ))
@@ -90,11 +110,10 @@ function test_hermite()
             H2 = HermiteFct1D(Λ2, a2, q2)
 
             H = H1 * H2
-            F_prod = x -> H1(x) * H2(x)
 
-            for j=1:20
+            for _=1:40
                 x = 5 * (rand() - 0.5)
-                err = max(err, abs(H(x) - F_prod(x)))
+                err = max(err, abs(H(x) - H1(x) * H2(x)))
             end
         end
 
@@ -104,22 +123,23 @@ function test_hermite()
     begin
         err = 0.0
         for _=1:nb_reps
-            N = 16
+            N = 32
             Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             H = HermiteFct1D(Λ, a, q)
 
-            M = 300
-            X = 16
+            M = 400
+            X = 20
             h = 2 * X / M
             x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F_int = x -> H(x)
+            I = BigFloat(0.0)
+            F = y -> H(y)
             for k=1:M
                 x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F_int.(x .+ h/2 * x_legendre))
+                I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
             end
+            I = ComplexF64(I)
             err = max(err, abs(I - integral(H)) / abs(I))
         end
 
@@ -144,20 +164,53 @@ function test_hermite()
             H = convolution(H1, H2)
 
             x0 = 5.0 * (rand() - 0.5)
-            M = 300
-            X = 16
+            M = 400
+            X = 20
             h = 2 * X / M
             x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
+            I = BigFloat(0.0)
             F = y -> H1(y) * H2(x0 - y)
             for k=1:M
                 x = -X + (k - 0.5) * h
                 I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
             end
+            I = ComplexF64(I)
             err = max(err, abs(I - H(x0)))
         end
 
         println("Error convolution = $err")
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N1 = 11
+            Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
+            a1 = (4 * rand() + 0.5)
+            q1 = 4 * (rand() - 0.5)
+            H1 = HermiteFct1D(Λ1, a1, q1)
+
+            N2 = 19
+            Λ2 = (@SVector rand(N2)) + 1im * (@SVector rand(N2))
+            a2 = (4 * rand() + 0.5)
+            q2 = 4 * (rand() - 0.5)
+            H2 = HermiteFct1D(Λ2, a2, q2)
+
+            M = 400
+            X = 20
+            h = 2 * X / M
+            x_legendre, w_legendre = gausslegendre(8)
+            I = BigFloat(0.0)
+            F = y -> conj(H1(y)) * H2(y)
+            for k=1:M
+                x = -X + (k - 0.5) * h
+                I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
+            end
+            I = ComplexF64(I)
+            err = max(err, abs(I - dot_L2(H1, H2)) / abs(I))
+        end
+
+        println("Error dot L² = $err")
     end
 
     begin
@@ -167,13 +220,13 @@ function test_hermite()
         q1 = 4 * (rand(Float32) - 0.5f0)
         H1 = HermiteFct1D(Λ1, a1, q1)
 
-        N2 = 3
+        N2 = 2
         Λ2 = @SVector rand(Float32, N2)
         a2 = (4 * rand(Float32) + 0.5f0)
         q2 = 4 * (rand(Float32) - 0.5f0)
         H2 = HermiteFct1D(Λ2, a2, q2)
 
-        N3 = 3
+        N3 = 4
         Λ3 = @SVector rand(Float32, N3)
         a3 = (4 * rand(Float32) + 0.5f0)
         q3 = 4 * (rand(Float32) - 0.5f0)

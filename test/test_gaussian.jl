@@ -23,6 +23,23 @@ function test_gaussian()
     begin
         err = 0.0
         for _=1:nb_reps
+            x = 4.0 * (rand() - 0.5)
+            λ = rand() + 1im * rand()
+            a = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            G = Gaussian1D(λ, a, q)
+
+            Gc = conj(G)
+
+            err = max(err, abs(Gc(x) - conj(G(x))) / abs(Gc(x)))
+        end
+
+        println("Error conjugate = $err")
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
             λ1 = rand() + 1im * rand()
             a1 = (4 * rand() + 0.5)
             q1 = 4 * (rand() - 0.5)
@@ -67,10 +84,10 @@ function test_gaussian()
             h = 2 * X / N
             x_legendre, w_legendre = gausslegendre(8)
             I = 0.0
-            F_conv(y) = G1(y) * G2(x0 - y)
+            F = y -> G1(y) * G2(x0 - y)
             for k=1:N
                 x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F_conv.(x .+ h/2 * x_legendre))
+                I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
             end
 
             err = max(err, abs(I - G(x0)))
@@ -92,15 +109,49 @@ function test_gaussian()
             h = 2 * X / N
             x_legendre, w_legendre = gausslegendre(8)
             I = 0.0
-            F_int(y) = G(y)
+            F = y -> G(y)
             for k=1:N
                 x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F_int.(x .+ h/2 * x_legendre))
+                I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
             end
             
             err = max(err, abs(I - integral(G)) / abs(I))
         end
         println("Error integral = $err")
+    end
+
+    begin
+        err = 0.0
+
+        for _=1:nb_reps
+            λ1 = rand() + 1im * rand()
+            a1 = (4 * rand() + 0.5)
+            q1 = 4 * (rand() - 0.5)
+            G1 = Gaussian1D(λ1, a1, q1)
+
+            λ2 = rand() + 1im * rand()
+            a2 = (4 * rand() + 0.5)
+            q2 = 4 * (rand() - 0.5)
+            G2 = Gaussian1D(λ2, a2, q2)
+
+            G = convolution(G1, G2)
+
+            x0 = 5.0 * (rand() - 0.5)
+            N = 200
+            X = 15
+            h = 2 * X / N
+            x_legendre, w_legendre = gausslegendre(8)
+            I = 0.0
+            F = y -> conj(G1(y)) * G2(y)
+            for k=1:N
+                x = -X + (k - 0.5) * h
+                I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
+            end
+
+            err = max(err, abs(I - dot_L2(G1, G2)) / abs(I))
+        end
+
+        println("Error dot L² = $err")
     end
 
     begin

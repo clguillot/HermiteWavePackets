@@ -33,8 +33,13 @@ end
     return :( $T )
 end
 
+# Returns the complex conjugate of a gaussian
+@inline function conj(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return Gaussian1D(conj(G.λ), G.a, G.q)
+end
+
 # Evaluates a gaussian at x
-@inline function (G::Gaussian1D{Tλ, Ta, Tq})(x::Tx) where{Tλ, Ta, Tq, Tx<:Number}
+@inline function (G::Gaussian1D{Tλ, Ta, Tq})(x::Number) where{Tλ, Ta, Tq}
     return G.λ * myexp(-G.a/2 * (x - G.q)^2)
 end
 
@@ -70,8 +75,8 @@ end
 end
 
 # Computes the product of a scalar and a gaussian
-@inline function (*)(μ::Tμ, G::Gaussian1D{Tλ, Ta, Tq}) where{Tμ<:Number, Tλ, Ta, Tq}
-    return Gaussian1D(μ * G.λ, G.a, G.q)
+@inline function (*)(w::Number, G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return Gaussian1D(w * G.λ, G.a, G.q)
 end
 
 # Computes the product of two gaussians
@@ -99,6 +104,10 @@ end
 end
 
 # Computes the L² product of two gaussians
-@inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
-    return integral(G1 * G2)
+@generated function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
+    if Tλ1 <: Real
+        return :( integral(G1 * G2) )
+    elseif Tλ2 <: Complex
+        return :( integral(conj(G1) * G2) )
+    end
 end

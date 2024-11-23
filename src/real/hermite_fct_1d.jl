@@ -55,16 +55,22 @@ end
     return :( $Tf )
 end
 
+# Returns the complex conjugate of a hermite function
+@inline function conj(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return HermiteFct1D(conj.(H.Λ), H.a, H.q)
+end
+
 # Evaluates a hermite function at x
 function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Tx) where{N, TΛ, Ta, Tq, Tx<:Number}
     T = promote_type(fitting_float(H), fitting_float(Tx))
 
     u = T(π^(-1/4)) * (H.a)^T(1/4) * myexp(-H.a * (x - H.q)^2 / 2)
-    b = (2*H.a)^T(1/2)
 
     if N > 0
         val = H.Λ[1] * u
         if N > 1
+            b = (2*H.a)^T(1/2)
+
             v = u
             u = b * (x - H.q) * u
             val += H.Λ[2] * u
@@ -78,7 +84,7 @@ function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Tx) where{N, TΛ, Ta, Tq, Tx<:Numb
         end
         return val
     else
-        return zero(eltype(H.Λ)) * u
+        return zero(TΛ) * u
     end
 end
 
@@ -110,8 +116,8 @@ function evaluate(H::HermiteFct1D{N, TΛ, Ta, Tq}, x::SVector{M, Tx}) where{N, T
 end
 
 # Computes the product of a scalar and a hermite function
-@inline function (*)(μ::Tμ, H::HermiteFct1D{N, TΛ, Ta, Tq}) where{Tμ<:Number, N, TΛ, Ta, Tq}
-    return HermiteFct1D(μ .* H.Λ, H.a, H.q)
+@inline function (*)(w::Number, H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return HermiteFct1D(w .* H.Λ, H.a, H.q)
 end
 
 # Computes the product of two hermite functions
@@ -159,6 +165,10 @@ function convolution(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, 
 end
 
 # Computes the L² product of two gaussians
-function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
-    return integral(H1 * H2)
+@generated function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+    if TΛ1 <: Real
+        return :( integral(H1 * H2) )
+    elseif TΛ1 <: Complex
+        return :( integral(conj(H1) * H2) )
+    end
 end

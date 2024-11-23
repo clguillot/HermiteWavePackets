@@ -1,11 +1,3 @@
-import Base.*
-import Base.copy
-import Base.zero
-
-export Gaussian1D
-export integral
-export convolution
-export dot_L2
 
 #=
     Represents the gaussian function

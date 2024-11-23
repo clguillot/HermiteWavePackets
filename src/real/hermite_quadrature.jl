@@ -1,6 +1,3 @@
-export hermite_quadrature
-export hermite_transform_matrix
-export hermite_discrete_transform
 
 #=
     Reminder :
@@ -103,33 +100,33 @@ end
         MΦ = Λ, with Λ=(λₙ)ₙ
 =#
 @generated function hermite_primitive_discrete_transform(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32, Float64}}
-    x, _ = hermite_primitive_quadrature(T, Val(N))
+    x, _ = hermite_primitive_quadrature(Float64, Val(N))
 
-    M = zeros(T, N, N)
+    M = zeros(Float64, N, N)
 
     if N > 0
-        b = T(sqrt(2))
-        @. M[:, 1] = T(π^(-1/4)) * exp(-x^2 / 2)
+        b = sqrt(2)
+        @views @. M[:, 1] = π^(-1/4) * exp(-x^2 / 2)
         if N > 1
-            @. M[:, 2] = b * x * M[:, 1]
+            @views @. M[:, 2] = b * x * M[:, 1]
 
             for k=3:N
-                @views @. M[:, k] = (b * x * M[:, k-1] - T(sqrt(k-2)) * M[:, k-2]) / T(sqrt(k-1))
+                @views @. M[:, k] = (b * x * M[:, k-1] - sqrt(k-2) * M[:, k-2]) / sqrt(k-1)
             end
         end
     end
 
-    x = SizedVector{N}(x)
-    M_inv = SizedMatrix{N, N}(M^(-1))
+    x = SizedVector{N}(T.(x))
+    M_inv1 = SizedMatrix{N, N}(T.(M^(-1)))
 
-    return :( $x, $M_inv )
+    return :( $x, $M_inv1 )
 end
 
 #=
     Let x, w = hermite_integral_quadrature(a, q, N)
     This functions returns x, M where
-    - x are the gausshermite quadrature points
-    - M is a matrix of size N×N that transforms the values of a function
+    - x is a SVector containing the N Gauss-Hermite quadrature points
+    - M is a SMatrix of size N×N that transforms the values of a function
         at the quadrature points x into its discrete transform on the Fourier base
      In other words, if φ(x) = ∑ₙ λₙψₙ(a, q, x) and Φ = (φ(x[n+1]))ₙ (n=0,...,N-1), then
         MΦ = Λ, with Λ=(λₙ)ₙ

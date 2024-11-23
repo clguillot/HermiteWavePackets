@@ -1,20 +1,9 @@
-import Base.*
-import Base.copy
-import Base.zero
-import Base.conj
-
-export ComplexGaussian1D
-export integral
-export fourier
-export inv_fourier
-export convolution
-export dot_L2
 
 #=
     Represents the complex gaussian function
         λ*exp(-z/2*(x-q)²)*exp(ipx)
 =#
-struct ComplexGaussian1D{Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real}
+struct GaussianWavePacket1D{Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real}
     λ::Tλ
     z::Tz
     q::Tq
@@ -26,32 +15,32 @@ end
 =#
 
 # Returns a null gaussian
-@inline function zero(::Type{ComplexGaussian1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
-    return ComplexGaussian1D(zero(Tλ), one(Tz), zero(Tq), zero(Tp))
+@inline function zero(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
+    return GaussianWavePacket1D(zero(Tλ), one(Tz), zero(Tq), zero(Tp))
 end
 
 # Creates a copy of a gaussian
-@inline function copy(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-    return ComplexGaussian1D(G.λ, G.z, G.q, G.p)
+@inline function copy(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    return GaussianWavePacket1D(G.λ, G.z, G.q, G.p)
 end
 
 # 
-@generated function fitting_float(::Type{ComplexGaussian1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
+@generated function fitting_float(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
     T = fitting_float(promote_type(Tλ, Tz, Tq, Tp))
     return :( $T )
 end
-@generated function fitting_float(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-    T = fitting_float(ComplexGaussian1D{Tλ, Tz, Tq, Tp})
+@generated function fitting_float(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    T = fitting_float(GaussianWavePacket1D{Tλ, Tz, Tq, Tp})
     return :( $T )
 end
 
 # Returns the complex conjugate of a gaussian
-@inline function conj(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-    return ComplexGaussian1D(conj(G.λ), conj(G.z), G.q, -G.p)
+@inline function conj(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    return GaussianWavePacket1D(conj(G.λ), conj(G.z), G.q, -G.p)
 end
 
 # Evaluates a gaussian at x
-@inline function (G::ComplexGaussian1D{Tλ, Tz, Tq, Tp})(x::Tx) where{Tλ, Tz, Tq, Tp, Tx<:Number}
+@inline function (G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp})(x::Number) where{Tλ, Tz, Tq, Tp}
     return G.λ * myexp(-G.z/2 * (x - G.q)^2) * mycis(G.p * x)
 end
 
@@ -108,12 +97,12 @@ end
 
 
 # Computes the product of a scalar and a gaussian
-@inline function (*)(w::Number, G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-    return ComplexGaussian1D(w * G.λ, G.z, G.q, G.p)
+@inline function (*)(w::Number, G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    return GaussianWavePacket1D(w * G.λ, G.z, G.q, G.p)
 end
 
 # Computes the product of two gaussians
-@inline function (*)(G1::ComplexGaussian1D{Tλ1, Tz1, Tq1, Tp1}, G2::ComplexGaussian1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
+@inline function (*)(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, G2::GaussianWavePacket1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
     λ1, z1, q1, p1 = G1.λ, G1.z, G1.q, G1.p
     λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
     z = z1 + z2
@@ -121,11 +110,11 @@ end
     p0 = (imag(z1) * q1 + imag(z2) * q2) - (imag(z1) + imag(z2)) * q
     p = p2 + p1 + p0
     λ = λ1 * λ2 * myexp(-z1*(q-q1)^2 / 2) * myexp(-z2*(q-q2)^2 / 2) * mycis(-p0*q)
-    return ComplexGaussian1D(λ, z, q, p)
+    return GaussianWavePacket1D(λ, z, q, p)
 end
 
 # Computes the integral of a gaussian
-@inline function integral(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+@inline function integral(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     T = fitting_float(G)
     return G.λ * T(sqrt(2π)) / mysqrt(G.z) * cis(G.p * G.q) * myexp(- G.p^2 / (2*G.z))
 end
@@ -135,14 +124,14 @@ end
     The Fourier transform is defined as
         TF(ψ)(ξ) = ∫dx e^(-ixξ) ψ(x)
 =#
-@inline function fourier(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+@inline function fourier(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     T = fitting_float(G)
     λ, z, q, p = G.λ, G.z, G.q, G.p
     z_tf = 1/z
     q_tf = p
     p_tf = -q
     λ_tf = λ * cis(p*q) * T(sqrt(2π)) / mysqrt(z)
-    return ComplexGaussian1D(λ_tf, z_tf, q_tf, p_tf)
+    return GaussianWavePacket1D(λ_tf, z_tf, q_tf, p_tf)
 end
 
 #=
@@ -150,26 +139,26 @@ end
     The inverse Fourier transform is defined as
         ITF(ψ)(x) = (2π)⁻¹∫dξ e^(ixξ) ψ(ξ)
 =#
-@inline function inv_fourier(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+@inline function inv_fourier(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     T = fitting_float(G)
     λ, z, q, p = G.λ, G.z, G.q, G.p
     z_tf = 1/z
     q_tf = -p
     p_tf = q
     λ_tf = λ * T((2π)^(-1/2)) * cis(-p_tf*q_tf) / mysqrt(z)
-    return ComplexGaussian1D(λ_tf, z_tf, q_tf, p_tf)
+    return GaussianWavePacket1D(λ_tf, z_tf, q_tf, p_tf)
 end
 
 # Computes the convolution product of two gaussians
-function convolution(G1::ComplexGaussian1D{Tλ1, Tz1, Tq1, Tp1}, G2::ComplexGaussian1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
+function convolution(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, G2::GaussianWavePacket1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
     z1, q1, p1 = G1.z, G1.q, G1.p
     λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
     z, q, p = complex_gaussian_convolution_product_arg(z1, q1, p1, z2, q2, p2)
-    λ = mycis(q * (p2 - p)) * integral(G1 * ComplexGaussian1D(λ2, z2, q - q2, -p2))
-    return ComplexGaussian1D(λ, z, q, p)
+    λ = mycis(q * (p2 - p)) * integral(G1 * GaussianWavePacket1D(λ2, z2, q - q2, -p2))
+    return GaussianWavePacket1D(λ, z, q, p)
 end
 
 # Computes the L² product of two gaussians
-@inline function dot_L2(G1::ComplexGaussian1D, G2::ComplexGaussian1D)
+@inline function dot_L2(G1::GaussianWavePacket1D, G2::GaussianWavePacket1D)
     return integral(conj(G1) * G2)
 end

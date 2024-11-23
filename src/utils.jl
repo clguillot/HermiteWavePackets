@@ -29,6 +29,6 @@ end
     elseif T<:Complex
         return :( x )
     else
-        throw(ArgumentError("T is not a Real or a Complex type"))
+        :( throw(ArgumentError("T is not a Real or a Complex type")) )
     end
 end

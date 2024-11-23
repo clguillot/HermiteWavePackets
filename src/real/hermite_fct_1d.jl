@@ -170,5 +170,7 @@ end
         return :( integral(H1 * H2) )
     elseif TΛ1 <: Complex
         return :( integral(conj(H1) * H2) )
+    else
+        :( throw(ArgumentError("Tλ1 is not a Real or a Complex type")) )
     end
 end

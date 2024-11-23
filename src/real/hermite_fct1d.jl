@@ -59,7 +59,7 @@ end
 function (H::StaticHermiteFct1D{N, TΛ, Ta, Tq})(x::Tx) where{N, TΛ, Ta, Tq, Tx<:Number}
     T = fitting_float(promote_type(TΛ, Ta, Tq, Tx))
 
-    u = (H.a/T(π))^(1/4) * myexp(-H.a * (x - H.q)^2 / 2)
+    u = (H.a/T(π))^T(1/4) * myexp(-H.a * (x - H.q)^2 / 2)
     b = sqrt(2*H.a)
 
     if N > 0
@@ -86,7 +86,7 @@ end
 function evaluate(H::StaticHermiteFct1D{N, TΛ, Ta, Tq}, x::SVector{M, Tx}) where{N, TΛ, Ta, Tq, M, Tx<:Number}
     T = fitting_float(promote_type(TΛ, Ta, Tq, Tx))
 
-    u = @. (H.a/T(π))^(1/4) * myexp(-H.a * (x - H.q)^2 / 2)
+    u = @. (H.a/T(π))^T(1/4) * myexp(-H.a * (x - H.q)^2 / 2)
     b = sqrt(2*H.a)
 
     if N > 0
@@ -133,7 +133,7 @@ end
 # Computes the integral of a hermite function
 function integral(H::StaticHermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
     T = fitting_float(promote_type(TΛ, Ta, Tq))
-    return H.a^(-1/4) * dot(hermite_primitive_integral(T, Val(N)), H.Λ)
+    return H.a^T(-1/4) * dot(hermite_primitive_integral(T, Val(N)), H.Λ)
 end
 
 # Computes the convolution product of two hermite functions

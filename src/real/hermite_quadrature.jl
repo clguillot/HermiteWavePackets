@@ -28,7 +28,7 @@ export hermite_discrete_transform
     if N > 0
         U[1] = sqrt(T(2)) * T(π)^(1/4)
         for k=3:2:N
-            U[k] = sqrt(T((k - 2) / (k - 1))) * U[k - 2]
+            U[k] = sqrt(T(k - 2) / T(k - 1)) * U[k - 2]
         end
     end
 
@@ -43,7 +43,7 @@ end
 function hermite_integral(a::Real, q::Real, ::Val{N}) where{N}
     T = fitting_float(promote_type(typeof(a), typeof(q)))
     U0 = hermite_primitive_integral(T, Val(N))
-    return a^(-1/4) .* SVector{N}(U0)
+    return a^T(-1/4) .* SVector{N}(U0)
 end
 
 
@@ -79,7 +79,7 @@ function hermite_quadrature(a::Real, q::Real, ::Val{N}) where{N}
     T = fitting_float(promote_type(typeof(a), typeof(q)))    
     x0, w0 = hermite_primitive_quadrature(T, Val(N))
 
-    c = a^(-1/2)
+    c = a^T(-1/2)
     x = SVector{N}(x0) .* c .+ q
     w = SVector{N}(w0) .* c
 
@@ -114,7 +114,7 @@ end
             @. M[:, 2] = b * x * M[:, 1]
 
             for k=3:N
-                @. M[:, k] = (b * x * M[:, k-1] - T(sqrt(k-2)) * M[:, k-2]) / T(sqrt(k-1))
+                @views @. M[:, k] = (b * x * M[:, k-1] - T(sqrt(k-2)) * M[:, k-2]) / T(sqrt(k-1))
             end
         end
     end
@@ -138,8 +138,8 @@ function hermite_discrete_transform(a::Real, q::Real, ::Val{N}) where{N}
     T = fitting_float(promote_type(typeof(a), typeof(q)))
     x0, M0 = hermite_primitive_discrete_transform(T, Val(N))
 
-    x = SVector{N}(x0) .* a^(-1/2) .+ q
-    M = SMatrix{N, N}(M0) .* a^(-1/4)
+    x = SVector{N}(x0) .* a^T(-1/2) .+ q
+    M = SMatrix{N, N}(M0) .* a^T(-1/4)
 
     return x, M
 end

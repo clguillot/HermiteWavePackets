@@ -75,13 +75,13 @@ function test_hermite()
     begin
         err = 0.0
         for _=1:nb_reps
-            N1 = 64
+            N1 = 14
             Λ1 = @SVector rand(N1)
             a1 = (4 * rand() + 0.5)
             q1 = 4 * (rand() - 0.5)
             H1 = StaticHermiteFct1D(Λ1, a1, q1)
 
-            N2 = 50
+            N2 = 17
             Λ2 = @SVector rand(N2)
             a2 = (4 * rand() + 0.5)
             q2 = 4 * (rand() - 0.5)
@@ -127,13 +127,13 @@ function test_hermite()
     begin
         err = 0.0
         for _=1:nb_reps
-            N1 = 4
+            N1 = 16
             Λ1 = @SVector rand(N1)
             a1 = (4 * rand() + 0.5)
             q1 = 4 * (rand() - 0.5)
             H1 = StaticHermiteFct1D(Λ1, a1, q1)
 
-            N2 = 3
+            N2 = 14
             Λ2 = @SVector rand(N2)
             a2 = (4 * rand() + 0.5)
             q2 = 4 * (rand() - 0.5)
@@ -156,5 +156,31 @@ function test_hermite()
         end
 
         println("Error convolution = $err")
+    end
+
+    begin
+        N1 = 3
+        Λ1 = @SVector rand(Float32, N1)
+        a1 = (4 * rand(Float32) + 0.5f0)
+        q1 = 4 * (rand(Float32) - 0.5f0)
+        H1 = StaticHermiteFct1D(Λ1, a1, q1)
+
+        N2 = 3
+        Λ2 = @SVector rand(Float32, N2)
+        a2 = (4 * rand(Float32) + 0.5f0)
+        q2 = 4 * (rand(Float32) - 0.5f0)
+        H2 = StaticHermiteFct1D(Λ2, a2, q2)
+
+        N3 = 3
+        Λ3 = @SVector rand(Float32, N3)
+        a3 = (4 * rand(Float32) + 0.5f0)
+        q3 = 4 * (rand(Float32) - 0.5f0)
+        H3 = StaticHermiteFct1D(Λ3, a3, q3)
+
+        H = convolution(H1 * H2, H3)
+        x = @SVector rand(Float32, 3)
+        T_type = promote_type(typeof(H(rand(Float32)) + integral(H)), eltype(evaluate(H, x)))
+
+        println("Expecting $Float32 and got $T_type")
     end
 end

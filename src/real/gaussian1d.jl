@@ -11,7 +11,7 @@ export dot_L2
     Represents the gaussian function
         λ*exp(-a/2*(x-q)²)
 =#
-struct Gaussian1D{Tλ<:Real, Ta<:Real, Tq<:Real}
+struct Gaussian1D{Tλ<:Number, Ta<:Real, Tq<:Real}
     λ::Tλ
     a::Ta
     q::Tq
@@ -27,17 +27,27 @@ end
 end
 
 # Creates a copy of a gaussian
-@inline function copy(G::Gaussian1D)
+@inline function copy(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
     return Gaussian1D(G.λ, G.a, G.q)
 end
 
+# 
+@generated function fitting_float(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
+    T = fitting_float(promote_type(Tλ, Ta, Tq))
+    return :( $T )
+end
+@generated function fitting_float(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    T = fitting_float(Gaussian1D{Tλ, Ta, Tq})
+    return :( $T )
+end
+
 # Evaluates a gaussian at x
-@inline function (G::Gaussian1D)(x::Number)
+@inline function (G::Gaussian1D{Tλ, Ta, Tq})(x::Tx) where{Tλ, Ta, Tq, Tx<:Number}
     return G.λ * myexp(-G.a/2 * (x - G.q)^2)
 end
 
 # Evaluates a gaussian at every point in x
-@inline function (G::Gaussian1D)(x::SVector{N, T}) where{N, T<:Number}
+@inline function evaluate(G::Gaussian1D{Tλ, Ta, Tq}, x::SVector{M, T}) where{Tλ, Ta, Tq, M, T<:Number}
     return @. G.λ * myexp(-G.a/2 * (x - G.q)^2)
 end
 
@@ -68,27 +78,28 @@ end
 end
 
 # Computes the product of a scalar and a gaussian
-@inline function (*)(μ::Real, G::Gaussian1D)
+@inline function (*)(μ::Tμ, G::Gaussian1D{Tλ, Ta, Tq}) where{Tμ<:Number, Tλ, Ta, Tq}
     return Gaussian1D(μ * G.λ, G.a, G.q)
 end
 
 # Computes the product of two gaussians
-@inline function (*)(G1::Gaussian1D, G2::Gaussian1D)
+@inline function (*)(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
     λ1, a1, q1 = G1.λ, G1.a, G1.q
     λ2, a2, q2 = G2.λ, G2.a, G2.q
     a, q = gaussian_product_arg(a1, q1, a2, q2)
-    λ = λ1 * λ2 * myexp(- a1*(q-q1)^2 / 2) * myexp(- a2*(q-q2)^2 / 2)
+    λ = λ1 * λ2 * exp(- a1*(q-q1)^2 / 2) * exp(- a2*(q-q2)^2 / 2)
     return Gaussian1D(λ, a, q)
 end
 
 # Computes the integral of a gaussian
-@inline function integral(G::Gaussian1D)
-    return G.λ * sqrt(2 * (π / G.a))
+@inline function integral(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    T = fitting_float(G)
+    return G.λ * T(sqrt(2π)) * G.a^T(-1/2)
 end
 
 # Computes the convolution product of two gaussians
-@inline function convolution(G1::Gaussian1D, G2::Gaussian1D)
-    _, a1, q1 = G1.λ, G1.a, G1.q
+@inline function convolution(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
+    a1, q1 = G1.a, G1.q
     λ2, a2, q2 = G2.λ, G2.a, G2.q
     a, q = gaussian_convolution_arg(a1, q1, a2, q2)
     λ = integral(G1 * Gaussian1D(λ2, a2, q - q2))
@@ -96,6 +107,6 @@ end
 end
 
 # Computes the L² product of two gaussians
-@inline function dot_L2(G1::Gaussian1D, G2::Gaussian1D)
+@inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
     return integral(G1 * G2)
 end

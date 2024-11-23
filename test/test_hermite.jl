@@ -1,7 +1,9 @@
 
 function test_hermite()
 
-    nb_reps = 5
+    println("Testing Hermite:")
+
+    nb_reps = 13
 
     #ψₙ(a, q, x) = (a/π)^(1/4) / sqrt(2ⁿn!) * Hₙ(√a*x) * exp(-z(x - q)²/2) * exp(ipx)
     function ψ(a, q, n, x)
@@ -13,13 +15,13 @@ function test_hermite()
         for _=1:nb_reps
             N = 16
             x = 4.0 * (rand() - 0.5)
-            Λ = @SVector rand(N)
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             H = StaticHermiteFct1D(Λ, a, q)
 
             val = H(x)
-            val2 = dot(Λ, [ψ(a, q, n, x) for n=0:N-1])
+            val2 = dot(conj(Λ), [ψ(a, q, n, x) for n=0:N-1])
             err = max(err, abs(val - val2) / abs(val))
         end
         println("Error evaluate = $err")
@@ -29,7 +31,7 @@ function test_hermite()
         err = 0.0
         for _=1:nb_reps
             N = 16
-            Λ = @SVector rand(N)
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             H = StaticHermiteFct1D(Λ, a, q)
@@ -58,7 +60,7 @@ function test_hermite()
         err = 0.0
         for _=1:nb_reps
             N = 16
-            Λ = @SVector rand(N)
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             H = StaticHermiteFct1D(Λ, a, q)
@@ -76,13 +78,13 @@ function test_hermite()
         err = 0.0
         for _=1:nb_reps
             N1 = 14
-            Λ1 = @SVector rand(N1)
+            Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
             a1 = (4 * rand() + 0.5)
             q1 = 4 * (rand() - 0.5)
             H1 = StaticHermiteFct1D(Λ1, a1, q1)
 
             N2 = 17
-            Λ2 = @SVector rand(N2)
+            Λ2 = (@SVector rand(N2)) + 1im * (@SVector rand(N2))
             a2 = (4 * rand() + 0.5)
             q2 = 4 * (rand() - 0.5)
             H2 = StaticHermiteFct1D(Λ2, a2, q2)
@@ -103,7 +105,7 @@ function test_hermite()
         err = 0.0
         for _=1:nb_reps
             N = 16
-            Λ = @SVector rand(N)
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             H = StaticHermiteFct1D(Λ, a, q)
@@ -128,13 +130,13 @@ function test_hermite()
         err = 0.0
         for _=1:nb_reps
             N1 = 16
-            Λ1 = @SVector rand(N1)
+            Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
             a1 = (4 * rand() + 0.5)
             q1 = 4 * (rand() - 0.5)
             H1 = StaticHermiteFct1D(Λ1, a1, q1)
 
             N2 = 14
-            Λ2 = @SVector rand(N2)
+            Λ2 = (@SVector rand(N2)) + 1im * (@SVector rand(N2))
             a2 = (4 * rand() + 0.5)
             q2 = 4 * (rand() - 0.5)
             H2 = StaticHermiteFct1D(Λ2, a2, q2)
@@ -160,7 +162,7 @@ function test_hermite()
 
     begin
         N1 = 3
-        Λ1 = @SVector rand(Float32, N1)
+        Λ1 = (@SVector rand(Float32, N1))
         a1 = (4 * rand(Float32) + 0.5f0)
         q1 = 4 * (rand(Float32) - 0.5f0)
         H1 = StaticHermiteFct1D(Λ1, a1, q1)

@@ -31,17 +31,27 @@ end
 end
 
 # Creates a copy of a gaussian
-@inline function copy(G::ComplexGaussian1D)
+@inline function copy(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     return ComplexGaussian1D(G.λ, G.z, G.q, G.p)
 end
 
+# 
+@generated function fitting_float(::Type{ComplexGaussian1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
+    T = fitting_float(promote_type(Tλ, Tz, Tq, Tp))
+    return :( $T )
+end
+@generated function fitting_float(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    T = fitting_float(ComplexGaussian1D{Tλ, Tz, Tq, Tp})
+    return :( $T )
+end
+
 # Returns the complex conjugate of a gaussian
-@inline function conj(G::ComplexGaussian1D)
+@inline function conj(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     return ComplexGaussian1D(conj(G.λ), conj(G.z), G.q, -G.p)
 end
 
 # Evaluates a gaussian at x
-@inline function (G::ComplexGaussian1D)(x::Number)
+@inline function (G::ComplexGaussian1D{Tλ, Tz, Tq, Tp})(x::Tx) where{Tλ, Tz, Tq, Tp, Tx<:Number}
     return G.λ * myexp(-G.z/2 * (x - G.q)^2) * mycis(G.p * x)
 end
 
@@ -98,12 +108,12 @@ end
 
 
 # Computes the product of a scalar and a gaussian
-@inline function (*)(w::Number, G::ComplexGaussian1D)
+@inline function (*)(w::Number, G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     return ComplexGaussian1D(w * G.λ, G.z, G.q, G.p)
 end
 
 # Computes the product of two gaussians
-@inline function (*)(G1::ComplexGaussian1D, G2::ComplexGaussian1D)
+@inline function (*)(G1::ComplexGaussian1D{Tλ1, Tz1, Tq1, Tp1}, G2::ComplexGaussian1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
     λ1, z1, q1, p1 = G1.λ, G1.z, G1.q, G1.p
     λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
     z = z1 + z2
@@ -115,8 +125,9 @@ end
 end
 
 # Computes the integral of a gaussian
-@inline function integral(G::ComplexGaussian1D)
-    return G.λ * mysqrt(2*(π/G.z)) * mycis(G.p * G.q) * myexp(- 1/(2*G.z) * G.p^2)
+@inline function integral(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    T = fitting_float(G)
+    return G.λ * T(sqrt(2π)) / mysqrt(G.z) * cis(G.p * G.q) * myexp(- G.p^2 / (2*G.z))
 end
 
 #=
@@ -124,12 +135,13 @@ end
     The Fourier transform is defined as
         TF(ψ)(ξ) = ∫dx e^(-ixξ) ψ(x)
 =#
-@inline function fourier(G::ComplexGaussian1D)
+@inline function fourier(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    T = fitting_float(G)
     λ, z, q, p = G.λ, G.z, G.q, G.p
     z_tf = 1/z
     q_tf = p
     p_tf = -q
-    λ_tf = λ * mycis(p*q) * mysqrt(2*(π/z))
+    λ_tf = λ * cis(p*q) * T(sqrt(2π)) / mysqrt(z)
     return ComplexGaussian1D(λ_tf, z_tf, q_tf, p_tf)
 end
 
@@ -138,18 +150,19 @@ end
     The inverse Fourier transform is defined as
         ITF(ψ)(x) = (2π)⁻¹∫dξ e^(ixξ) ψ(ξ)
 =#
-@inline function inv_fourier(G::ComplexGaussian1D)
+@inline function inv_fourier(G::ComplexGaussian1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    T = fitting_float(G)
     λ, z, q, p = G.λ, G.z, G.q, G.p
     z_tf = 1/z
     q_tf = -p
     p_tf = q
-    λ_tf = λ * mycis(-p_tf*q_tf) * mysqrt(1/(2*(π*z)))
+    λ_tf = λ * T((2π)^(-1/2)) * cis(-p_tf*q_tf) / mysqrt(z)
     return ComplexGaussian1D(λ_tf, z_tf, q_tf, p_tf)
 end
 
 # Computes the convolution product of two gaussians
-@inline function convolution(G1::ComplexGaussian1D, G2::ComplexGaussian1D)
-    _, z1, q1, p1 = G1.λ, G1.z, G1.q, G1.p
+function convolution(G1::ComplexGaussian1D{Tλ1, Tz1, Tq1, Tp1}, G2::ComplexGaussian1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
+    z1, q1, p1 = G1.z, G1.q, G1.p
     λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
     z, q, p = complex_gaussian_convolution_product_arg(z1, q1, p1, z2, q2, p2)
     λ = mycis(q * (p2 - p)) * integral(G1 * ComplexGaussian1D(λ2, z2, q - q2, -p2))

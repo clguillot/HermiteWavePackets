@@ -69,6 +69,22 @@ function test_gaussian_wave_packet1d()
 
     begin
         err = 0.0
+        for _=1:nb_reps
+            λ = rand() + 1im * rand()
+            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            p = 4 * (rand() - 0.5)
+            G = GaussianWavePacket1D(λ, z, q, p)
+
+            I = legendre_quadrature(15.0, 200, y -> G(y))            
+            err = max(err, abs(I - integral(G)) / abs(I))
+        end
+
+        println("Error integral = $err")
+    end
+
+    begin
+        err = 0.0
 
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
@@ -86,47 +102,11 @@ function test_gaussian_wave_packet1d()
             G = convolution(G1, G2)
 
             x0 = 5.0 * (rand() - 0.5)
-            N = 200
-            X = 15
-            h = 2 * X / N
-            x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F_conv(y) = G1(y) * G2(x0 - y)
-            for k=1:N
-                x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F_conv.(x .+ h/2 * x_legendre))
-            end
-
+            I = legendre_quadrature(15.0, 200, y -> G1(y) * G2(x0 - y))
             err = max(err, abs(I - G(x0)))
         end
 
         println("Error convolution = $err")
-    end
-
-    begin
-        err = 0.0
-        for _=1:nb_reps
-            λ = rand() + 1im * rand()
-            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
-            q = 4 * (rand() - 0.5)
-            p = 4 * (rand() - 0.5)
-            G = GaussianWavePacket1D(λ, z, q, p)
-
-            N = 200
-            X = 15
-            h = 2 * X / N
-            x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F_int(y) = G(y)
-            for k=1:N
-                x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F_int.(x .+ h/2 * x_legendre))
-            end
-            
-            err = max(err, abs(I - integral(G)) / abs(I))
-        end
-
-        println("Error integral = $err")
     end
 
     begin
@@ -141,17 +121,7 @@ function test_gaussian_wave_packet1d()
 
             Gf = fourier(G)
 
-            N = 200
-            X = 15
-            h = 2 * X / N
-            x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F_int(y) = G(y) * exp(-1im * ξ * y)
-            for k=1:N
-                x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F_int.(x .+ h/2 * x_legendre))
-            end
-            
+            I = legendre_quadrature(15.0, 200, y -> G(y) * exp(-1im * ξ * y))            
             err = max(err, abs(I - Gf(ξ)) / abs(I))
         end
 
@@ -170,17 +140,7 @@ function test_gaussian_wave_packet1d()
 
             Gf = inv_fourier(G)
 
-            N = 200
-            X = 15
-            h = 2 * X / N
-            x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F_int(y) = (2π)^(-1) * G(y) * exp(1im * ξ * y)
-            for k=1:N
-                x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F_int.(x .+ h/2 * x_legendre))
-            end
-            
+            I = (2π)^(-1) * legendre_quadrature(15.0, 200, y -> G(y) * exp(1im * ξ * y))
             err = max(err, abs(I - Gf(ξ)) / abs(I))
         end
 

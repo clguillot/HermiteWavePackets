@@ -1,7 +1,7 @@
 
-function test_gaussian()
+function test_gaussian1d()
 
-    println("Testing gaussian:")
+    println("Testing gaussian 1d:")
 
     nb_reps = 13
 
@@ -79,17 +79,7 @@ function test_gaussian()
             G = convolution(G1, G2)
 
             x0 = 5.0 * (rand() - 0.5)
-            N = 200
-            X = 15
-            h = 2 * X / N
-            x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F = y -> G1(y) * G2(x0 - y)
-            for k=1:N
-                x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
-            end
-
+            I = legendre_quadrature(15.0, 200, y -> G1(y) * G2(x0 - y))
             err = max(err, abs(I - G(x0)))
         end
 
@@ -104,17 +94,7 @@ function test_gaussian()
             q = 4 * (rand() - 0.5)
             G = Gaussian1D(λ, a, q)
 
-            N = 200
-            X = 15
-            h = 2 * X / N
-            x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F = y -> G(y)
-            for k=1:N
-                x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
-            end
-            
+            I = legendre_quadrature(15.0, 200, y -> G(y))
             err = max(err, abs(I - integral(G)) / abs(I))
         end
         println("Error integral = $err")
@@ -136,18 +116,7 @@ function test_gaussian()
 
             G = convolution(G1, G2)
 
-            x0 = 5.0 * (rand() - 0.5)
-            N = 200
-            X = 15
-            h = 2 * X / N
-            x_legendre, w_legendre = gausslegendre(8)
-            I = 0.0
-            F = y -> conj(G1(y)) * G2(y)
-            for k=1:N
-                x = -X + (k - 0.5) * h
-                I += h/2 * dot(w_legendre, F.(x .+ h/2 * x_legendre))
-            end
-
+            I = legendre_quadrature(15.0, 200, y -> conj(G1(y)) * G2(y))
             err = max(err, abs(I - dot_L2(G1, G2)) / abs(I))
         end
 

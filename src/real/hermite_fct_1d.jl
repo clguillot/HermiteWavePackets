@@ -64,7 +64,7 @@ end
 function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Number) where{N, TΛ, Ta, Tq}
     T = promote_type(fitting_float(H), fitting_float(x))
 
-    u = T(π^(-1/4)) * (H.a)^T(1/4) * myexp(-H.a * (x - H.q)^2 / 2)
+    u = T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
 
     if N > 0
         val = H.Λ[1] * u
@@ -92,7 +92,7 @@ end
 function evaluate(H::HermiteFct1D{N, TΛ, Ta, Tq}, x::SVector{M, Tx}) where{N, TΛ, Ta, Tq, M, Tx<:Number}
     T = promote_type(fitting_float(H), fitting_float(x))
 
-    u = @. T(π^(-1/4)) * (H.a)^T(1/4) * myexp(-H.a * (x - H.q)^2 / 2)
+    u = @. T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
     b = (2*H.a)^T(1/2)
 
     if N > 0

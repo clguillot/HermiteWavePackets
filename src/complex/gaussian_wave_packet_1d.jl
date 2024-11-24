@@ -41,7 +41,7 @@ end
 
 # Evaluates a gaussian at x
 @inline function (G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp})(x::Number) where{Tλ, Tz, Tq, Tp}
-    return G.λ * myexp(-G.z/2 * (x - G.q)^2) * mycis(G.p * x)
+    return G.λ * exp(-G.z/2 * (x - G.q)^2) * cis(G.p * x)
 end
 
 #=
@@ -109,14 +109,14 @@ end
     q = (real(z1) * q1 + real(z2) * q2) / (real(z1) + real(z2))
     p0 = (imag(z1) * q1 + imag(z2) * q2) - (imag(z1) + imag(z2)) * q
     p = p2 + p1 + p0
-    λ = λ1 * λ2 * myexp(-z1*(q-q1)^2 / 2) * myexp(-z2*(q-q2)^2 / 2) * mycis(-p0*q)
+    λ = λ1 * λ2 * exp(-z1*(q-q1)^2 / 2) * exp(-z2*(q-q2)^2 / 2) * cis(-p0*q)
     return GaussianWavePacket1D(λ, z, q, p)
 end
 
 # Computes the integral of a gaussian
 @inline function integral(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     T = fitting_float(G)
-    return G.λ * T(sqrt(2π)) / mysqrt(G.z) * cis(G.p * G.q) * myexp(- G.p^2 / (2*G.z))
+    return G.λ * T(sqrt(2π)) / sqrt(G.z) * cis(G.p * G.q) * exp(- G.p^2 / (2*G.z))
 end
 
 #=
@@ -130,7 +130,7 @@ end
     z_tf = 1/z
     q_tf = p
     p_tf = -q
-    λ_tf = λ * cis(p*q) * T(sqrt(2π)) / mysqrt(z)
+    λ_tf = λ * cis(p*q) * T(sqrt(2π)) / sqrt(z)
     return GaussianWavePacket1D(λ_tf, z_tf, q_tf, p_tf)
 end
 
@@ -145,7 +145,7 @@ end
     z_tf = 1/z
     q_tf = -p
     p_tf = q
-    λ_tf = λ * T((2π)^(-1/2)) * cis(-p_tf*q_tf) / mysqrt(z)
+    λ_tf = λ * T((2π)^(-1/2)) * cis(-p_tf*q_tf) / sqrt(z)
     return GaussianWavePacket1D(λ_tf, z_tf, q_tf, p_tf)
 end
 
@@ -154,7 +154,7 @@ function convolution(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, G2::Gaussian
     z1, q1, p1 = G1.z, G1.q, G1.p
     λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
     z, q, p = complex_gaussian_convolution_product_arg(z1, q1, p1, z2, q2, p2)
-    λ = mycis(q * (p2 - p)) * integral(G1 * GaussianWavePacket1D(λ2, z2, q - q2, -p2))
+    λ = cis(q * (p2 - p)) * integral(G1 * GaussianWavePacket1D(λ2, z2, q - q2, -p2))
     return GaussianWavePacket1D(λ, z, q, p)
 end
 

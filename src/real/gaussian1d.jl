@@ -40,12 +40,12 @@ end
 
 # Evaluates a gaussian at x
 @inline function (G::Gaussian1D{Tλ, Ta, Tq})(x::Number) where{Tλ, Ta, Tq}
-    return G.λ * myexp(-G.a/2 * (x - G.q)^2)
+    return G.λ * exp(-G.a/2 * (x - G.q)^2)
 end
 
 # Evaluates a gaussian at every point in x
 @inline function evaluate(G::Gaussian1D{Tλ, Ta, Tq}, x::SVector{M, T}) where{Tλ, Ta, Tq, M, T<:Number}
-    return @. G.λ * myexp(-G.a/2 * (x - G.q)^2)
+    return @. G.λ * exp(-G.a/2 * (x - G.q)^2)
 end
 
 #=

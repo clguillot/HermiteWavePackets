@@ -69,7 +69,7 @@ end
     where C is some constant
 =#
 @inline function complex_gaussian_fourier_arg(z::Number, q::Real, p::Real)
-    return 1/z, p, -q
+    return inv(z), p, -q
 end
 
 #=
@@ -79,7 +79,7 @@ end
     where C is some constant
 =#
 @inline function complex_gaussian_inv_fourier_arg(z::Number, q::Real, p::Real)
-    return 1/z, -p, q
+    return inv(z), -p, q
 end
 
 #=

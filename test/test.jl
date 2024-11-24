@@ -9,4 +9,4 @@ using StaticArrays
 include("test_gaussian.jl");
 include("test_hermite.jl");
 
-include("test_complex_gaussian.jl")
+include("test_hermite_wave_packet.jl")

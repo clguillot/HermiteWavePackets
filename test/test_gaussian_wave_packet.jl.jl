@@ -1,7 +1,7 @@
 
-function test_complex_gaussian()
+function test_gaussian_wave_packet1d()
 
-    println("Testing complex gaussian:")
+    println("Testing gaussian wave packet 1d:")
 
     nb_reps = 13
 

@@ -165,12 +165,9 @@ function convolution(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, 
 end
 
 # Computes the L² product of two gaussians
-@generated function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
-    if TΛ1 <: Real
-        return :( integral(H1 * H2) )
-    elseif TΛ1 <: Complex
-        return :( integral(conj(H1) * H2) )
-    else
-        :( throw(ArgumentError("Tλ1 is not a Real or a Complex type")) )
-    end
+@inline function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1<:Real, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+    return integral(H1 * H2)
+end
+@inline function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1<:Complex, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+    return integral(conj(H1) * H2)
 end

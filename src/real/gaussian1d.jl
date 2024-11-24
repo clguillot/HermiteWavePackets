@@ -104,12 +104,9 @@ end
 end
 
 # Computes the L² product of two gaussians
-@generated function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
-    if Tλ1 <: Real
-        return :( integral(G1 * G2) )
-    elseif Tλ2 <: Complex
-        return :( integral(conj(G1) * G2) )
-    else
-        :( throw(ArgumentError("Tλ1 is not a Real or a Complex type")) )
-    end
+@inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1<:Real, Ta1, Tq1, Tλ2, Ta2, Tq2}
+    return integral(G1 * G2)
+end
+@inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1<:Complex, Ta1, Tq1, Tλ2, Ta2, Tq2}
+    return integral(conj(G1) * G2)
 end

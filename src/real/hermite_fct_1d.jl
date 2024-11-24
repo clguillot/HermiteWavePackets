@@ -61,8 +61,8 @@ end
 end
 
 # Evaluates a hermite function at x
-function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Tx) where{N, TΛ, Ta, Tq, Tx<:Number}
-    T = promote_type(fitting_float(H), fitting_float(Tx))
+function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Number) where{N, TΛ, Ta, Tq}
+    T = promote_type(fitting_float(H), fitting_float(x))
 
     u = T(π^(-1/4)) * (H.a)^T(1/4) * myexp(-H.a * (x - H.q)^2 / 2)
 
@@ -111,7 +111,7 @@ function evaluate(H::HermiteFct1D{N, TΛ, Ta, Tq}, x::SVector{M, Tx}) where{N, T
         end
         return val
     else
-        return @. zero(eltype(H.Λ)) * u
+        return zero(TΛ) .* u
     end
 end
 

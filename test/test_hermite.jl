@@ -7,7 +7,7 @@ function test_hermite()
 
     #ψₙ(a, q, x) = (a/π)^(1/4) / sqrt(2ⁿn!) * Hₙ(√a*x) * exp(-z(x - q)²/2) * exp(ipx)
     function ψ(a, q, n, x)
-        (a/π)^(1/4) / sqrt(2.0^n * gamma(n+1)) * hermiteh(n, sqrt(a) * (x-q)) * exp(-a*(x-q)^2/2)
+        (a/π)^(1/4) / sqrt(2.0^n * gamma(n+1)) * hermite_poly(n, sqrt(a) * (x-q)) * exp(-a*(x-q)^2/2)
     end
 
     begin

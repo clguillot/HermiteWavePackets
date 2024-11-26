@@ -152,94 +152,125 @@ function test_hermite_wave_packet1d()
         println("Error Fourier (complex variance) = $err")
     end
 
-    # begin
-    #     err = 0.0
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 17
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            z = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            p = 4 * (rand() - 0.5)
+            H = HermiteWavePacket1D(Λ, z, q, p)
 
-    #     for _=1:nb_reps
-    #         λ1 = rand() + 1im * rand()
-    #         z1 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
-    #         q1 = 4 * (rand() - 0.5)
-    #         p1 = 4 * (rand() - 0.5)
-    #         G1 = GaussianWavePacket1D(λ1, z1, q1, p1)
+            Hf = inv_fourier(H)
 
-    #         λ2 = rand() + 1im * rand()
-    #         z2 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
-    #         q2 = 4 * (rand() - 0.5)
-    #         p2 = 4 * (rand() - 0.5)
-    #         G2 = GaussianWavePacket1D(λ2, z2, q2, p2)
+            ξ0 = 5 * (rand() - 0.5)
+            I = 1/(2π) * legendre_quadrature(25.0, 500, y -> H(y) * cis(ξ0*y))
+            err = max(err, abs(I - Hf(ξ0)))
+        end
 
-    #         G = convolution(G1, G2)
+        println("Error Inverse Fourier (real variance) = $err")
+    end
 
-    #         x0 = 5.0 * (rand() - 0.5)
-    #         N = 200
-    #         X = 15
-    #         h = 2 * X / N
-    #         x_legendre, w_legendre = gausslegendre(8)
-    #         I = 0.0
-    #         F_conv(y) = G1(y) * G2(x0 - y)
-    #         for k=1:N
-    #             x = -X + (k - 0.5) * h
-    #             I += h/2 * dot(w_legendre, F_conv.(x .+ h/2 * x_legendre))
-    #         end
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 15
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            z = (4 * rand() + 0.5) + 1im * (rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            p = 4 * (rand() - 0.5)
+            H = HermiteWavePacket1D(Λ, z, q, p)
 
-    #         err = max(err, abs(I - G(x0)))
-    #     end
+            Hf = inv_fourier(H)
 
-    #     println("Error convolution = $err")
-    # end
+            ξ0 = 5 * (rand() - 0.5)
+            I = 1/(2π) * legendre_quadrature(25.0, 500, y -> H(y) * cis(ξ0*y))
+            err = max(err, abs(I - Hf(ξ0)))
+        end
 
-    # begin
-    #     err = 0.0
-    #     for _=1:nb_reps
-    #         ξ = 5 * (rand() - 0.5)
-    #         λ = rand() + 1im * rand()
-    #         z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
-    #         q = 4 * (rand() - 0.5)
-    #         p = 4 * (rand() - 0.5)
-    #         G = GaussianWavePacket1D(λ, z, q, p)
+        println("Error Inverse Fourier (complex variance) = $err")
+    end
 
-    #         Gf = inv_fourier(G)
+    begin
+        err = 0.0
 
-    #         N = 200
-    #         X = 15
-    #         h = 2 * X / N
-    #         x_legendre, w_legendre = gausslegendre(8)
-    #         I = 0.0
-    #         F_int(y) = (2π)^(-1) * G(y) * exp(1im * ξ * y)
-    #         for k=1:N
-    #             x = -X + (k - 0.5) * h
-    #             I += h/2 * dot(w_legendre, F_int.(x .+ h/2 * x_legendre))
-    #         end
-            
-    #         err = max(err, abs(I - Gf(ξ)) / abs(I))
-    #     end
+        for _=1:nb_reps
+            N1 = 18
+            Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
+            z1 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            q1 = 4 * (rand() - 0.5)
+            p1 = 4 * (rand() - 0.5)
+            H1 = HermiteWavePacket1D(Λ1, z1, q1, p1)
 
-    #     println("Error Inverse Fourier = $err")
-    # end
+            N2 = 15
+            Λ2 = (@SVector rand(N2)) + 1im * (@SVector rand(N2))
+            z2 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            q2 = 4 * (rand() - 0.5)
+            p2 = 4 * (rand() - 0.5)
+            H2 = HermiteWavePacket1D(Λ2, z2, q2, p2)
 
-    # begin
-    #     λ1 = rand(Float32) + 1im * rand(Float32)
-    #     z1 = (4 * rand(Float32) + 0.5f0) + 1im * (4 * rand(Float32) + 0.5f0)
-    #     q1 = 4 * (rand(Float32) - 0.5f0)
-    #     p1 = 4 * (rand(Float32) - 0.5f0)
-    #     G1 = GaussianWavePacket1D(λ1, z1, q1, p1)
+            H = convolution(H1, H2)
 
-    #     λ2 = rand(Float32) + 1im * rand(Float32)
-    #     z2 = (4 * rand(Float32) + 0.5f0) + 1im * (4 * rand(Float32) + 0.5f0)
-    #     q2 = 4 * (rand(Float32) - 0.5f0)
-    #     p2 = 4 * (rand(Float32) - 0.5f0)
-    #     G2 = GaussianWavePacket1D(λ2, z2, q2, p2)
+            x0 = 5.0 * (rand() - 0.5)
+            I = legendre_quadrature(25.0, 500, y -> H1(y) * H2(x0 - y))
+            err = max(err, abs(I - H(x0)))
+        end
 
-    #     λ3 = rand(Float32) + 1im * rand(Float32)
-    #     z3 = (4 * rand(Float32) + 0.5f0) + 1im * (4 * rand(Float32) + 0.5f0)
-    #     q3 = 4 * (rand(Float32) - 0.5f0)
-    #     p3 = 4 * (rand(Float32) - 0.5f0)
-    #     G3 = GaussianWavePacket1D(λ3, z3, q3, p3)
+        println("Error convolution = $err")
+    end
 
-    #     G = convolution(G1 * fourier(G2), inv_fourier(G3))
-    #     res = G(rand(Float32)) + integral(G)
-    #     T_type = typeof(res)
+    begin
+        err = 0.0
 
-    #     println("Expecting $ComplexF32 and got $T_type")
-    # end
+        for _=1:nb_reps
+            N1 = 18
+            Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
+            z1 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            q1 = 4 * (rand() - 0.5)
+            p1 = 4 * (rand() - 0.5)
+            H1 = HermiteWavePacket1D(Λ1, z1, q1, p1)
+
+            N2 = 15
+            Λ2 = (@SVector rand(N2)) + 1im * (@SVector rand(N2))
+            z2 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            q2 = 4 * (rand() - 0.5)
+            p2 = 4 * (rand() - 0.5)
+            H2 = HermiteWavePacket1D(Λ2, z2, q2, p2)
+
+            I = legendre_quadrature(25.0, 500, y -> conj(H1(y)) * H2(y))
+            err = max(err, abs(I - dot_L2(H1, H2)))
+        end
+
+        println("Error dot L² = $err")
+    end
+
+    begin
+        N1 = 3
+        Λ1 = (@SVector rand(Float32, N1)) + 1im * (@SVector rand(Float32, N1))
+        z1 = (4 * rand(Float32) + 0.5f0) + 1im * (4 * rand(Float32) + 0.5f0)
+        q1 = 4 * (rand(Float32) - 0.5f0)
+        p1 = 4 * (rand(Float32) - 0.5f0)
+        H1 = HermiteWavePacket1D(Λ1, z1, q1, p1)
+
+        N2 = 7
+        Λ2 = (@SVector rand(Float32, N2)) + 1im * (@SVector rand(Float32, N2))
+        z2 = (4 * rand(Float32) + 0.5f0) + 1im * (4 * rand(Float32) + 0.5f0)
+        q2 = 4 * (rand(Float32) - 0.5f0)
+        p2 = 4 * (rand(Float32) - 0.5f0)
+        H2 = HermiteWavePacket1D(Λ2, z2, q2, p2)
+
+        N3 = 5
+        Λ3 = (@SVector rand(Float32, N3)) + 1im * (@SVector rand(Float32, N3))
+        z3 = (4 * rand(Float32) + 0.5f0) + 1im * (4 * rand(Float32) + 0.5f0)
+        q3 = 4 * (rand(Float32) - 0.5f0)
+        p3 = 4 * (rand(Float32) - 0.5f0)
+        H3 = HermiteWavePacket1D(Λ3, z3, q3, p3)
+
+        H = convolution(H1 * fourier(H2), inv_fourier(H3))
+        res = H(rand(Float32)) + integral(H)
+        T_type = typeof(res)
+
+        println("Expecting $ComplexF32 and got $T_type")
+    end
 end

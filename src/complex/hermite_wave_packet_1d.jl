@@ -202,7 +202,7 @@ function integral(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz<:
 end
 
 #=
-    Computes the Fourier transform of a gaussian
+    Computes the Fourier transform of a hermite function
     The Fourier transform is defined as
         TF(ψ)(ξ) = ∫dx e^(-ixξ) ψ(x)
 =#
@@ -211,7 +211,8 @@ function fourier(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz<:R
     T = fitting_float(H)
     a, q, p = H.z, H.q, H.p
     af, qf, pf = complex_gaussian_fourier_arg(a, q, p)
-    Λf = T(sqrt(2π)) * cis(p*q) .* SVector{N}((-1im)^n * H.Λ[n+1] for n in 0:N-1)
+    root4 = @SVector [1, -1im, -1, 1im]
+    Λf = T(sqrt(2π)) * cis(p*q) .* SVector{N}(root4[n % 4 + 1] * H.Λ[n+1] for n in 0:N-1)
     return HermiteWavePacket1D(Λf, af, qf, pf)
 end
 # Complex variance
@@ -252,31 +253,64 @@ function fourier(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz<:C
     return HermiteWavePacket1D(Λf, zf, qf, pf)
 end
 
-# #=
-#     Computes the inverse Fourier transform of a gaussian
-#     The inverse Fourier transform is defined as
-#         ITF(ψ)(x) = (2π)⁻¹∫dξ e^(ixξ) ψ(ξ)
-# =#
-# @inline function inv_fourier(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-#     T = fitting_float(G)
-#     λ, z, q, p = G.λ, G.z, G.q, G.p
-#     z_tf = 1/z
-#     q_tf = -p
-#     p_tf = q
-#     λ_tf = λ * T((2π)^(-1/2)) * cis(-p_tf*q_tf) / sqrt(z)
-#     return GaussianWavePacket1D(λ_tf, z_tf, q_tf, p_tf)
-# end
+#=
+    Computes the inverse Fourier transform of a hermite function
+    The Fourier transform is defined as
+        ITF(ψ)(ξ) = (2π)⁻¹ ∫dx e^(ixξ) ψ(x)
+=#
+# Real variance
+function inv_fourier(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz<:Real, Tq, Tp}
+    T = fitting_float(H)
+    a, q, p = H.z, H.q, H.p
+    af, qf, pf = complex_gaussian_inv_fourier_arg(a, q, p)
+    root4 = @SVector [1, 1im, -1, -1im]
+    Λf = T((2π)^(-1/2)) * cis(p*q) .* SVector{N}(root4[n % 4 + 1] * H.Λ[n+1] for n in 0:N-1)
+    return HermiteWavePacket1D(Λf, af, qf, pf)
+end
+# Complex variance
+function inv_fourier(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz<:Complex, Tq, Tp}
+    T = fitting_float(H)
 
-# # Computes the convolution product of two gaussians
-# function convolution(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, G2::GaussianWavePacket1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
-#     z1, q1, p1 = G1.z, G1.q, G1.p
-#     λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
-#     z, q, p = complex_gaussian_convolution_product_arg(z1, q1, p1, z2, q2, p2)
-#     λ = cis(q * (p2 - p)) * integral(G1 * GaussianWavePacket1D(λ2, z2, q - q2, -p2))
-#     return GaussianWavePacket1D(λ, z, q, p)
-# end
+    z, q, p = H.z, H.q, H.p
+    a = real(z)
+    Gf = inv_fourier(GaussianWavePacket1D(T(π^(-1/4)) * a^T(1/4), z, q, p))
+    
+    zf, qf, pf = Gf.z, Gf.q, Gf.p
+    af, bf = reim(zf)
+    ξ, Mf = hermite_discrete_transform(af, qf, Val(N))
+    u = Gf.(ξ)
+    
+    U = if N > 0
+        val = @. H.Λ[1] * u
+        if N > 1
+            b = sqrt(2*a)
+            v = u
+            u = @. 1im * b * (p + ξ) / z * u
+            val = @. val + H.Λ[2] * u
+            for k=3:N
+                w = u
+                u = @. (1im * b * (p + ξ) * u + conj(z) * sqrt(T(k-2)) * v) / (z * sqrt(T(k-1)))
+                v = w
+                val = @. val + H.Λ[k] * u
+            end
+        end
+        val
+    else
+        zero(TΛ) .* u
+    end
+    V = SVector{N}(U[j] * cis(bf * (ξ[j] - qf)^2 / 2) * cis(- pf * ξ[j]) for j in 1:N)
+    
+    Λf = Mf * V
 
-# # Computes the L² product of two gaussians
-# @inline function dot_L2(G1::GaussianWavePacket1D, G2::GaussianWavePacket1D)
-#     return integral(conj(G1) * G2)
-# end
+    return HermiteWavePacket1D(Λf, zf, qf, pf)
+end
+
+# Computes the convolution product of two gaussians
+function convolution(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}) where{N1, TΛ1, Tz1, Tq1, Tp1, N2, TΛ2, Tz2, Tq2, Tp2}
+    return inv_fourier(fourier(H1) * fourier(H2))
+end
+
+# Computes the L² product of two gaussians
+@inline function dot_L2(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}) where{N1, TΛ1, Tz1, Tq1, Tp1, N2, TΛ2, Tz2, Tq2, Tp2}
+    return integral(conj(H1) * H2)
+end

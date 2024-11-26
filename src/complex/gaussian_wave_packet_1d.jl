@@ -159,6 +159,6 @@ function convolution(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, G2::Gaussian
 end
 
 # Computes the L² product of two gaussians
-@inline function dot_L2(G1::GaussianWavePacket1D, G2::GaussianWavePacket1D)
+@inline function dot_L2(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, G2::GaussianWavePacket1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
     return integral(conj(G1) * G2)
 end

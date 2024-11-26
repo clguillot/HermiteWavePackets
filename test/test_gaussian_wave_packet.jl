@@ -140,7 +140,7 @@ function test_gaussian_wave_packet1d()
 
             Gf = inv_fourier(G)
 
-            I = (2π)^(-1) * legendre_quadrature(15.0, 200, y -> G(y) * exp(1im * ξ * y))
+            I = (2π)^(-1) * legendre_quadrature(15.0, 200, y -> G(y) * cis(ξ * y))
             err = max(err, abs(I - Gf(ξ)) / abs(I))
         end
 

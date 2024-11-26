@@ -145,7 +145,7 @@ end
     z_tf = 1/z
     q_tf = -p
     p_tf = q
-    λ_tf = λ * T((2π)^(-1/2)) * cis(-p_tf*q_tf) / sqrt(z)
+    λ_tf = λ * T((2π)^(-1/2)) * cis(p*q) / sqrt(z)
     return GaussianWavePacket1D(λ_tf, z_tf, q_tf, p_tf)
 end
 

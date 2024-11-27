@@ -221,34 +221,16 @@ function fourier(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz<:C
 
     z, q, p = H.z, H.q, H.p
     a = real(z)
-    Gf = fourier(GaussianWavePacket1D(T(π^(-1/4)) * a^T(1/4), z, q, p))
-    
+
+    # Fourier transform of the first hermite function
+    Gf = fourier(GaussianWavePacket1D(a^T(1/4), z, q, p))
     zf, qf, pf = Gf.z, Gf.q, Gf.p
-    af, bf = reim(zf)
-    ξ, Mf = hermite_discrete_transform(af, qf, Val(N))
-    u = Gf.(ξ)
-    
-    U = if N > 0
-        val = @. H.Λ[1] * u
-        if N > 1
-            b = sqrt(2*a)
-            v = u
-            u = @. 1im * b * (p - ξ) / z * u
-            val = @. val + H.Λ[2] * u
-            for k=3:N
-                w = u
-                u = @. (1im * b * (p - ξ) * u + conj(z) * sqrt(T(k-2)) * v) / (z * sqrt(T(k-1)))
-                v = w
-                val = @. val + H.Λ[k] * u
-            end
-        end
-        val
-    else
-        zero(TΛ) .* u
-    end
-    V = SVector{N}(U[j] * cis(bf * (ξ[j] - qf)^2 / 2) * cis(- pf * ξ[j]) for j in 1:N)
-    
-    Λf = Mf * V
+    af = real(zf)
+
+    # 
+    λ0 = Gf.λ * af^T(-1/4)
+    α = -im * conj(z) / abs(z)
+    Λf = λ0 .* SVector{N}(α^n * H.Λ[n+1] for n in 0:N-1)
 
     return HermiteWavePacket1D(Λf, zf, qf, pf)
 end
@@ -273,34 +255,16 @@ function inv_fourier(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, T
 
     z, q, p = H.z, H.q, H.p
     a = real(z)
-    Gf = inv_fourier(GaussianWavePacket1D(T(π^(-1/4)) * a^T(1/4), z, q, p))
-    
+
+    # Fourier transform of the first hermite function
+    Gf = inv_fourier(GaussianWavePacket1D(a^T(1/4), z, q, p))
     zf, qf, pf = Gf.z, Gf.q, Gf.p
-    af, bf = reim(zf)
-    ξ, Mf = hermite_discrete_transform(af, qf, Val(N))
-    u = Gf.(ξ)
-    
-    U = if N > 0
-        val = @. H.Λ[1] * u
-        if N > 1
-            b = sqrt(2*a)
-            v = u
-            u = @. 1im * b * (p + ξ) / z * u
-            val = @. val + H.Λ[2] * u
-            for k=3:N
-                w = u
-                u = @. (1im * b * (p + ξ) * u + conj(z) * sqrt(T(k-2)) * v) / (z * sqrt(T(k-1)))
-                v = w
-                val = @. val + H.Λ[k] * u
-            end
-        end
-        val
-    else
-        zero(TΛ) .* u
-    end
-    V = SVector{N}(U[j] * cis(bf * (ξ[j] - qf)^2 / 2) * cis(- pf * ξ[j]) for j in 1:N)
-    
-    Λf = Mf * V
+    af = real(zf)
+
+    # 
+    λ0 = Gf.λ * af^T(-1/4)
+    α = im * conj(z) / abs(z)
+    Λf = λ0 .* SVector{N}(α^n * H.Λ[n+1] for n in 0:N-1)
 
     return HermiteWavePacket1D(Λf, zf, qf, pf)
 end

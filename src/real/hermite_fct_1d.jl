@@ -60,32 +60,22 @@ end
     return HermiteFct1D(conj.(H.Λ), H.a, H.q)
 end
 
-# Evaluates a hermite function at x
+# Evaluates a hermite function at x using Clenshaw's algorithm
 function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Number) where{N, TΛ, Ta, Tq}
     T = promote_type(fitting_float(H), fitting_float(x))
 
-    u = T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
+    # u = T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
 
-    if N > 0
-        val = H.Λ[1] * u
-        if N > 1
-            b = (2*H.a)^T(1/2)
+    b = sqrt(2*H.a)
+    ψ0 = T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
 
-            v = u
-            u = b * (x - H.q) * u
-            val += H.Λ[2] * u
-
-            for k=3:N
-                w = u
-                u = (b * (x - H.q) * u - sqrt(T(k-2)) * v) / sqrt(T(k-1))
-                v = w
-                val += H.Λ[k] * u
-            end
-        end
-        return val
-    else
-        return zero(TΛ) * u
+    u = zero(promote_type(TΛ, typeof(ψ0)))
+    v = zero(u)
+    for k=N-1:-1:0
+        (u, v) = (H.Λ[k+1] + b / sqrt(T(k+1)) * (x - H.q) * u - sqrt(T(k+1) / T(k+2)) * v, u)
     end
+    
+    return u * ψ0
 end
 
 # Evaluates a hermite function at all the points in x

@@ -152,17 +152,20 @@ function convolution(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, 
     return HermiteFct1D(Λ, a, q)
 end
 
-# Computes the L² product of two hermite functions
+#=
+    Computes the L² product of two hermite functions
+        ∫dx conj(H1(x)) H2(x)
+=#
 function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
     N = max(N1 + N2 - 1, 0)
     a, q = gaussian_product_arg(H1.a, H1.q, H2.a, H2.q)
 
     m = cld(N, 2)
-    x, w = hermite_quadrature(a, q, Val(m))
+    x, w = hermite_quadrature(a/2, q, Val(m))
 
     Φ1 = evaluate(H1, x)
     Φ2 = evaluate(H2, x)
-    Φ = @. conj(Φ1) * ϕ2
+    Φ = @. conj(Φ1) * Φ2
 
     return dot(w, Φ)
 end

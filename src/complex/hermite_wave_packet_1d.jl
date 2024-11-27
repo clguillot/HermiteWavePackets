@@ -270,7 +270,7 @@ function inv_fourier(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, T
 end
 
 # Computes the convolution product of two gaussians
-function convolution(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}) where{N1, TΛ1, Tz1, Tq1, Tp1, N2, TΛ2, Tz2, Tq2, Tp2}
+@inline function convolution(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}) where{N1, TΛ1, Tz1, Tq1, Tp1, N2, TΛ2, Tz2, Tq2, Tp2}
     return inv_fourier(fourier(H1) * fourier(H2))
 end
 

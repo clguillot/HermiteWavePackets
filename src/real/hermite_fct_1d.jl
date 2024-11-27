@@ -64,8 +64,6 @@ end
 function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Number) where{N, TΛ, Ta, Tq}
     T = promote_type(fitting_float(H), fitting_float(x))
 
-    # u = T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
-
     b = sqrt(2*H.a)
     ψ0 = T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
 
@@ -154,10 +152,17 @@ function convolution(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, 
     return HermiteFct1D(Λ, a, q)
 end
 
-# Computes the L² product of two gaussians
-@inline function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1<:Real, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
-    return integral(H1 * H2)
-end
-@inline function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1<:Complex, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
-    return integral(conj(H1) * H2)
+# Computes the L² product of two hermite functions
+function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+    N = max(N1 + N2 - 1, 0)
+    a, q = gaussian_product_arg(H1.a, H1.q, H2.a, H2.q)
+
+    m = N÷2 + N%2
+    x, w = hermite_quadrature(a, q, Val(m))
+
+    Φ1 = evaluate(H1, x)
+    Φ2 = evaluate(H2, x)
+    Φ = @. conj(Φ1) * ϕ2
+
+    return dot(w, Φ)
 end

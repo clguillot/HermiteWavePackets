@@ -49,13 +49,13 @@ function test_hermite1d()
     begin
         err = 0.0
         for _=1:nb_reps
-            N = 32
+            N = 33
             Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             H = HermiteFct1D(Λ, a, q)
             
-            x, w = ComplexHermiteFct.hermite_quadrature(a/2, q, Val(N))
+            x, w = ComplexHermiteFct.hermite_quadrature(a/2, q, Val(ceil(Int, N/2)))
             I_exact = dot(w, H.(x))
 
             I = legendre_quadrature(20.0, 400, y -> H(y))
@@ -153,7 +153,7 @@ function test_hermite1d()
     begin
         err = 0.0
         for _=1:nb_reps
-            N1 = 11
+            N1 = 12
             Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
             a1 = (4 * rand() + 0.5)
             q1 = 4 * (rand() - 0.5)

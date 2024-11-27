@@ -80,27 +80,16 @@ end
 function evaluate(H::HermiteFct1D{N, TΛ, Ta, Tq}, x::SVector{M, Tx}) where{N, TΛ, Ta, Tq, M, Tx<:Number}
     T = promote_type(fitting_float(H), fitting_float(x))
 
-    u = @. T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
-    b = (2*H.a)^T(1/2)
+    b = sqrt(2*H.a)
+    ψ0 = @. T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
 
-    if N > 0
-        val = @. H.Λ[1] * u
-        if N > 1
-            v = u
-            u = @. b * (x - H.q) * u
-            val = @. val + H.Λ[2] * u
-
-            for k=3:N
-                w = u
-                u = @. (b * (x - H.q) * u - sqrt(T(k-2)) * v) / sqrt(T(k-1))
-                v = w
-                val = @. val + H.Λ[k] * u
-            end
-        end
-        return val
-    else
-        return zero(TΛ) .* u
+    u = zero(SVector{M, promote_type(TΛ, eltype(ψ0))})
+    v = zero(u)
+    for k=N-1:-1:0
+        (u, v) = @. (H.Λ[k+1] + b / sqrt(T(k+1)) * (x - H.q) * u - sqrt(T(k+1) / T(k+2)) * v, u)
     end
+    
+    return u .* ψ0
 end
 
 # Computes the product of a scalar and a hermite function

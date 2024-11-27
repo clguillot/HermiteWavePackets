@@ -25,7 +25,24 @@ function test_hermite1d()
             err = max(err, abs(val - val2) / abs(val))
         end
 
-        println("Error evaluate = $err")
+        println("Error evaluate (point) = $err")
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 16
+            x = SVector{5}(4.0 .* (rand(5) .- 0.5))
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            a = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            H = HermiteFct1D(Λ, a, q)
+
+            val = evaluate(H, x)
+            err = max(err, norm(val - H.(x)) / norm(val))
+        end
+
+        println("Error evaluate (vector) = $err")
     end
 
     begin

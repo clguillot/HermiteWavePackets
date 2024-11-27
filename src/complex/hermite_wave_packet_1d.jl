@@ -66,59 +66,16 @@ end
 
 # Evaluates a hermite wave packet at x
 function (H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp})(x::Number) where{N, TΛ, Tz, Tq, Tp}
-    T = promote_type(fitting_float(H), fitting_float(x))
-
-    a = real(H.z)
-    u = T(π^(-1/4)) * a^T(1/4) * exp(-H.z * (x - H.q)^2 / 2) * cis(x * H.p)
-
-    if N > 0
-        val = H.Λ[1] * u
-        if N > 1
-            b = (2*a)^T(1/2)
-
-            v = u
-            u = b * (x - H.q) * u
-            val += H.Λ[2] * u
-
-            for k=3:N
-                w = u
-                u = (b * (x - H.q) * u - sqrt(T(k-2)) * v) / sqrt(T(k-1))
-                v = w
-                val += H.Λ[k] * u
-            end
-        end
-        return val
-    else
-        return zero(TΛ) * u
-    end
+    Ha = HermiteFct1D(H.Λ, real(H.z), H.q)
+    e = cis(-imag(H.z) * (x - H.q)^2 / 2) * cis(x * H.p)
+    return Ha(x) * e
 end
 
 # Evaluates a hermite function at all the points in x
 function evaluate(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}, x::SVector{M, Tx}) where{N, TΛ, Tz, Tq, Tp, M, Tx<:Number}
-    T = promote_type(fitting_float(H), fitting_float(x))
-
-    a = real(H.z)
-    u = @. T(π^(-1/4)) * a^T(1/4) * exp(-H.z * (x - H.q)^2 / 2) * cis(x * H.p)
-
-    if N > 0
-        val = @. H.Λ[1] * u
-        if N > 1
-            b = sqrt(2*a)
-            v = u
-            u = @. b * (x - H.q) * u
-            val = @. val + H.Λ[2] * u
-
-            for k=3:N
-                w = u
-                u = @. (b * (x - H.q) * u - sqrt(T(k-2)) * v) / sqrt(T(k-1))
-                v = w
-                val = @. val + H.Λ[k] * u
-            end
-        end
-        return val
-    else
-        return zero(TΛ) .* u
-    end
+    Ha = HermiteFct1D(H.Λ, real(H.z), H.q)
+    e = @. cis(-imag(H.z) * (x - H.q)^2 / 2) * cis(x * H.p)
+    return evaluate(Ha, x) .* e
 end
 
 #=

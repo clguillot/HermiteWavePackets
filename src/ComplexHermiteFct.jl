@@ -2,6 +2,7 @@ module ComplexHermiteFct
 
 using LinearAlgebra
 using StaticArrays
+using DoubleFloats
 using FastGaussQuadrature
 
 # Custom mathematical operations compatible with autodifferentiation

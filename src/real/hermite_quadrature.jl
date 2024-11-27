@@ -99,27 +99,42 @@ end
      In other words, if φ(x) = ∑ₙ λₙψₙ(1, 0, x) and Φ = (φ(x[n+1]))ₙ (n=0,...,N-1), then
         MΦ = Λ, with Λ=(λₙ)ₙ
 =#
-@generated function hermite_primitive_discrete_transform(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32, Float64}}
-    x, _ = hermite_primitive_quadrature(Float64, Val(N))
+@generated function hermite_primitive_discrete_transform(::Type{Float64}, ::Val{N}) where{N}
+    x, _ = gausshermite(N)
 
-    M = zeros(Float64, N, N)
+    x = Double64.(x)
+    M = zeros(Double64, N, N)
 
     if N > 0
-        b = sqrt(2)
-        @views @. M[:, 1] = π^(-1/4) * exp(-x^2 / 2)
+        b = sqrt(Double64(2))
+        @views @. M[:, 1] = Double64(π)^(Double64(-1/4)) * exp(-x^2 / 2)
         if N > 1
             @views @. M[:, 2] = b * x * M[:, 1]
 
             for k=3:N
-                @views @. M[:, k] = (b * x * M[:, k-1] - sqrt(k-2) * M[:, k-2]) / sqrt(k-1)
+                @views @. M[:, k] = (b * x * M[:, k-1] - sqrt(Double64(k-2)) * M[:, k-2]) / sqrt(Double64(k-1))
             end
         end
     end
 
-    x = SizedVector{N}(T.(x))
-    M_inv1 = SizedMatrix{N, N}(T.(M^(-1)))
+    x = SizedVector{N}(Float64.(x))
+    M_inv = SizedMatrix{N, N}(Float64.(M^(-1)))
 
-    return :( $x, $M_inv1 )
+    w = SizedVector{N}(zeros(Float64, N))
+    for k=1:N
+        w[k] = @views Float64(dot(M_inv[:, k], M[:, k]))
+    end
+
+    return :( $x, $w, $M_inv )
+end
+@generated function hermite_primitive_discrete_transform(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32}}
+    x64, w64, M64 = hermite_primitive_discrete_transform(Float64, Val(N))
+
+    x = SizedVector{N}(T.(x64))
+    w = SizedVector{N}(T.(w64))
+    M = SizedMatrix{N, N}(T.(M64))
+
+    return :( $x, $w, $M )
 end
 
 #=
@@ -133,7 +148,7 @@ end
 =#
 function hermite_discrete_transform(a::Real, q::Real, ::Val{N}) where{N}
     T = fitting_float(promote_type(typeof(a), typeof(q)))
-    x0, M0 = hermite_primitive_discrete_transform(T, Val(N))
+    x0, _, M0 = hermite_primitive_discrete_transform(T, Val(N))
 
     x = SVector{N}(x0) .* a^T(-1/2) .+ q
     M = SMatrix{N, N}(M0) .* a^T(-1/4)

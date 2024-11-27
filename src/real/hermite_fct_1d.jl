@@ -157,7 +157,7 @@ function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2,
     N = max(N1 + N2 - 1, 0)
     a, q = gaussian_product_arg(H1.a, H1.q, H2.a, H2.q)
 
-    m = N÷2 + N%2
+    m = cld(N, 2)
     x, w = hermite_quadrature(a, q, Val(m))
 
     Φ1 = evaluate(H1, x)

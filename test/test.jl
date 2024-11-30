@@ -1,4 +1,4 @@
-using ComplexHermiteFct
+using HermiteWavePackets
 
 using LinearAlgebra
 using FastGaussQuadrature

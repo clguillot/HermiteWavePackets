@@ -1,4 +1,4 @@
-name = "ComplexHermiteFct"
+name = "HermiteWavePackets"
 uuid = "0c63080c-9546-48d9-913a-8575c4379365"
 authors = ["Clement Guillot <clement.guillot@enpc.fr>"]
 version = "0.1.0"

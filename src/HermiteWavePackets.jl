@@ -1,4 +1,4 @@
-module ComplexHermiteFct
+module HermiteWavePackets
 
 using LinearAlgebra
 using StaticArrays

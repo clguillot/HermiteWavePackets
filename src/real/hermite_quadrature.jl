@@ -82,45 +82,6 @@ end
 
 #=
 
-    INTEGRAL
-
-=#
-
-#=
-    Returns a vector containing the value of the integral of the N first hermite functions
-=#
-@generated function hermite_primitive_integral(::Type{Float64}, ::Val{N}) where{N}    
-    U = zeros(Double64, N)
-
-    if N > 0
-        U[1] = sqrt(Double64(2)) * Double64(π)^(1/Double64(4))
-        for k=3:2:N
-            U[k] = sqrt(Double64(k - 2) / Double64(k - 1)) * U[k - 2]
-        end
-    end
-
-    V = SizedVector{N}(Float64.(U))
-
-    return :( $V )
-end
-@generated function hermite_primitive_integral(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32}}    
-    U = hermite_primitive_integral(Float64, Val(N))
-    V = SizedVector{N}(T.(U))
-    return :( $V )
-end
-
-#=
-    Returns a vector containing the value of the integral of the N first hermite functions
-=#
-function hermite_integral(a::Real, q::Real, ::Val{N}) where{N}
-    T = fitting_float(promote_type(typeof(a), typeof(q)))
-    U0 = hermite_primitive_integral(T, Val(N))
-    return a^T(-1/4) .* SVector{N}(U0)
-end
-
-
-#=
-
     QUADRATURE RULE
 
 =#

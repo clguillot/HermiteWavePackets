@@ -1,8 +1,6 @@
 
 #=
     Reminder :
-    -hermiteh(n, x) computes Hₙ(x)
-     where the (Hₙ)ₙ are the Hermite polynomials orthognal with respect to the weight exp(-x²)
     -gausshermite(p) computes the weights (wⱼ)ⱼ and nodes (xⱼ)ⱼ (j=1,...,m) such that the quadrature formula
      ∫dx f(x)exp(-x²) ≈ ∑ⱼ wⱼf(xⱼ)
      is exact for any polynomial f up to degree 2m-1
@@ -116,7 +114,17 @@ end
 # Computes the integral of a hermite function
 function integral(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
     T = fitting_float(H)
-    return H.a^T(-1/4) * dot(hermite_primitive_integral(T, Val(N)), H.Λ)
+
+    m = 2 * fld(N-1, 2) + 1
+    val = zero(promote_type(TΛ, T))
+    if N > 0
+        val = H.Λ[m]
+        for k=m-2:-2:1
+            val = H.Λ[k] + sqrt(T(k) / T(k+1)) * val
+        end
+    end
+
+    return H.a^T(-1/4) * T(sqrt(2) * π^(1/4)) * val
 end
 
 # Computes the convolution product of two hermite functions

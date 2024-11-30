@@ -72,7 +72,7 @@ function test_hermite1d()
             q = 4 * (rand() - 0.5)
             H = HermiteFct1D(Λ, a, q)
             
-            x, w = ComplexHermiteFct.hermite_quadrature(a/2, q, Val(ceil(Int, N/2)))
+            x, w = HermiteWavePackets.hermite_quadrature(a/2, q, Val(ceil(Int, N/2)))
             I_exact = dot(w, H.(x))
 
             I = legendre_quadrature(20.0, 400, y -> H(y))
@@ -91,7 +91,7 @@ function test_hermite1d()
             q = 4 * (rand() - 0.5)
             H = HermiteFct1D(Λ, a, q)
 
-            x, M = ComplexHermiteFct.hermite_discrete_transform(a, q, Val(N))
+            x, M = HermiteWavePackets.hermite_discrete_transform(a, q, Val(N))
             U = M * evaluate(H, x)
 
             err = max(err, norm(U - Λ) / norm(Λ))
@@ -129,7 +129,7 @@ function test_hermite1d()
     begin
         err = 0.0
         for _=1:nb_reps
-            N = 32
+            N = 31
             Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)

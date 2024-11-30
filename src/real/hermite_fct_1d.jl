@@ -16,7 +16,7 @@
     then it follows from the previous properties that
         ∫ψₘψₙ = δₘₙ
         ψₙ₊₁ = (√(2a)*x*ψₙ - √n*ψₙ₋₁) / √(n+1)
-        ̂ψₙ = √(2πa) * (-i)ⁿ * exp(-iqξ) * ψₙ(1/a, 0, ξ)
+        ̂ψₙ = √(2π) * (-i)ⁿ * exp(-iqξ) * ψₙ(1/a, 0, ξ)
 =#
 
 #=
@@ -65,13 +65,7 @@ function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Number) where{N, TΛ, Ta, Tq}
     b = sqrt(2*H.a)
     ψ0 = T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
 
-    u = zero(promote_type(TΛ, typeof(ψ0)))
-    v = zero(u)
-    for k=N-1:-1:0
-        (u, v) = (H.Λ[k+1] + b / sqrt(T(k+1)) * (x - H.q) * u - sqrt(T(k+1) / T(k+2)) * v, u)
-    end
-    
-    return u * ψ0
+    return clenshaw_hermite_eval(H.Λ, b, x - H.q, ψ0)
 end
 
 # Evaluates a hermite function at all the points in x
@@ -81,13 +75,7 @@ function evaluate(H::HermiteFct1D{N, TΛ, Ta, Tq}, x::SVector{M, Tx}) where{N, T
     b = sqrt(2*H.a)
     ψ0 = @. T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
 
-    u = zero(SVector{M, promote_type(TΛ, eltype(ψ0))})
-    v = zero(u)
-    for k=N-1:-1:0
-        (u, v) = @. (H.Λ[k+1] + b / sqrt(T(k+1)) * (x - H.q) * u - sqrt(T(k+1) / T(k+2)) * v, u)
-    end
-    
-    return u .* ψ0
+    return clenshaw_hermite_eval(H.Λ, b, x .- H.q, ψ0)
 end
 
 # Computes the product of a scalar and a hermite function

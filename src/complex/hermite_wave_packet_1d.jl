@@ -5,8 +5,6 @@ import Base.conj
 
 #=
     Reminder :
-    -hermiteh(n, x) computes Hₙ(x)
-     where the (Hₙ)ₙ are the Hermite polynomials orthognal with respect to the weight exp(-x²)
     -gausshermite(p) computes the weights (wⱼ)ⱼ and nodes (xⱼ)ⱼ (j=1,...,p) such that the quadrature formula
         ∫dx f(x)exp(-x²) ≈ ∑ⱼ wⱼf(xⱼ)
      is exact for any polynomial f up to degree 2m-1
@@ -104,58 +102,9 @@ function (*)(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePa
 end
 
 # Computes the integral of a hermite wave packet
-# Real variance
-function integral(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz<:Real, Tq, Tp}
-    T = fitting_float(H)
-    a, q, p = H.z, H.q, H.p
-    
-    u = T(π^(-1/4)) * a^T(1/4) * integral(GaussianWavePacket1D(one(T), a, q, p))
-    
-    if N > 0
-        val = H.Λ[1] * u
-        if N > 1
-            c = sqrt(2 / a)
-            v = u
-            u = 1im * c * p * u
-            val += H.Λ[2] * u
-            for k=3:N
-                w = u
-                u = (1im * c * p * u + sqrt(T(k-2)) * v) / sqrt(T(k-1))
-                v = w
-                val += H.Λ[k] * u
-            end
-        end
-        return val
-    else
-        return zero(TΛ) * u
-    end
-end
-# Complex variance
-function integral(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz<:Complex, Tq, Tp}
-    T = fitting_float(H)
-    z, q, p = H.z, H.q, H.p
-    a = real(z)
-    
-    u = integral(GaussianWavePacket1D(T(π^(-1/4)) * a^T(1/4), z, q, p))
-    
-    if N > 0
-        val = H.Λ[1] * u
-        if N > 1
-            b = sqrt(2*a)
-            v = u
-            u = 1im * b * p / z * u
-            val += H.Λ[2] * u
-            for k=3:N
-                w = u
-                u = (1im * b * p * u + conj(z) * sqrt(T(k-2)) * v) / (z * sqrt(T(k-1)))
-                v = w
-                val += H.Λ[k] * u
-            end
-        end
-        return val
-    else
-        return zero(TΛ) * u
-    end
+function integral(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    Hf = fourier(H)
+    return Hf(zero(fitting_float(H)))
 end
 
 #=

@@ -34,6 +34,12 @@ end
 end
 
 #=
+
+    CLENSHAW ALGORITHM FOR HERMITE FUNCTIONS
+
+=#
+
+#=
     Computes
         ∑ₙ Λ[n+1] αₙ(z, x)
     where

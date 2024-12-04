@@ -101,6 +101,17 @@ function (*)(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePa
     return HermiteWavePacket1D(Λ, z, q, p)
 end
 
+# Multiplies a hermite wave packet by exp(-ib/2 * (x - q)^2) * exp(ipx)
+@inline function unitary_product(b::Real, q::Real, p::Real, H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    α = cis(b / 2 * (H.q + q) * (H.q - q))
+    return HermiteWavePacket1D(α .* H.Λ, H.z + complex(0, b), H.q, H.p + p - b * (H.q - q))
+end
+# Multiplies a hermite wave packet by exp(-ib/2 * x^2)
+@inline function unitary_product(b::Real, H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    α = cis(b / 2 * H.q^2)
+    return HermiteWavePacket1D(α .* H.Λ, H.z + complex(0, b), H.q, H.p - b * H.q)
+end
+
 # Computes the integral of a hermite wave packet
 function integral(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
     Hf = fourier(H)

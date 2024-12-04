@@ -105,6 +105,36 @@ function test_hermite_wave_packet1d()
         for _=1:nb_reps
             N = 17
             Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            p = 4 * (rand() - 0.5)
+            H = HermiteWavePacket1D(Λ, z, q, p)
+
+            b = 4 * (rand() - 0.5)
+            q2 = 4 * (rand() - 0.5)
+            p2 = 4 * (rand() - 0.5)
+
+            f2(x) = H(x) * cis(-b/2 * (x - q2)^2) * cis(p2*x)
+            H2 = unitary_product(b, q2, p2, H)
+            f3(x) = H(x) * cis(-b/2 * x^2)
+            H3 = unitary_product(b, H)
+
+            for j=1:100
+                x = 5 * (rand() - 0.5)
+                err = max(err, abs(f2(x) - H2(x)))
+                err = max(err, abs(f3(x) - H3(x)))
+            end
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error unitary product = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 17
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             z = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             p = 4 * (rand() - 0.5)

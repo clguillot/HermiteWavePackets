@@ -113,6 +113,17 @@ end
     return GaussianWavePacket1D(λ, z, q, p)
 end
 
+# Multiplies a gaussian wave packet by exp(-ib/2 * (x - q)^2) * exp(ipx)
+@inline function unitary_product(b::Real, q::Real, p::Real, G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    α = cis(b / 2 * (G.q + q) * (G.q - q))
+    return GaussianWavePacket1D(α .* G.λ, G.z + complex(0, b), G.q, G.p + p - b * (G.q - q))
+end
+# Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
+@inline function unitary_product(b::Real, G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    α = cis(b / 2 * G.q^2)
+    return GaussianWavePacket1D(α .* G.λ, G.z + complex(0, b), G.q, G.p - b * G.q)
+end
+
 # Computes the integral of a gaussian
 @inline function integral(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     T = fitting_float(G)

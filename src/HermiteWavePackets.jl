@@ -18,6 +18,7 @@ export HermiteWavePacket1D
 # Functions
 export evaluate
 export integral
+export unitary_product
 export fourier
 export inv_fourier
 export convolution

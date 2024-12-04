@@ -33,15 +33,3 @@ include("test_hermite.jl");
 
 include("test_gaussian_wave_packet.jl");
 include("test_hermite_wave_packet.jl");
-
-test_gaussian1d()
-println()
-
-test_hermite1d()
-println()
-
-test_gaussian_wave_packet1d()
-println()
-
-test_hermite_wave_packet1d()
-println()

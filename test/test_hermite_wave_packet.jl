@@ -1,7 +1,7 @@
 
 function test_hermite_wave_packet1d()
 
-    println("Testing hermite wave packet 1d:")
+    printstyled("Testing hermite wave packet 1d:\n"; bold=true, color=:blue)
 
     nb_reps = 50
 
@@ -27,7 +27,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(val - val2) / abs(val))
         end
 
-        println("Error evaluate (point) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error evaluate (point) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -45,7 +46,8 @@ function test_hermite_wave_packet1d()
             err = max(err, norm(val - H.(x)) / norm(val))
         end
 
-        println("Error evaluate (vector) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error evaluate (vector) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -64,7 +66,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(Hc(x) - conj(H(x))) / abs(Hc(x)))
         end
 
-        println("Error conjugate = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error conjugate = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -93,7 +96,8 @@ function test_hermite_wave_packet1d()
             end
         end
 
-        println("Error product = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error product = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -110,7 +114,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(I - integral(H)) / abs(I))
         end
 
-        println("Error integral (real variance) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error integral (real variance) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -127,7 +132,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(I - integral(H)) / abs(I))
         end
 
-        println("Error integral (complex variance) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error integral (complex variance) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -147,7 +153,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(I - Hf(ξ0)))
         end
 
-        println("Error Fourier (real variance) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error Fourier (real variance) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -167,7 +174,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(I - Hf(ξ0)))
         end
 
-        println("Error Fourier (complex variance) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error Fourier (complex variance) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -187,7 +195,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(I - Hf(ξ0)))
         end
 
-        println("Error Inverse Fourier (real variance) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error Inverse Fourier (real variance) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -207,7 +216,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(I - Hf(ξ0)))
         end
 
-        println("Error Inverse Fourier (complex variance) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error Inverse Fourier (complex variance) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -235,7 +245,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(I - H(x0)))
         end
 
-        println("Error convolution = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error convolution = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -260,7 +271,8 @@ function test_hermite_wave_packet1d()
             err = max(err, abs(I - dot_L2(H1, H2)))
         end
 
-        println("Error dot L² = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error dot L² = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -289,6 +301,7 @@ function test_hermite_wave_packet1d()
         res = H(rand(Float32)) + integral(H)
         T_type = typeof(res)
 
-        println("Expecting $ComplexF32 and got $T_type")
+        color = (T_type != ComplexF32) ? :red : :green
+        printstyled("Expecting $ComplexF32 and got $T_type\n"; bold=true, color=color)
     end
 end

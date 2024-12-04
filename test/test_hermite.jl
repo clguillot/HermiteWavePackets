@@ -1,7 +1,7 @@
 
 function test_hermite1d()
 
-    println("Testing Hermite 1d:")
+    printstyled("Testing Hermite 1d:\n"; bold=true, color=:blue)
 
     nb_reps = 50
 
@@ -25,7 +25,8 @@ function test_hermite1d()
             err = max(err, abs(val - val2) / abs(val))
         end
 
-        println("Error evaluate (point) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error evaluate (point) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -42,7 +43,8 @@ function test_hermite1d()
             err = max(err, norm(val - H.(x)) / norm(val))
         end
 
-        println("Error evaluate (vector) = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error evaluate (vector) = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -60,7 +62,8 @@ function test_hermite1d()
             err = max(err, abs(Hc(x) - conj(H(x))) / abs(Hc(x)))
         end
 
-        println("Error conjugate = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error conjugate = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -79,7 +82,8 @@ function test_hermite1d()
             err = max(err, abs(I - I_exact) / abs(I_exact))
         end
 
-        println("Error quadrature = ", err)
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error quadrature = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -97,7 +101,25 @@ function test_hermite1d()
             err = max(err, norm(U - Λ) / norm(Λ))
         end
 
-        println("Error discrete transform = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error discrete transform = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 31
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            a = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            H = HermiteFct1D(Λ, a, q)
+
+            I = legendre_quadrature(20.0, 400, y -> H(y))
+            err = max(err, abs(I - integral(H)) / abs(I))
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error integral = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -123,23 +145,8 @@ function test_hermite1d()
             end
         end
 
-        println("Error product = $err")
-    end
-
-    begin
-        err = 0.0
-        for _=1:nb_reps
-            N = 31
-            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
-            a = (4 * rand() + 0.5)
-            q = 4 * (rand() - 0.5)
-            H = HermiteFct1D(Λ, a, q)
-
-            I = legendre_quadrature(20.0, 400, y -> H(y))
-            err = max(err, abs(I - integral(H)) / abs(I))
-        end
-
-        println("Error integral = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error product = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -164,7 +171,8 @@ function test_hermite1d()
             err = max(err, abs(I - H(x0)))
         end
 
-        println("Error convolution = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error convolution = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -186,7 +194,8 @@ function test_hermite1d()
             err = max(err, abs(I - dot_L2(H1, H2)) / abs(I))
         end
 
-        println("Error dot L² = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error dot L² = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -212,6 +221,7 @@ function test_hermite1d()
         x = @SVector rand(Float32, 3)
         T_type = promote_type(typeof(H(rand(Float32)) + integral(H)), eltype(evaluate(H, x)))
 
-        println("Expecting $Float32 and got $T_type")
+        color = (T_type != Float32) ? :red : :green
+        printstyled("Expecting $Float32 and got $T_type\n"; bold=true, color=color)
     end
 end

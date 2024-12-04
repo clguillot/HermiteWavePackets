@@ -1,7 +1,7 @@
 
 function test_gaussian1d()
 
-    println("Testing gaussian 1d:")
+    printstyled("Testing gaussian 1d:\n"; bold=true, color=:blue)
 
     nb_reps = 13
 
@@ -17,7 +17,8 @@ function test_gaussian1d()
             err = max(err, abs(G(x) - λ * exp(-a/2 * (x - q)^2)) / abs(λ * exp(-a/2 * (x - q)^2)))
         end
 
-        println("Error evaluate = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error evaluate = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -34,7 +35,8 @@ function test_gaussian1d()
             err = max(err, abs(Gc(x) - conj(G(x))) / abs(Gc(x)))
         end
 
-        println("Error conjugate = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error conjugate = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -59,7 +61,24 @@ function test_gaussian1d()
             end
         end
 
-        println("Error product = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error product = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            λ = rand() + 1im * rand()
+            a = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            G = Gaussian1D(λ, a, q)
+
+            I = legendre_quadrature(15.0, 200, y -> G(y))
+            err = max(err, abs(I - integral(G)) / abs(I))
+        end
+        
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error integral = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -83,21 +102,8 @@ function test_gaussian1d()
             err = max(err, abs(I - G(x0)))
         end
 
-        println("Error convolution = $err")
-    end
-
-    begin
-        err = 0.0
-        for _=1:nb_reps
-            λ = rand() + 1im * rand()
-            a = (4 * rand() + 0.5)
-            q = 4 * (rand() - 0.5)
-            G = Gaussian1D(λ, a, q)
-
-            I = legendre_quadrature(15.0, 200, y -> G(y))
-            err = max(err, abs(I - integral(G)) / abs(I))
-        end
-        println("Error integral = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error convolution = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -120,7 +126,8 @@ function test_gaussian1d()
             err = max(err, abs(I - dot_L2(G1, G2)) / abs(I))
         end
 
-        println("Error dot L² = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error dot L² = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -143,6 +150,7 @@ function test_gaussian1d()
         res = G(rand(Float32)) + integral(G)
         T_type = typeof(res)
 
-        println("Expecting $Float32 and got $T_type")
+        color = (T_type != ComplexF32) ? :red : :green
+        printstyled("Expecting $ComplexF32 and got $T_type\n"; bold=true, color=color)
     end
 end

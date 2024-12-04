@@ -1,7 +1,7 @@
 
 function test_gaussian_wave_packet1d()
 
-    println("Testing gaussian wave packet 1d:")
+    printstyled("Testing gaussian wave packet 1d:\n"; bold=true, color=:blue)
 
     nb_reps = 13
 
@@ -19,7 +19,8 @@ function test_gaussian_wave_packet1d()
             err = max(err, abs(G(x) - μ) / abs(μ))
         end
 
-        println("Error evaluate = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error evaluate = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -37,7 +38,8 @@ function test_gaussian_wave_packet1d()
             err = max(err, abs(Gc(x) - conj(G(x))) / abs(Gc(x)))
         end
 
-        println("Error conjugate = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error conjugate = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -64,7 +66,8 @@ function test_gaussian_wave_packet1d()
             end
         end
 
-        println("Error product = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error product = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -80,7 +83,8 @@ function test_gaussian_wave_packet1d()
             err = max(err, abs(I - integral(G)) / abs(I))
         end
 
-        println("Error integral = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error integral = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -106,7 +110,8 @@ function test_gaussian_wave_packet1d()
             err = max(err, abs(I - G(x0)))
         end
 
-        println("Error convolution = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error convolution = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -125,7 +130,8 @@ function test_gaussian_wave_packet1d()
             err = max(err, abs(I - Gf(ξ)) / abs(I))
         end
 
-        println("Error Fourier = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error Fourier = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -144,7 +150,8 @@ function test_gaussian_wave_packet1d()
             err = max(err, abs(I - Gf(ξ)) / abs(I))
         end
 
-        println("Error Inverse Fourier = $err")
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error Inverse Fourier = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -170,6 +177,7 @@ function test_gaussian_wave_packet1d()
         res = G(rand(Float32)) + integral(G)
         T_type = typeof(res)
 
-        println("Expecting $ComplexF32 and got $T_type")
+        color = (T_type != ComplexF32) ? :red : :green
+        printstyled("Expecting $ComplexF32 and got $T_type\n"; bold=true, color=color)
     end
 end

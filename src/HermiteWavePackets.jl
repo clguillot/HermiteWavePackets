@@ -6,7 +6,6 @@ using DoubleFloats
 using FastGaussQuadrature
 
 # Custom mathematical operations compatible with autodifferentiation
-include("math.jl")
 include("utils.jl")
 
 # Structures

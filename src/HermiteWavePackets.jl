@@ -22,6 +22,8 @@ export fourier
 export inv_fourier
 export convolution
 export dot_L2
+export norm2_L2
+export norm_L2
 
 import Base.*
 import Base.copy

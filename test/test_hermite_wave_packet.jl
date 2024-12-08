@@ -252,7 +252,6 @@ function test_hermite_wave_packet1d()
 
     begin
         err = 0.0
-
         for _=1:nb_reps
             N1 = 18
             Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
@@ -281,7 +280,6 @@ function test_hermite_wave_packet1d()
 
     begin
         err = 0.0
-
         for _=1:nb_reps
             N1 = 18
             Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
@@ -303,6 +301,23 @@ function test_hermite_wave_packet1d()
 
         color = (err > 5e-13) ? :red : :green
         printstyled("Error dot L² = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 15
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            z = (4 * rand() + 0.5) + 1im * (rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            p = 4 * (rand() - 0.5)
+            H = HermiteWavePacket1D(Λ, z, q, p)
+            
+            err = max(err, abs(norm_L2(H) - sqrt(dot_L2(H, H))) / norm_L2(H))
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error norm L² = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -328,7 +343,7 @@ function test_hermite_wave_packet1d()
         H3 = HermiteWavePacket1D(Λ3, z3, q3, p3)
 
         H = convolution(H1 * fourier(H2), inv_fourier(H3))
-        res = H(rand(Float32)) + integral(H)
+        res = H(rand(Float32)) + integral(H) + norm_L2(H)
         T_type = typeof(res)
 
         color = (T_type != ComplexF32) ? :red : :green

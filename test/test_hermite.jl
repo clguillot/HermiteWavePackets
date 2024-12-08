@@ -199,6 +199,22 @@ function test_hermite1d()
     end
 
     begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 31
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            a = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            H = HermiteFct1D(Λ, a, q)
+
+            err = max(err, abs(norm_L2(H) - sqrt(dot_L2(H, H))) / norm_L2(H))
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error norm L² = $err\n"; bold=true, color=color)
+    end
+
+    begin
         N1 = 3
         Λ1 = (@SVector rand(Float32, N1))
         a1 = (4 * rand(Float32) + 0.5f0)
@@ -219,7 +235,8 @@ function test_hermite1d()
 
         H = convolution(H1 * H2, H3)
         x = @SVector rand(Float32, 3)
-        T_type = promote_type(typeof(H(rand(Float32)) + integral(H)), eltype(evaluate(H, x)))
+        res = H(rand(Float32)) + integral(H) + norm_L2(H)
+        T_type = promote_type(typeof(res), eltype(evaluate(H, x)))
 
         color = (T_type != Float32) ? :red : :green
         printstyled("Expecting $Float32 and got $T_type\n"; bold=true, color=color)

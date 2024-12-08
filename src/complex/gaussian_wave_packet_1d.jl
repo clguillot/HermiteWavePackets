@@ -169,7 +169,17 @@ function convolution(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, G2::Gaussian
     return GaussianWavePacket1D(λ, z, q, p)
 end
 
-# Computes the L² product of two gaussians
+# Computes the L² product of two gaussian wave packets
 @inline function dot_L2(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, G2::GaussianWavePacket1D{Tλ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
     return integral(conj(G1) * G2)
+end
+
+# Computes the square L² norm of a gaussian wave packet
+@inline function norm2_L2(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    T = fitting_float(G)
+    return abs2(G.λ) * T(sqrt(π)) * real(G.z)^T(-1/2)
+end
+# Computes the L² norm of a gaussian wave packet
+@inline function norm_L2(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    return sqrt(norm2_L2(G))
 end

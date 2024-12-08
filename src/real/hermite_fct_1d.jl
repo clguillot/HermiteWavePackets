@@ -154,3 +154,12 @@ function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2,
 
     return dot(w, Φ)
 end
+
+# Computes the square L² norm of a hermite function
+@inline function norm2_L2(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return real(dot(H.Λ, H.Λ))
+end
+# Computes the L² norm of a hermite function
+@inline function norm_L2(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return sqrt(norm2_L2(H))
+end

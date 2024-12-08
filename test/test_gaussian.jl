@@ -120,14 +120,28 @@ function test_gaussian1d()
             q2 = 4 * (rand() - 0.5)
             G2 = Gaussian1D(λ2, a2, q2)
 
-            G = convolution(G1, G2)
-
             I = legendre_quadrature(15.0, 200, y -> conj(G1(y)) * G2(y))
             err = max(err, abs(I - dot_L2(G1, G2)) / abs(I))
         end
 
         color = (err > 5e-13) ? :red : :green
         printstyled("Error dot L² = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+
+        for _=1:nb_reps
+            λ = rand() + 1im * rand()
+            a = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            G = Gaussian1D(λ, a, q)
+
+            err = max(err, abs(norm_L2(G) - sqrt(dot_L2(G, G))) / norm_L2(G))
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error norm L² = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -147,7 +161,7 @@ function test_gaussian1d()
         G3 = Gaussian1D(λ3, a3, q3)
 
         G = convolution(G1 * G2, G3)
-        res = G(rand(Float32)) + integral(G)
+        res = G(rand(Float32)) + integral(G) + norm_L2(G)
         T_type = typeof(res)
 
         color = (T_type != ComplexF32) ? :red : :green

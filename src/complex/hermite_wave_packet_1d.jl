@@ -195,3 +195,12 @@ end
 @inline function dot_L2(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}) where{N1, TΛ1, Tz1, Tq1, Tp1, N2, TΛ2, Tz2, Tq2, Tp2}
     return integral(conj(H1) * H2)
 end
+
+# Computes the square L² norm of a hermite wave packet
+@inline function norm2_L2(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    return real(dot(H.Λ, H.Λ))
+end
+# Computes the L² norm of a hermite wave packet
+@inline function norm_L2(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    return sqrt(norm2_L2(H))
+end

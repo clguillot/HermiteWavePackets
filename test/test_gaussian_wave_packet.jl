@@ -10,7 +10,7 @@ function test_gaussian_wave_packet1d()
         for _=1:nb_reps
             x = 4.0 * (rand() - 0.5)
             λ = rand() + 1im * rand()
-            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            z = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
             q = 4 * (rand() - 0.5)
             p = 4 * (rand() - 0.5)
             G = GaussianWavePacket1D(λ, z, q, p)
@@ -28,7 +28,7 @@ function test_gaussian_wave_packet1d()
         for _=1:nb_reps
             x = 4.0 * (rand() - 0.5)
             λ = rand() + 1im * rand()
-            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            z = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
             q = 4 * (rand() - 0.5)
             p = 4 * (rand() - 0.5)
             G = GaussianWavePacket1D(λ, z, q, p)
@@ -46,13 +46,13 @@ function test_gaussian_wave_packet1d()
         err = 0.0
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
-            z1 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            z1 = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
             q1 = 4 * (rand() - 0.5)
             p1 = 4 * (rand() - 0.5)
             G1 = GaussianWavePacket1D(λ1, z1, q1, p1)
 
             λ2 = rand() + 1im * rand()
-            z2 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            z2 = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
             q2 = 4 * (rand() - 0.5)
             p2 = 4 * (rand() - 0.5)
             G2 = GaussianWavePacket1D(λ2, z2, q2, p2)
@@ -74,7 +74,7 @@ function test_gaussian_wave_packet1d()
         err = 0.0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
-            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            z = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
             q = 4 * (rand() - 0.5)
             p = 4 * (rand() - 0.5)
             G = GaussianWavePacket1D(λ, z, q, p)
@@ -103,7 +103,7 @@ function test_gaussian_wave_packet1d()
         err = 0.0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
-            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            z = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
             q = 4 * (rand() - 0.5)
             p = 4 * (rand() - 0.5)
             G = GaussianWavePacket1D(λ, z, q, p)
@@ -121,13 +121,13 @@ function test_gaussian_wave_packet1d()
 
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
-            z1 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            z1 = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
             q1 = 4 * (rand() - 0.5)
             p1 = 4 * (rand() - 0.5)
             G1 = GaussianWavePacket1D(λ1, z1, q1, p1)
 
             λ2 = rand() + 1im * rand()
-            z2 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            z2 = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
             q2 = 4 * (rand() - 0.5)
             p2 = 4 * (rand() - 0.5)
             G2 = GaussianWavePacket1D(λ2, z2, q2, p2)
@@ -141,6 +141,47 @@ function test_gaussian_wave_packet1d()
 
         color = (err > 5e-13) ? :red : :green
         printstyled("Error convolution = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+
+        for _=1:nb_reps
+            λ1 = rand() + 1im * rand()
+            z1 = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
+            q1 = 4 * (rand() - 0.5)
+            p1 = 4 * (rand() - 0.5)
+            G1 = GaussianWavePacket1D(λ1, z1, q1, p1)
+
+            λ2 = rand() + 1im * rand()
+            z2 = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
+            q2 = 4 * (rand() - 0.5)
+            p2 = 4 * (rand() - 0.5)
+            G2 = GaussianWavePacket1D(λ2, z2, q2, p2)
+
+            I = legendre_quadrature(15.0, 200, y -> conj(G1(y)) * G2(y))
+            err = max(err, abs(I - dot_L2(G1, G2)) / abs(I))
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error dot L² = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+
+        for _=1:nb_reps
+            λ = rand() + 1im * rand()
+            z = (4 * rand() + 0.5) + 4im * (rand() - 0.5)
+            q = 4 * (rand() - 0.5)
+            p = 4 * (rand() - 0.5)
+            G = GaussianWavePacket1D(λ, z, q, p)
+
+            err = max(err, abs(norm_L2(G) - sqrt(dot_L2(G, G))) / norm_L2(G))
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error norm L² = $err\n"; bold=true, color=color)
     end
 
     begin
@@ -203,7 +244,7 @@ function test_gaussian_wave_packet1d()
         G3 = GaussianWavePacket1D(λ3, z3, q3, p3)
 
         G = convolution(G1 * fourier(G2), inv_fourier(G3))
-        res = G(rand(Float32)) + integral(G)
+        res = G(rand(Float32)) + integral(G) + norm_L2(G)
         T_type = typeof(res)
 
         color = (T_type != ComplexF32) ? :red : :green

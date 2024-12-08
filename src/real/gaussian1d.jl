@@ -110,3 +110,13 @@ end
 @inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1<:Complex, Ta1, Tq1, Tλ2, Ta2, Tq2}
     return integral(conj(G1) * G2)
 end
+
+# Computes the square L² norm of a gaussian
+@inline function norm2_L2(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    T = fitting_float(G)
+    return abs2(G.λ) * T(sqrt(π)) * G.a^T(-1/2)
+end
+# Computes the L² norm of a gaussian
+@inline function norm_L2(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return sqrt(norm2_L2(G))
+end

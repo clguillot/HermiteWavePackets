@@ -8,7 +8,13 @@ using FastGaussQuadrature
 # Custom mathematical operations compatible with autodifferentiation
 include("utils.jl")
 
-# Structures
+# Abtract types
+abstract type AbstractWavePacket end
+abstract type AbstractWavePacket1D <: AbstractWavePacket end
+export AbstractWavePacket
+export AbstractWavePacket1D
+
+# Concrete types
 export Gaussian1D
 export HermiteFct1D
 export GaussianWavePacket1D

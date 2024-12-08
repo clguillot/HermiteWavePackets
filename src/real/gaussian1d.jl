@@ -3,7 +3,7 @@
     Represents the gaussian function
         λ*exp(-a/2*(x-q)²)
 =#
-struct Gaussian1D{Tλ<:Number, Ta<:Real, Tq<:Real}
+struct Gaussian1D{Tλ<:Number, Ta<:Real, Tq<:Real} <: AbstractWavePacket1D
     λ::Tλ
     a::Ta
     q::Tq

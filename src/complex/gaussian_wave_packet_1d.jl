@@ -3,7 +3,7 @@
     Represents the complex gaussian function
         λ*exp(-z/2*(x-q)²)*exp(ipx)
 =#
-struct GaussianWavePacket1D{Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real}
+struct GaussianWavePacket1D{Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: AbstractWavePacket1D
     λ::Tλ
     z::Tz
     q::Tq

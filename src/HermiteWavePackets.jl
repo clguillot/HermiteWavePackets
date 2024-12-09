@@ -35,6 +35,7 @@ import Base.*
 import Base.copy
 import Base.zero
 import Base.conj
+import Base.eltype
 
 include("real/gaussian1d.jl")
 include("real/hermite_fct_1d.jl")

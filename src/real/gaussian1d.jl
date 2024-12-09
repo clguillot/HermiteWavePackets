@@ -13,6 +13,11 @@ end
     BASIC OPERATIONS
 =#
 
+#
+function eltype(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return promote_type(Tλ, Ta, Tq)
+end
+
 # Returns a null gaussian
 @inline function zero(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return Gaussian1D(zero(Tλ), one(Ta), zero(Tq))

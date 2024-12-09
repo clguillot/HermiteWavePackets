@@ -37,6 +37,10 @@ end
     BASIC OPERATIONS
 =#
 
+function eltype(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    return promote_type(TΛ, Tz, Tq, Tp)
+end
+
 # Returns a null hermite wave packet
 @inline function zero(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
     return HermiteWavePacket1D(zero(SVector{N, TΛ}), one(Tz), zero(Tq), zero(Tp))

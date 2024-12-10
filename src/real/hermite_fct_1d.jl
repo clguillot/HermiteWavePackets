@@ -33,9 +33,12 @@ end
     BASIC OPERATIONS
 =#
 
-# 
-function eltype(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+#
+function eltype(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return promote_type(TΛ, Ta, Tq)
+end
+function eltype(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return eltype(HermiteFct1D{N, TΛ, Ta, Tq})
 end
 
 # Returns a null hermite function

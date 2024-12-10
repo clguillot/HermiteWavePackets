@@ -14,8 +14,11 @@ end
 =#
 
 #
-function eltype(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+function eltype(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return promote_type(Tλ, Ta, Tq)
+end
+function eltype(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return eltype(Gaussian1D{Tλ, Ta, Tq})
 end
 
 # Returns a null gaussian

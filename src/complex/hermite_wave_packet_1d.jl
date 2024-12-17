@@ -235,7 +235,7 @@ end
 @inline function dot_L2(G1::GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}, H2::HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}) where{Tλ1, Tz1, Tq1, Tp1, N2, TΛ2, Tz2, Tq2, Tp2}
     return dot_L2(HermiteWavePacket1D(G1), H2)
 end
-@inline function dot_L2(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, G2::HermiteWavePacket1D{Tλ2, Tz2, Tq2, Tp2}) where{N1, TΛ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
+@inline function dot_L2(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, G2::GaussianWavePacket1D{Tλ2, Tz2, Tq2, Tp2}) where{N1, TΛ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
     return dot_L2(H1, HermiteWavePacket1D(G2))
 end
 

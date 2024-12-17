@@ -145,7 +145,7 @@ function test_hermite_wave_packet1d()
 
             PH = polynomial_product(q2, Λ_P, H)
 
-            f(x) = H(x) * dot([(x-q2)^k for k=0:length(Λ_P)-1], Λ_P)
+            f(x) = H(x) * dot(SVector{5}((x-q2)^k for k=0:4), Λ_P)
 
             for _=1:10
                 x = 5 * (rand() - 0.5)

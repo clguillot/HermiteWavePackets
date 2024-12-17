@@ -113,6 +113,16 @@ function (*)(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePa
     return HermiteWavePacket1D(Λ, z, q, p)
 end
 
+#=
+    Computes the product of a hermite wave packet with a polynomial
+        P(x) = ∑ₖ P[k](x-q)^k
+=#
+function polynomial_product(q::Tq1, P::SVector{N1, TΛ1}, H::HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}) where{Tq1<:Real, N1, TΛ1, N2, TΛ2, Tz2, Tq2, Tp2}
+    Ha = HermiteFct1D(H.Λ, real(H.z), H.q)
+    PHa = polynomial_product(q, P, Ha)
+    return HermiteWavePacket1D(PHa.Λ, H.z, H.q, H.p)
+end
+
 # Multiplies a hermite wave packet by exp(-ib/2 * (x - q)^2) * exp(ipx)
 @inline function unitary_product(b::Real, q::Real, p::Real, H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
     α = cis(b / 2 * (H.q + q) * (H.q - q))

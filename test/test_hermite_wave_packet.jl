@@ -135,6 +135,33 @@ function test_hermite_wave_packet1d()
         for _=1:nb_reps
             N = 17
             Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            p = 4 * (rand() - 0.5)
+            H = HermiteWavePacket1D(Λ, z, q, p)
+
+            Λ_P = (@SVector rand(5)) + 1im * (@SVector rand(5))
+            q2 = 4 * (rand() - 0.5)
+
+            PH = polynomial_product(q2, Λ_P, H)
+
+            f(x) = H(x) * dot([(x-q2)^k for k=0:length(Λ_P)-1], Λ_P)
+
+            for _=1:10
+                x = 5 * (rand() - 0.5)
+                err = max(err, abs(f(x) - PH(x)) / norm_L2(PH))
+            end
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error polynomial product = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
+            N = 17
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             z = (4 * rand() + 0.5)
             q = 4 * (rand() - 0.5)
             p = 4 * (rand() - 0.5)

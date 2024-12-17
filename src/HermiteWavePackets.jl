@@ -24,6 +24,7 @@ export HermiteWavePacket1D
 export evaluate
 export integral
 export unitary_product
+export polynomial_product
 export fourier
 export inv_fourier
 export convolution

@@ -110,6 +110,25 @@ function (*)(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta
     return HermiteFct1D(Λ, a, q)
 end
 
+#=
+    Computes the product of a hermite function with a polynomial
+        P(x) = ∑ₖ P[k](x-q)^k
+=#
+function polynomial_product(q::Tq1, P::SVector{N1, TΛ1}, H::HermiteFct1D{N2, TΛ2, Tq2}) where{Tq1<:Real, N1, TΛ1, N2, TΛ2, Tq2}
+    N = max(N1+N2-1, 0)
+    x, M = hermite_discrete_transform(H.a, H.q, Val(N))
+
+    Φ = evaluate(H, x)
+    
+    T = promote_type(eltype(x), Tq1, TΛ1)
+    Φ_P = zero(SVector{N, T})
+    for k in N1:-1:1
+        Φ_P = @. (x - q) * Φ_P + P[k]
+    end
+
+    return HermiteFct1D(M * (Φ .* Φ_P), H.a, H.q)
+end
+
 # Computes the integral of a hermite function
 function integral(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
     T = fitting_float(H)

@@ -189,6 +189,12 @@ function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2,
 
     return dot(w, Φ)
 end
+@inline function dot_L2(G1::HermiteFct1D{Tλ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+    return dot_L2(HermiteFct1D(G1), H2)
+end
+@inline function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, G2::HermiteFct1D{Tλ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
+    return dot_L2(H1, HermiteFct1D(G2))
+end
 
 # Computes the square L² norm of a hermite function
 @inline function norm2_L2(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}

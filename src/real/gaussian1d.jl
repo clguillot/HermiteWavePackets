@@ -25,6 +25,9 @@ end
 @inline function zero(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return Gaussian1D(zero(Tλ), one(Ta), zero(Tq))
 end
+@inline function zero(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return zero(Gaussian1D{Tλ, Ta, Tq})
+end
 
 # Creates a copy of a gaussian
 @inline function copy(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}

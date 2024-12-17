@@ -45,6 +45,9 @@ end
 @inline function zero(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return HermiteFct1D(zeros(SVector{N, TΛ}), one(Ta), zero(Tq))
 end
+@inline function zero(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return zero(HermiteFct1D{N, TΛ, Ta, Tq})
+end
 
 # Creates a copy of a gaussian
 @inline function copy(H::HermiteFct1D)

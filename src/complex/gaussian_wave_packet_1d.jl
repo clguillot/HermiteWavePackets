@@ -26,6 +26,9 @@ end
 @inline function zero(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
     return GaussianWavePacket1D(zero(Tλ), one(Tz), zero(Tq), zero(Tp))
 end
+@inline function zero(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    return zero(GaussianWavePacket1D{Tλ, Tz, Tq, Tp})
+end
 
 # Creates a copy of a gaussian
 @inline function copy(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}

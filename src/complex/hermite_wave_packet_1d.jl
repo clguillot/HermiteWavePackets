@@ -50,6 +50,9 @@ end
 @inline function zero(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
     return HermiteWavePacket1D(zero(SVector{N, TΛ}), one(Tz), zero(Tq), zero(Tp))
 end
+@inline function zero(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    return zero(HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp})
+end
 
 # Creates a copy of a hermite wave packet
 @inline function copy(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}

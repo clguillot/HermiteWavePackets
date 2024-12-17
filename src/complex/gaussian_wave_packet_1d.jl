@@ -9,6 +9,10 @@ struct GaussianWavePacket1D{Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: Abst
     q::Tq
     p::Tp
 end
+# Construct a gaussian wave packet from a gaussian
+function GaussianWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return GaussianWavePacket1D(G.λ, G.a, G.q, zero(G.q))
+end
 
 #=
     BASIC OPERATIONS

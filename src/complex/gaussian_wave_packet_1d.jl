@@ -15,10 +15,10 @@ end
 =#
 
 #
-function eltype(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
+@inline function eltype(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
     return promote_type(Tλ, Tz, Tq, Tp)
 end
-function eltype(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+@inline function eltype(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     return eltype(GaussianWavePacket1D{Tλ, Tz, Tq, Tp})
 end
 

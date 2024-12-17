@@ -39,10 +39,10 @@ end
 
 #
 
-function eltype(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
+@inline function eltype(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
     return promote_type(TΛ, Tz, Tq, Tp)
 end
-function eltype(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+@inline function eltype(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
     return eltype(HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp})
 end
 

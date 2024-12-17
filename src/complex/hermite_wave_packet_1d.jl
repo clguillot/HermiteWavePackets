@@ -34,13 +34,13 @@ struct HermiteWavePacket1D{N, TΛ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: Ab
 end
 # Constructs a hermite wave packet from a gaussian
 function HermiteWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    Λ = SVector((G.a/π)^(1/4) * G.λ)
+    Λ = SVector((G.a/π)^(-1/4) * G.λ)
     return HermiteWavePacket1D(Λ, G.a, G.q, zero(G.q))
 end
 # Constructs a hermite wave packet from a gaussian wave packet
 function HermiteWavePacket1D(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     a = real(G.z)
-    Λ = SVector((a/π)^(1/4) * G.λ)
+    Λ = SVector((a/π)^(-1/4) * G.λ)
     return HermiteWavePacket1D(Λ, G.z, G.q, G.p)
 end
 # Constructs a hermite wave packet from a hermite function

@@ -1,7 +1,3 @@
-import Base.*
-import Base.copy
-import Base.zero
-import Base.conj
 
 #=
     Reminder :
@@ -32,20 +28,43 @@ struct HermiteWavePacket1D{N, TΛ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: Ab
     q::Tq
     p::Tp
 end
-# Constructs a hermite wave packet from a gaussian
-function HermiteWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    Λ = SVector((G.a/π)^(-1/4) * G.λ)
-    return HermiteWavePacket1D(Λ, G.a, G.q, zero(G.q))
+
+#=
+    CONVERSIONS
+=#
+
+function convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, G::Gaussian1D) where{N, TΛ, Tz, Tq, Tp}
+    T = fitting_float(G)
+    Λ = [convert(TΛ, (G.a / π)^T(-1/4) * G.λ); zero(SVector{N - 1, TΛ})]
+    return HermiteWavePacket1D(Λ, convert(Tz, G.a), convert(Tq, G.q), zero(Tp))
 end
-# Constructs a hermite wave packet from a gaussian wave packet
-function HermiteWavePacket1D(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+
+function convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket1D) where{N, TΛ, Tz, Tq, Tp}
+    T = fitting_float(G)
     a = real(G.z)
-    Λ = SVector((a/π)^(-1/4) * G.λ)
-    return HermiteWavePacket1D(Λ, G.z, G.q, G.p)
+    Λ = [convert(TΛ, (a / π)^T(-1/4) * G.λ); zero(SVector{N - 1, TΛ})]
+    return HermiteWavePacket1D(Λ, convert(Tz, G.z), convert(Tq, G.q),convert(Tp, G.p))
 end
-# Constructs a hermite wave packet from a hermite function
-function HermiteWavePacket1D(H::HermiteFct1D{TΛ, Ta, Tq}) where{TΛ, Ta, Tq}
-    return HermiteWavePacket1D(H.Λ, H.a, H.q, zero(H.q))
+
+function convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, H::HermiteFct1D{N2}) where{N, TΛ, Tz, Tq, Tp, N2}
+    if N < N2
+        throw(InexactError("Cannot convert HermiteFct1D{N2} to HermiteWavePacket1D{N}: N = $N is smaller than N2 = $N2. Ensure that N ≥ N2 for a valid conversion."))
+    end
+
+    Λ = [TΛ.(H.Λ) ; zero(SVector{N - N2, TΛ})]
+    return HermiteWavePacket1D(Λ, Tz(H.a), Tq(H.q), zero(Tp))
+end
+
+function HermiteWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return convert(HermiteWavePacket1D{1, Tλ, Ta, Tq, Tq}, G)
+end
+
+function HermiteWavePacket1D(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    return convert(HermiteWavePacket1D{1, Tλ, Tz, Tq, Tp}, G)
+end
+
+function HermiteWavePacket1D(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return convert(HermiteWavePacket1D{N, TΛ, Ta, Tq, Tq}, H)
 end
 
 #=

@@ -73,6 +73,35 @@ function test_hermite_wave_packet1d()
     begin
         err = 0.0
         for _=1:nb_reps
+            N = 16
+            x = 4.0 * (rand() - 0.5)
+            Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
+            λ = Λ[1]
+            z = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)
+            a = real(z)
+            q = 4 * (rand() - 0.5)
+            p = 4 * (rand() - 0.5)
+
+            G = Gaussian1D(λ, a, q)
+            H = convert(HermiteWavePacket1D{N, ComplexF64, Float64, Float64, Float64}, G)
+            err = max(err, abs(H(x) - G(x)) / abs(G(x)))
+
+            G = GaussianWavePacket1D(λ, z, q, p)
+            H = convert(HermiteWavePacket1D{N, ComplexF64, ComplexF64, Float64, Float64}, G)
+            err = max(err, abs(H(x) - G(x)) / abs(G(x)))
+
+            G = HermiteFct1D(Λ, a, q)
+            H = convert(HermiteWavePacket1D{N, ComplexF64, Float64, Float64, Float64}, G)
+            err = max(err, abs(H(x) - G(x)) / abs(G(x)))
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error conversion = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
             N1 = 18
             Λ1 = (@SVector rand(N1)) + 1im * (@SVector rand(N1))
             z1 = (4 * rand() + 0.5) + 1im * (4 * rand() + 0.5)

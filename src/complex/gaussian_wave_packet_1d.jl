@@ -9,10 +9,33 @@ struct GaussianWavePacket1D{Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: Abst
     q::Tq
     p::Tp
 end
-# Construct a gaussian wave packet from a gaussian
-function GaussianWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    return GaussianWavePacket1D(G.λ, G.a, G.q, zero(G.q))
+
+#=
+    CONVERSIONS
+=#
+
+function convert(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, G::GaussianWavePacket1D) where {Tλ, Tz, Tq, Tp}
+    return GaussianWavePacket1D(
+        convert(Tλ, G.λ),
+        convert(Tz, G.z),
+        convert(Tq, G.q),
+        convert(Tp, G.p)
+    )
 end
+
+function convert(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, G::Gaussian1D) where {Tλ, Tz, Tq, Tp}
+    return GaussianWavePacket1D(
+        convert(Tλ, G.λ),
+        convert(Tz, G.a),
+        convert(Tq, G.q),
+        zero(Tp)
+    )
+end
+
+function GaussianWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where {Tλ, Ta, Tq}
+    return convert(GaussianWavePacket1D{Tλ, Ta, Tq, Tq}, G)
+end
+
 
 #=
     BASIC OPERATIONS

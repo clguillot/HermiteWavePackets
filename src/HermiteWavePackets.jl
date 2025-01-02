@@ -21,6 +21,8 @@ export GaussianWavePacket1D
 export HermiteWavePacket1D
 
 # Functions
+export hermite_discrete_transform
+export hermite_quadrature
 export evaluate
 export integral
 export unitary_product
@@ -33,6 +35,7 @@ export norm2_L2
 export norm_L2
 
 import Base.*
+import Base.convert
 import Base.copy
 import Base.zero
 import Base.conj

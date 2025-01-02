@@ -69,6 +69,24 @@ function test_hermite1d()
     begin
         err = 0.0
         for _=1:nb_reps
+            N = 16
+            x = 4.0 * (rand() - 0.5)
+            λ = rand() + 1im * rand()
+            a = (4 * rand() + 0.5)
+            q = 4 * (rand() - 0.5)
+            G = Gaussian1D(λ, a, q)
+            H = convert(HermiteFct1D{N, ComplexF64, Float64, Float64}, G)
+
+            err = max(err, abs(H(x) - G(x)) / abs(G(x)))
+        end
+
+        color = (err > 5e-13) ? :red : :green
+        printstyled("Error conversion = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+        for _=1:nb_reps
             N = 33
             Λ = (@SVector rand(N)) + 1im * (@SVector rand(N))
             a = (4 * rand() + 0.5)

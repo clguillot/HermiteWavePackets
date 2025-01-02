@@ -28,10 +28,19 @@ struct HermiteFct1D{N, TΛ<:Number, Ta<:Real, Tq<:Real} <: AbstractWavePacket1D
     a::Ta
     q::Tq
 end
+
+#=
+    CONVERSIONS
+=#
+
+function convert(::Type{HermiteFct1D{N1, TΛ1, Ta1, Tq1}}, G::Gaussian1D{Tλ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
+    Λ = [TΛ1((G.a/π)^(-1/4) * G.λ) ; zero(SVector{N1-1, TΛ1})]
+    return HermiteFct1D(Λ, Ta1(G.a), Tq1(G.q))
+end
+
 # Constructs a hermite function from a gaussian
 function HermiteFct1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    Λ = SVector((G.a/π)^(-1/4) * G.λ)
-    return HermiteFct1D(Λ, G.a, G.q)
+    return convert(HermiteFct1D{1, Tλ, Ta, Tq}, G)
 end
 
 #=

@@ -38,7 +38,6 @@ function convert(::Type{HermiteFct1D{N1, TΛ1, Ta1, Tq1}}, G::Gaussian1D{Tλ2, T
     return HermiteFct1D(Λ, Ta1(G.a), Tq1(G.q))
 end
 
-# Constructs a hermite function from a gaussian
 function HermiteFct1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
     return convert(HermiteFct1D{1, Tλ, Ta, Tq}, G)
 end

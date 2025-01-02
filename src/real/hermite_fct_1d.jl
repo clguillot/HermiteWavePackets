@@ -33,13 +33,14 @@ end
     CONVERSIONS
 =#
 
-function convert(::Type{HermiteFct1D{N1, TΛ1, Ta1, Tq1}}, G::Gaussian1D{Tλ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
-    Λ = [TΛ1((G.a/π)^(-1/4) * G.λ) ; zero(SVector{N1-1, TΛ1})]
-    return HermiteFct1D(Λ, Ta1(G.a), Tq1(G.q))
+function convert(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}, G::Gaussian1D) where {N, TΛ, Ta, Tq}
+    T = fitting_float(G)
+    Λ = [convert(TΛ, (G.a / π)^T(-1/4) * G.λ); zero(SVector{N - 1, TΛ})]
+    return HermiteFct1D(Λ, convert(Ta, G.a), convert(Tq, G.q))
 end
 
-function HermiteFct1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    return convert(HermiteFct1D{1, Tλ, Ta, Tq}, G)
+function HermiteFct1D(G::Gaussian1D{TΛ, Ta, Tq}) where {TΛ, Ta, Tq}
+    return convert(HermiteFct1D{1, TΛ, Ta, Tq}, G)
 end
 
 #=

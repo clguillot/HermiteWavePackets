@@ -13,9 +13,14 @@ end
     CONVERSIONS
 =#
 
-function convert(::Type{Gaussian1D{Tλ1, Ta1, Tq1}}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
-    return Gaussian1D(Tλ1(G2.λ), Ta1(G2.a), Tq1(G2.q))
+function convert(::Type{Gaussian1D{Tλ, Ta, Tq}}, G::Gaussian1D) where {Tλ, Ta, Tq}
+    return Gaussian1D(
+        convert(Tλ, G.λ),
+        convert(Ta, G.a),
+        convert(Tq, G.q)
+    )
 end
+
 
 #=
     BASIC OPERATIONS

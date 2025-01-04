@@ -115,11 +115,12 @@ function (*)(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta
     a, q = gaussian_product_arg(a1, q1, a2, q2)
     N = N1 + N2 - 1
 
-    x, M = hermite_discrete_transform(a, q, Val(N))
+    x, _ = hermite_quadrature(a, q, Val(N))
     Φ1 = evaluate(H1, x)
     Φ2 = evaluate(H2, x)
     Φ = Φ1 .* Φ2
-    Λ = M * Φ
+    
+    Λ = hermite_discrete_transform(Φ, a, q, Val(N))
 
     return HermiteFct1D(Λ, a, q)
 end
@@ -130,17 +131,19 @@ end
 =#
 function polynomial_product(q::Tq1, P::SVector{N1, TΛ1}, H::HermiteFct1D{N2, TΛ2, Tq2}) where{Tq1<:Real, N1, TΛ1, N2, TΛ2, Tq2}
     N = max(N1+N2-1, 0)
-    x, M = hermite_discrete_transform(H.a, H.q, Val(N))
-
+    x, _ = hermite_quadrature(H.a, H.q, Val(N))
+    T = promote_type(eltype(x), Tq1, TΛ1)
+    
     Φ = evaluate(H, x)
     
-    T = promote_type(eltype(x), Tq1, TΛ1)
     Φ_P = zero(SVector{N, T})
     for k in N1:-1:1
         Φ_P = @. (x - q) * Φ_P + P[k]
     end
 
-    return HermiteFct1D(M * (Φ .* Φ_P), H.a, H.q)
+    Λ = hermite_discrete_transform(Φ .* Φ_P, H.a, H.q, Val(N))
+
+    return HermiteFct1D(Λ, H.a, H.q)
 end
 
 # Computes the integral of a hermite function

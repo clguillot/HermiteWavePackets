@@ -14,8 +14,8 @@
 =#
 
 #=
-    This functions returns x, w, M where
-    - x, w are such that the quadrature rule
+    Returns x, w, M where
+    - x, w, M are such that the quadrature rule
             ∫dx f(x) ≈ ∑ⱼ wⱼf(xⱼ) (j=1,...,N)
         is exact for any function of the form f(x)exp(-x²)
     - M is a matrix of size N×N that transforms the values of a function
@@ -23,7 +23,7 @@
      In other words, if φ(x) = ∑ₙ λₙψₙ(1, 0, x) and Φ = (φ(x[n+1]))ₙ (n=0,...,N-1), then
         MΦ = Λ, with Λ=(λₙ)ₙ
 =#
-@generated function hermite_primitive_discrete_transform(::Type{Float64}, ::Val{N}) where{N}
+function hermite_primitive_discrete_transform(::Type{T}, N::Integer) where{T<:Union{Float16, Float32, Float64}}
     x, _ = gausshermite(N)
 
     x = Double64.(x)
@@ -43,40 +43,49 @@
 
     M = L^(-1)
     w = @views [dot(M[:, k], M[:, k]) for k in 1:N]
-
-    x = SizedVector{N}(Float64.(x))
-    w = SizedVector{N}(Float64.(w))
-    M = SizedMatrix{N, N}(Float64.(M))
-
-    return :( $x, $w, $M )
+    
+    return T.(x), T.(w), T.(M)
 end
-@generated function hermite_primitive_discrete_transform(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32}}
-    x64, w64, M64 = hermite_primitive_discrete_transform(Float64, Val(N))
 
-    x = SizedVector{N}(T.(x64))
-    w = SizedVector{N}(T.(w64))
-    M = SizedMatrix{N, N}(T.(M64))
+@generated function hermite_primitive_discrete_transform(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32, Float64}}
+    x, w, M = hermite_primitive_discrete_transform(T, N)
 
-    return :( $x, $w, $M )
+    if N <= 32
+        xs = SizedVector{N}(x)
+        ws = SizedVector{N}(w)
+        Ms = SizedMatrix{N, N}(M)
+        return :( $xs, $ws, $Ms)
+    else
+        return :( $x, $w, $M)
+    end
 end
 
 #=
-    Let x, w = hermite_integral_quadrature(a, q, N)
-    This functions returns x, M where
-    - x is a SVector containing the N Gauss-Hermite quadrature points
-    - M is a SMatrix of size N×N that transforms the values of a function
-        at the quadrature points x into its discrete transform on the Fourier base
-     In other words, if φ(x) = ∑ₙ λₙψₙ(a, q, x) and Φ = (φ(x[n+1]))ₙ (n=0,...,N-1), then
-        MΦ = Λ, with Λ=(λₙ)ₙ
+    Let x, w = hermite_integral_quadrature(a, q, Val(N))
+    This functions performs a Hermite transform and returns the result in Λ
+    - U is an AbstractVector containing (φ(x[k]))ₖ where φ is the function to be transformed
+    In other words, if φ(x) = ∑ₙ λₙψₙ(a, q, x) and Φ = (φ(x[n+1]))ₙ (n=0,...,N-1), then
+        Λ = (λₙ)ₙ
+    Returns Λ
 =#
-function hermite_discrete_transform(a::Real, q::Real, ::Val{N}) where{N}
-    T = fitting_float(promote_type(typeof(a), typeof(q)))
-    x0, _, M0 = hermite_primitive_discrete_transform(T, Val(N))
+function hermite_discrete_transform(Λ::AbstractVector{TΛ}, U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N}) where{TΛ<:Number, TU<:Number, Ta<:Real, Tq<:Real, N}
+    T = fitting_float(promote_type(TΛ, TU, Ta, Tq))
+    _, _, M0 = hermite_primitive_discrete_transform(T, Val(N))
 
-    x = SVector{N}(x0) .* a^T(-1/2) .+ q
-    M = SMatrix{N, N}(M0) .* a^T(-1/4)
+    mul!(Λ, M0, U, a^T(-1/4), zero(TΛ))
 
-    return x, M
+    return Λ
+end
+
+function hermite_discrete_transform(U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N}) where{TU<:Number, Ta<:Real, Tq<:Real, N}
+    TΛ = promote_type(TU, Ta, Tq)
+    T = fitting_float(TΛ)
+    _, _, M0 = hermite_primitive_discrete_transform(T, Val(N))
+
+    Λ = zero(MVector{N, TΛ})
+    mul!(Λ, M0, U, a^T(-1/4), zero(TΛ))
+
+    return SVector{N}(Λ)
 end
 
 

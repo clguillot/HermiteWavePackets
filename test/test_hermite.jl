@@ -113,8 +113,8 @@ function test_hermite1d()
             q = 4 * (rand() - 0.5)
             H = HermiteFct1D(Λ, a, q)
 
-            x, M = HermiteWavePackets.hermite_discrete_transform(a, q, Val(N))
-            U = M * evaluate(H, x)
+            x, _ = hermite_quadrature(a, q, Val(N))
+            U = hermite_discrete_transform(evaluate(H, x), a, q, Val(N))
 
             err = max(err, norm(U - Λ) / norm(Λ))
         end

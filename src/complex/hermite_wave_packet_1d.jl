@@ -139,11 +139,11 @@ function (*)(H1::HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}, H2::HermiteWavePa
     z2, q2, p2 = H2.z, H2.q, H2.p
     z, q, p = complex_gaussian_product_arg(z1, q1, p1, z2, q2, p2)
     a, b = reim(z)
-    x, M = hermite_discrete_transform(a, q, Val(N))
+    x, _ = hermite_quadrature(a, q, Val(N))
     Φ1 = evaluate(H1, x)
     Φ2 = evaluate(H2, x)
     Φ = SVector{N}(Φ1[j] * Φ2[j] * cis(b * (x[j] - q)^2 / 2) * cis(- p * x[j]) for j in 1:N)
-    Λ = M * Φ
+    Λ = hermite_discrete_transform(Φ, a, q, Val(N))
     return HermiteWavePacket1D(Λ, z, q, p)
 end
 

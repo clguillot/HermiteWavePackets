@@ -26,17 +26,17 @@
 function hermite_primitive_discrete_transform(::Type{T}, N::Integer) where{T<:Union{Float16, Float32, Float64}}
     x, _ = gausshermite(N)
 
-    x = Double64.(x)
-    L = zeros(Double64, N, N)
+    x = BigFloat.(x)
+    L = zeros(BigFloat, N, N)
 
     if N > 0
-        b = sqrt(Double64(2))
-        @views @. L[:, 1] = Double64(π)^(-1/Double64(4)) * exp(-x^2 / 2)
+        b = sqrt(BigFloat("2.0"))
+        @views @. L[:, 1] = BigFloat(π)^(-1/BigFloat("4.0")) * exp(-x^2 / 2)
         if N > 1
             @views @. L[:, 2] = b * x * L[:, 1]
 
             for k=3:N
-                @views @. L[:, k] = (b * x * L[:, k-1] - sqrt(Double64(k-2)) * L[:, k-2]) / sqrt(Double64(k-1))
+                @views @. L[:, k] = (b * x * L[:, k-1] - sqrt(BigFloat(k-2)) * L[:, k-2]) / sqrt(BigFloat(k-1))
             end
         end
     end

@@ -33,7 +33,7 @@ end
     CONVERSIONS
 =#
 
-function convert(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}, G::Gaussian1D) where {N, TΛ, Ta, Tq}
+function Base.convert(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}, G::Gaussian1D) where {N, TΛ, Ta, Tq}
     T = fitting_float(G)
     Λ = [convert(TΛ, (G.a / π)^T(-1/4) * G.λ); zero(SVector{N - 1, TΛ})]
     return HermiteFct1D(Λ, convert(Ta, G.a), convert(Tq, G.q))
@@ -44,14 +44,34 @@ function HermiteFct1D(G::Gaussian1D{TΛ, Ta, Tq}) where {TΛ, Ta, Tq}
 end
 
 #=
+    PROMOTIONS
+=#
+
+# 
+function Base.promote_rule(::Type{<:HermiteFct1D}, ::Type{HermiteFct1D})
+    return HermiteFct1D
+end
+function Base.promote_rule(::Type{HermiteFct1D{N1, TΛ1, Ta1, Tq1}}, ::Type{HermiteFct1D{N2, TΛ2, Ta2, Tq2}}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+    return HermiteFct1D{max(N1, N2), promote_type(TΛ1, TΛ2), promote_type(Ta1, Ta2), promote_type(Tq1, Tq2)}
+end
+
+# 
+function Base.promote_rule(::Type{<:Gaussian1D}, ::Type{HermiteFct1D})
+    return HermiteFct1D
+end
+function Base.promote_rule(::Type{Gaussian1D{Tλ, Ta, Tq}}, ::Type{TH}) where{Tλ, Ta, Tq, TH<:HermiteFct1D}
+    promote_type(HermiteFct1D{1, Tλ, Ta, Tq}, TH)
+end
+
+#=
     BASIC OPERATIONS
 =#
 
 #
-@inline function eltype(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
+function eltype(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return promote_type(TΛ, Ta, Tq)
 end
-@inline function eltype(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+function eltype(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
     return eltype(HermiteFct1D{N, TΛ, Ta, Tq})
 end
 

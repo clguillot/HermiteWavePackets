@@ -36,16 +36,36 @@ function GaussianWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where {Tλ, Ta, Tq}
     return convert(GaussianWavePacket1D{Tλ, Ta, Tq, Tq}, G)
 end
 
+#=
+    PROMOTIONS
+=#
+
+# 
+function Base.promote_rule(::Type{<:GaussianWavePacket1D}, ::Type{GaussianWavePacket1D})
+    return GaussianWavePacket1D
+end
+function Base.promote_rule(::Type{GaussianWavePacket1D{Tλ1, Tz1, Tq1, Tp1}}, ::Type{GaussianWavePacket1D{Tλ2, Tz2, Tq2, Tp2}}) where{Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
+    return GaussianWavePacket1D{promote_type(Tλ1, Tλ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2)}
+end
+
+# 
+function Base.promote_rule(::Type{<:Gaussian1D}, ::Type{GaussianWavePacket1D})
+    return GaussianWavePacket1D
+end
+function Base.promote_rule(::Type{Gaussian1D{Tλ, Ta, Tq}}, ::Type{TG}) where{Tλ, Ta, Tq, TG<:GaussianWavePacket1D}
+    return promote_type(GaussianWavePacket1D{Tλ, Tq, Tq, Tq}, TG)
+end
+
 
 #=
     BASIC OPERATIONS
 =#
 
 #
-@inline function eltype(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
+function eltype(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
     return promote_type(Tλ, Tz, Tq, Tp)
 end
-@inline function eltype(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+function eltype(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
     return eltype(GaussianWavePacket1D{Tλ, Tz, Tq, Tp})
 end
 

@@ -68,15 +68,52 @@ function HermiteWavePacket1D(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, 
 end
 
 #=
+    PROMOTIONS
+=#
+
+# 
+function Base.promote_rule(::Type{<:HermiteWavePacket1D}, ::Type{HermiteWavePacket1D})
+    return HermiteWavePacket1D
+end
+function Base.promote_rule(::Type{HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}}, ::Type{HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}}) where{N1, TΛ1, Tz1, Tq1, Tp1, N2, TΛ2, Tz2, Tq2, Tp2}
+    return HermiteWavePacket1D{max(N1, N2), promote_type(TΛ1, TΛ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2)}
+end
+
+# 
+function Base.promote_rule(::Type{<:Gaussian1D}, ::Type{HermiteWavePacket1D})
+    return HermiteWavePacket1D
+end
+function Base.promote_rule(::Type{Gaussian1D{Tλ, Ta, Tq}}, ::Type{TH}) where{Tλ, Ta, Tq, TH<:HermiteWavePacket1D}
+    return promote_type(HermiteWavePacket1D{1, Tλ, Ta, Tq, Tq}, TH)
+end
+
+# 
+function Base.promote_rule(::Type{<:GaussianWavePacket1D}, ::Type{HermiteWavePacket1D})
+    return HermiteWavePacket1D
+end
+function Base.promote_rule(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, ::Type{TH}) where{Tλ, Tz, Tq, Tp, TH<:HermiteWavePacket1D}
+    return promote_type(HermiteWavePacket1D{1, Tλ, Tz, Tq, Tp}, TH)
+end
+
+# 
+function Base.promote_rule(::Type{<:HermiteFct1D}, ::Type{HermiteWavePacket1D})
+    return HermiteWavePacket1D
+end
+function Base.promote_rule(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}, ::Type{TH}) where{N, TΛ, Ta, Tq, TH<:HermiteWavePacket1D}
+    return promote_type(HermiteWavePacket1D{N, TΛ, Ta, Tq, Tq}, TH)
+end
+
+
+#=
     BASIC OPERATIONS
 =#
 
 #
 
-@inline function eltype(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
+function eltype(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
     return promote_type(TΛ, Tz, Tq, Tp)
 end
-@inline function eltype(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+function eltype(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
     return eltype(HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp})
 end
 

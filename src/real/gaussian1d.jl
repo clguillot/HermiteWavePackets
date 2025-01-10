@@ -13,12 +13,24 @@ end
     CONVERSIONS
 =#
 
-function convert(::Type{Gaussian1D{Tλ, Ta, Tq}}, G::Gaussian1D) where {Tλ, Ta, Tq}
+function Base.convert(::Type{Gaussian1D{Tλ, Ta, Tq}}, G::Gaussian1D) where {Tλ, Ta, Tq}
     return Gaussian1D(
         convert(Tλ, G.λ),
         convert(Ta, G.a),
         convert(Tq, G.q)
     )
+end
+
+#=
+    PROMOTIONS
+=#
+
+# 
+function Base.promote_rule(::Type{<:Gaussian1D}, ::Type{Gaussian1D})
+    return Gaussian1D
+end
+function Base.promote_rule(::Type{Gaussian1D{Tλ1, Ta1, Tq1}}, ::Type{Gaussian1D{Tλ2, Ta2, Tq2}}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
+    return Gaussian1D{promote_type(Tλ1, Tλ2), promote_type(Ta1, Ta2), promote_type(Tq1, Tq2)}
 end
 
 
@@ -27,10 +39,10 @@ end
 =#
 
 #
-@inline function eltype(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
+function eltype(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return promote_type(Tλ, Ta, Tq)
 end
-@inline function eltype(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+function eltype(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
     return eltype(Gaussian1D{Tλ, Ta, Tq})
 end
 

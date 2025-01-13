@@ -22,7 +22,6 @@ export HermiteWavePacket1D
 # Functions
 export hermite_discrete_transform
 export hermite_quadrature
-export evaluate
 export integral
 export unitary_product
 export polynomial_product

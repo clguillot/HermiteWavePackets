@@ -1,8 +1,8 @@
 #=
-
+    Computes ∑ₖ G[k](x)
 =#
 function (G::AbstractVector{<:AbstractWavePacket})(x::Number)
-    s = zero(eltype(eltype(G)))
+    s = promote(zero(eltype(eltype(G))), zero(typeof(x)))
     for g in G
         s += g(x)
     end

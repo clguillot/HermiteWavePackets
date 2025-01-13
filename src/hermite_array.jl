@@ -2,7 +2,7 @@
     Computes ∑ₖ G[k](x)
 =#
 function (G::AbstractVector{<:AbstractWavePacket})(x::Number)
-    s = promote(zero(eltype(eltype(G))), zero(typeof(x)))
+    s = zero(promote_type(eltype(eltype(G)), typeof(x)))
     for g in G
         s += g(x)
     end
@@ -26,7 +26,7 @@ end
         ∑ₖ,ₗ dot_L2(G1[k], G2[l])
 =#
 function dot_L2(G1::AbstractVector{<:AbstractWavePacket}, G2::AbstractVector{<:AbstractWavePacket})
-    s = promote(zero(eltype(eltype(G))), zero(eltype(eltype(G))))
+    s = zero(promote_type(eltype(eltype(G1)), eltype(eltype(G1))))
     for g1 in G1
         for g2 in G2
             s += dot_L2(g1, g2)

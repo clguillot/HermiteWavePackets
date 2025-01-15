@@ -36,6 +36,30 @@ function dot_L2(G1::AbstractVector{<:AbstractWavePacket}, G2::AbstractVector{<:A
 end
 
 #=
+    Computes the dot product
+        ∑ₖ dot_L2(G1[k], G2)
+=#
+function dot_L2(G1::AbstractVector{<:AbstractWavePacket}, G2::AbstractWavePacket)
+    s = zero(promote_type(eltype(eltype(G1)), eltype(G1)))
+    for g1 in G1
+        s += dot_L2(g1, G2)
+    end
+    return s
+end
+
+#=
+    Computes the dot product
+        ∑ₗ dot_L2(G1, G2[l])
+=#
+function dot_L2(G1::AbstractWavePacket, G2::AbstractVector{<:AbstractWavePacket})
+    s = zero(promote_type(eltype(G1), eltype(eltype(G1))))
+    for g2 in G2
+        s += dot_L2(G1, g2)
+    end
+    return s
+end
+
+#=
     Computes the squared L2 norm of ∑ₖ G[k]
 =#
 function norm2_L2(G::AbstractVector{<:AbstractWavePacket})

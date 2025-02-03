@@ -61,14 +61,6 @@ end
     BASIC OPERATIONS
 =#
 
-#
-function eltype(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
-    return promote_type(Tλ, Tz, Tq, Tp)
-end
-function eltype(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-    return eltype(GaussianWavePacket1D{Tλ, Tz, Tq, Tp})
-end
-
 # Returns a null gaussian
 @inline function zero(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
     return GaussianWavePacket1D(zero(Tλ), one(Tz), zero(Tq), zero(Tp))
@@ -82,14 +74,20 @@ end
     return GaussianWavePacket1D(G.λ, G.z, G.q, G.p)
 end
 
-# 
-@generated function fitting_float(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
-    T = fitting_float(promote_type(Tλ, Tz, Tq, Tp))
-    return :( $T )
+#
+function core_type(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
+    return promote_type(Tλ, Tz, Tq, Tp)
 end
-@generated function fitting_float(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-    T = fitting_float(GaussianWavePacket1D{Tλ, Tz, Tq, Tp})
-    return :( $T )
+function core_type(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    return core_type(GaussianWavePacket1D{Tλ, Tz, Tq, Tp})
+end
+
+# 
+function fitting_float(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
+    return fitting_float(promote_type(Tλ, Tz, Tq, Tp))
+end
+function fitting_float(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
+    return fitting_float(GaussianWavePacket1D{Tλ, Tz, Tq, Tp})
 end
 
 # Returns the complex conjugate of a gaussian

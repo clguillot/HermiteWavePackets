@@ -67,14 +67,6 @@ end
     BASIC OPERATIONS
 =#
 
-#
-function eltype(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
-    return promote_type(TΛ, Ta, Tq)
-end
-function eltype(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
-    return eltype(HermiteFct1D{N, TΛ, Ta, Tq})
-end
-
 # Returns a null hermite function
 @inline function zero(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return HermiteFct1D(zeros(SVector{N, TΛ}), one(Ta), zero(Tq))
@@ -88,14 +80,20 @@ end
     return HermiteFct1D(H.Λ, H.a, H.q)
 end
 
-# 
-@generated function fitting_float(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
-    Tf = fitting_float(promote_type(TΛ, Ta, Tq))
-    return :( $Tf )
+#
+function core_type(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
+    return promote_type(TΛ, Ta, Tq)
 end
-@generated function fitting_float(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
-    Tf = fitting_float(HermiteFct1D{N, TΛ, Ta, Tq})
-    return :( $Tf )
+function core_type(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return core_type(HermiteFct1D{N, TΛ, Ta, Tq})
+end
+
+# 
+function fitting_float(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
+    return fitting_float(promote_type(TΛ, Ta, Tq))
+end
+function fitting_float(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+    return fitting_float(HermiteFct1D{N, TΛ, Ta, Tq})
 end
 
 # Returns the complex conjugate of a hermite function

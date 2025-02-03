@@ -108,15 +108,6 @@ end
     BASIC OPERATIONS
 =#
 
-#
-
-function eltype(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
-    return promote_type(TΛ, Tz, Tq, Tp)
-end
-function eltype(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
-    return eltype(HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp})
-end
-
 # Returns a null hermite wave packet
 @inline function zero(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
     return HermiteWavePacket1D(zero(SVector{N, TΛ}), one(Tz), zero(Tq), zero(Tp))
@@ -130,14 +121,20 @@ end
     return HermiteWavePacket1D(H.Λ, H.z, H.q, H.p)
 end
 
-# 
-@generated function fitting_float(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
-    T = fitting_float(promote_type(TΛ, Tz, Tq, Tp))
-    return :( $T )
+#
+function core_type(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
+    return promote_type(TΛ, Tz, Tq, Tp)
 end
-@generated function fitting_float(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
-    T = fitting_float(HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp})
-    return :( $T )
+function core_type(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    return core_type(HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp})
+end
+
+# 
+function fitting_float(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
+    return fitting_float(promote_type(TΛ, Tz, Tq, Tp))
+end
+function fitting_float(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+    return fitting_float(HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp})
 end
 
 # Returns the complex conjugate of a hermite wave packet

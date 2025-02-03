@@ -38,14 +38,6 @@ end
     BASIC OPERATIONS
 =#
 
-#
-function eltype(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
-    return promote_type(Tλ, Ta, Tq)
-end
-function eltype(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    return eltype(Gaussian1D{Tλ, Ta, Tq})
-end
-
 # Returns a null gaussian
 @inline function zero(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return Gaussian1D(zero(Tλ), one(Ta), zero(Tq))
@@ -59,14 +51,20 @@ end
     return Gaussian1D(G.λ, G.a, G.q)
 end
 
-# 
-@generated function fitting_float(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
-    T = fitting_float(promote_type(Tλ, Ta, Tq))
-    return :( $T )
+#
+function core_type(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
+    return promote_type(Tλ, Ta, Tq)
 end
-@generated function fitting_float(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    T = fitting_float(Gaussian1D{Tλ, Ta, Tq})
-    return :( $T )
+function core_type(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return core_type(Gaussian1D{Tλ, Ta, Tq})
+end
+
+# 
+function fitting_float(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
+    return fitting_float(promote_type(Tλ, Ta, Tq))
+end
+function fitting_float(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+    return fitting_float(Gaussian1D{Tλ, Ta, Tq})
 end
 
 # Returns the complex conjugate of a gaussian

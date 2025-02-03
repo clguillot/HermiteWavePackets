@@ -32,13 +32,13 @@ export convolution
 export dot_L2
 export norm2_L2
 export norm_L2
+export core_type
 
 import Base.*
 import Base.convert
 import Base.copy
 import Base.zero
 import Base.conj
-import Base.eltype
 
 include("real/gaussian1d.jl")
 include("real/hermite_fct_1d.jl")

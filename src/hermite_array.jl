@@ -1,3 +1,8 @@
+#
+function core_type(G::AbstractVector{TG}) where{TG<:AbstractWavePacket}
+    return core_type(G)
+end
+
 #=
     Computes ∑ₖ G[k](x)
 =#

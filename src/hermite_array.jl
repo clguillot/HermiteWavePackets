@@ -1,6 +1,6 @@
 #
 function core_type(G::AbstractVector{TG}) where{TG<:AbstractWavePacket}
-    return core_type(G)
+    return core_type(TG)
 end
 
 #=

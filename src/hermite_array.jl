@@ -1,5 +1,5 @@
 #
-function core_type(::Type{AbstractVector{TG}}) where{TG<:AbstractWavePacket}
+function core_type(::Type{V}) where {V<:AbstractVector{TG}} where {TG<:AbstractWavePacket}
     return core_type(TG)
 end
 function core_type(G::AbstractVector{TG}) where{TG<:AbstractWavePacket}

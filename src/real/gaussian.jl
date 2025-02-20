@@ -73,7 +73,7 @@ end
 
 # Evaluates a gaussian at x
 function (G::Gaussian{D, Tλ, Ta, Tq})(x::AbstractVector{<:Number}) where{D, Tλ, Ta, Tq}
-    u = @. exp(-G.a/2 * (x - G.q)^2)
+    u = @. exp(-G.a/2 * (SVector{D}(x) - G.q)^2)
     return G.λ * prod(u)
 end
 

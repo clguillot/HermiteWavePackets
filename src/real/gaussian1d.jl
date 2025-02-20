@@ -65,7 +65,7 @@ end
 
 # Evaluates a gaussian at x
 @inline function (G::Gaussian1D)(x::Number)
-    return G.λ * exp(-G.a/2 * (SVector{D}(x) - G.q)^2)
+    return G.λ * exp(-G.a/2 * (x - G.q)^2)
 end
 
 # Evaluates a gaussian at every point in x

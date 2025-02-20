@@ -4,9 +4,6 @@ using LinearAlgebra
 using StaticArrays
 using FastGaussQuadrature
 
-# Custom mathematical operations compatible with autodifferentiation
-include("utils.jl")
-
 # Abtract types
 abstract type AbstractWavePacket end
 abstract type AbstractWavePacket1D <: AbstractWavePacket end
@@ -40,6 +37,8 @@ import Base.copy
 import Base.zero
 import Base.conj
 
+include("utils.jl")
+
 include("real/gaussian1d.jl")
 include("real/hermite_fct_1d.jl")
 include("real/hermite_quadrature.jl")
@@ -48,5 +47,6 @@ include("complex/gaussian_wave_packet_1d.jl")
 include("complex/hermite_wave_packet_1d.jl")
 
 include("hermite_array.jl")
+include("generics.jl")
 
 end

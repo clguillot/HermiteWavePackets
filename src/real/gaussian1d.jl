@@ -42,9 +42,6 @@ end
 @inline function zero(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return Gaussian1D(zero(Tλ), one(Ta), zero(Tq))
 end
-@inline function zero(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    return zero(Gaussian1D{Tλ, Ta, Tq})
-end
 
 # Creates a copy of a gaussian
 @inline function copy(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
@@ -55,16 +52,10 @@ end
 function core_type(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return promote_type(Tλ, Ta, Tq)
 end
-function core_type(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    return core_type(Gaussian1D{Tλ, Ta, Tq})
-end
 
 # 
 function fitting_float(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return fitting_float(promote_type(Tλ, Ta, Tq))
-end
-function fitting_float(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    return fitting_float(Gaussian1D{Tλ, Ta, Tq})
 end
 
 # Returns the complex conjugate of a gaussian
@@ -115,10 +106,8 @@ end
 
 # Computes the product of two gaussians
 @inline function (*)(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
-    λ1, a1, q1 = G1.λ, G1.a, G1.q
-    λ2, a2, q2 = G2.λ, G2.a, G2.q
-    a, q = gaussian_product_arg(a1, q1, a2, q2)
-    λ = λ1 * λ2 * exp(- a1*(q-q1)^2 / 2) * exp(- a2*(q-q2)^2 / 2)
+    a, q = gaussian_product_arg(G1.a, G1.q, G2.a, G2.q)
+    λ = G1(q) * G2(q)
     return Gaussian1D(λ, a, q)
 end
 
@@ -141,7 +130,7 @@ end
 @inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1<:Real, Ta1, Tq1, Tλ2, Ta2, Tq2}
     return integral(G1 * G2)
 end
-@inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1<:Complex, Ta1, Tq1, Tλ2, Ta2, Tq2}
+@inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
     return integral(conj(G1) * G2)
 end
 
@@ -149,8 +138,4 @@ end
 @inline function norm2_L2(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
     T = fitting_float(G)
     return abs2(G.λ) * T(sqrt(π)) * G.a^T(-1/2)
-end
-# Computes the L² norm of a gaussian
-@inline function norm_L2(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    return sqrt(norm2_L2(G))
 end

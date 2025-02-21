@@ -4,6 +4,7 @@ using LinearAlgebra
 using FastGaussQuadrature
 using SpecialFunctions
 using StaticArrays
+using Cubature
 
 function hermite_poly(n::Integer, x::T) where{T<:Number}
     v = zero(T)
@@ -28,8 +29,16 @@ function legendre_quadrature(X, M, F)
     return ComplexF64(I)
 end
 
+function complex_cubature(f, a, b; reltol=1e-13)
+    Ir = hcubature(x -> real(f(x)), a, b; reltol=reltol)
+    Ic = hcubature(x -> imag(f(x)), a, b; reltol=reltol)
+    return complex(Ir[1], Ic[1])
+end
+
 include("test_gaussian1d.jl");
 include("test_hermite1d.jl");
 
 include("test_gaussian_wave_packet1d.jl");
 include("test_hermite_wave_packet1d.jl");
+
+include("test_gaussian.jl")

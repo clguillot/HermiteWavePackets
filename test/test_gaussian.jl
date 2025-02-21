@@ -1,7 +1,7 @@
 
 function test_gaussian()
 
-    printstyled("Testing gaussian 1d:\n"; bold=true, color=:blue)
+    printstyled("Testing gaussian:\n"; bold=true, color=:blue)
 
     nb_reps = 4
     M = 12.0

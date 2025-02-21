@@ -6,7 +6,7 @@
 struct Gaussian{D, Tλ<:Number, Ta<:Real, Tq<:Real} <: AbstractWavePacket
     λ::Tλ
     a::SVector{D, Ta}
-    q::SVector{D, Ta}
+    q::SVector{D, Tq}
 end
 
 #=
@@ -57,7 +57,7 @@ end
 end
 
 #
-function core_type(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
+function core_type(::Type{Gaussian{D, Tλ, Ta, Tq}}) where{D, Tλ, Ta, Tq}
     return promote_type(Tλ, Ta, Tq)
 end
 
@@ -67,13 +67,14 @@ function fitting_float(::Type{Gaussian{D, Tλ, Ta, Tq}}) where{D, Tλ, Ta, Tq}
 end
 
 # Returns the complex conjugate of a gaussian
-@inline function conj(G::Gaussian{D, Tλ, Ta, Tq}) where{D, Tλ, Ta, Tq}
+function conj(G::Gaussian{D, Tλ, Ta, Tq}) where{D, Tλ, Ta, Tq}
     return Gaussian(conj(G.λ), G.a, G.q)
 end
 
 # Evaluates a gaussian at x
 function (G::Gaussian{D, Tλ, Ta, Tq})(x::AbstractVector{<:Number}) where{D, Tλ, Ta, Tq}
-    u = @. exp(-G.a/2 * (SVector{D}(x) - G.q)^2)
+    xs = SVector{D}(x)
+    u = @. exp(-G.a/2 * (xs - G.q)^2)
     return G.λ * prod(u)
 end
 

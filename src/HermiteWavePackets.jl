@@ -49,6 +49,7 @@ include("real/gaussian.jl")
 
 include("complex/gaussian_wave_packet_1d.jl")
 include("complex/hermite_wave_packet_1d.jl")
+include("complex/gaussian_wave_packet.jl")
 
 include("hermite_array.jl")
 include("generics.jl")

@@ -1,7 +1,7 @@
 
 #=
     Represents the complex gaussian function
-        λ*exp(-z/2*(x-q)²)*exp(ipx)
+        λ*exp(-∑ₖ zₖ/2*(xₖ-qₖ)²)*exp(i∑ₖpₖxₖ)
 =#
 struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: AbstractWavePacket
     λ::Tλ
@@ -87,10 +87,10 @@ function conj(G::GaussianWavePacket)
 end
 
 # Evaluates a gaussian at x
-function (G::GaussianWavePacket{D})(x::AbstractVector{Number}) where{D}
+function (G::GaussianWavePacket{D})(x::AbstractVector{<:Number}) where D
     xs = SVector{D}(x)
-    u = @. exp(-G.z/2 * (xs - G.q)^2) * cis(G.p * xs)
-    return G.λ * prod(u)
+    u1 = @. G.z/2 * (xs - G.q)^2
+    return G.λ * exp(-sum(u1)) * cis(dot(G.p, xs))
 end
 
 #=
@@ -103,28 +103,39 @@ function (*)(w::Number, G::GaussianWavePacket)
 end
 
 # Computes the product of two gaussians
-function (*)(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where{D}
+function (*)(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     z, q, p = complex_gaussian_product_arg(G1.z, G1.q, G1.p, G2.z, G2.q, G2.p)
-    λ = G1(q) * G2(q) * cis(-p*q)
+    λ = G1(q) * G2(q) * cis(-dot(p, q))
     return GaussianWavePacket(λ, z, q, p)
 end
 
-# # Multiplies a gaussian wave packet by exp(-ib/2 * (x - q)^2) * exp(ipx)
-# function unitary_product(b::Real, q::Real, p::Real, G::GaussianWavePacket1D)
-#     α = cis(b / 2 * (G.q + q) * (G.q - q))
-#     return GaussianWavePacket1D(α .* G.λ, G.z + complex(0, b), G.q, G.p + p - b * (G.q - q))
-# end
-# # Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
-# function unitary_product(b::Real, G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-#     α = cis(b / 2 * G.q^2)
-#     return GaussianWavePacket1D(α .* G.λ, G.z + complex(0, b), G.q, G.p - b * G.q)
-# end
+# Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
+function unitary_product(b::AbstractVector{<:Real}, q::AbstractVector{<:Real}, p::AbstractVector{<:Real}, G::GaussianWavePacket{D}) where D
+    b = SVector{D}(b)
+    q = SVector{D}(q)
+    p = SVector{D}(p)
+    u = @. b * (G.q + q) * (G.q - q)
+    λ_ = G.λ * cis(sum(u)/2)
+    z_ = @. G.z + complex(0, b)
+    q_ = G.q
+    p_ = @. G.p + p - b * (G.q - q)
+    return GaussianWavePacket(λ_, z_, q_, p_)
+end
+# Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
+function unitary_product(b::AbstractVector{<:Real}, G::GaussianWavePacket{D}) where D
+    b = SVector{D}(b)
+    λ_ = G.λ * cis(dot(G.q, Diagonal(b / 2), G.q))
+    z_ = @. G.z + complex(0, b)
+    q_ = G.q
+    p_ = @. G.p + b * G.q
+    return GaussianWavePacket(λ_, z_, q_, p_)
+end
 
 # Computes the integral of a gaussian
-function integral(G::GaussianWavePacket)
+function integral(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
-    u = @. T(sqrt(2π)) / sqrt(G.z) * cis(G.p * G.q) * exp(- G.p^2 / (2*G.z))
-    return G.λ * prod(u)
+    u = @. G.p^2 / (2*G.z)
+    return T(sqrt(2π)^D) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q)) * exp(-sum(u))
 end
 
 #=
@@ -132,44 +143,41 @@ end
     The Fourier transform is defined as
         TF(ψ)(ξ) = ∫dx e^(-ixξ) ψ(x)
 =#
-function fourier(G::GaussianWavePacket)
+function fourier(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
     z_tf, q_tf, p_tf = complex_gaussian_fourier_arg(G.z, G.q, G.p)
-    u = @. cis(G.p*G.q) * T(sqrt(2π)) / sqrt(G.z)
-    λ_tf = G.λ * prod(u)
+    λ_tf = T(sqrt(2π)^D) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
     return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
 
 #=
     Computes the inverse Fourier transform of a gaussian
     The inverse Fourier transform is defined as
-        ITF(ψ)(x) = (2π)⁻¹∫dξ e^(ixξ) ψ(ξ)
+        ITF(ψ)(x) = (2π)⁻ᴰ∫dξ e^(ixξ) ψ(ξ)
 =#
-function inv_fourier(G::GaussianWavePacket)
+function inv_fourier(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
     z_tf, q_tf, p_tf = complex_gaussian_inv_fourier_arg(G.z, G.q, G.p)
-    u = @. T((2π)^(-1/2)) * cis(G.p*G.q) / sqrt(G.z)
-    λ_tf = λ * prod(u)
-    return GaussianWavePacket1D(λ_tf, z_tf, q_tf, p_tf)
+    λ_tf = T((2π)^(-D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
+    return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
 
 # Computes the convolution product of two gaussians
-function convolution(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where{D}
+function convolution(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     z1, q1, p1 = G1.z, G1.q, G1.p
     λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
     z, q, p = complex_gaussian_convolution_product_arg(z1, q1, p1, z2, q2, p2)
-    λ = cis(q * (p2 - p)) * integral(G1 * GaussianWavePacket1D(λ2, z2, q - q2, -p2))
-    return GaussianWavePacket1D(λ, z, q, p)
+    λ = cis(dot(q, p2 - p)) * integral(G1 * GaussianWavePacket(λ2, z2, q - q2, -p2))
+    return GaussianWavePacket(λ, z, q, p)
 end
 
 # Computes the L² product of two gaussian wave packets
-function dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where{D}
+function dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     return integral(conj(G1) * G2)
 end
 
 # Computes the square L² norm of a gaussian wave packet
-function norm2_L2(G::GaussianWavePacket1D)
+function norm2_L2(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
-    u = @. T(sqrt(π)) * real(G.z)^T(-1/2)
-    return abs2(G.λ) * prod(u)
+    return T(sqrt(π)^D) * abs2(G.λ) * prod((real.(G.z)).^T(-1/2))
 end

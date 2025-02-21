@@ -88,7 +88,7 @@ function test_gaussian_wave_packet1d()
             f3(x) = G(x) * cis(-b/2 * x^2)
             G3 = unitary_product(b, G)
 
-            for j=1:100
+            for _=1:100
                 x = 5 * (rand() - 0.5)
                 err = max(err, abs(f2(x) - G2(x)))
                 err = max(err, abs(f3(x) - G3(x)))

@@ -13,6 +13,7 @@ export AbstractWavePacket1D
 # Concrete types
 export Gaussian1D
 export HermiteFct1D
+export Gaussian
 export GaussianWavePacket1D
 export HermiteWavePacket1D
 
@@ -39,9 +40,11 @@ import Base.conj
 
 include("utils.jl")
 
+include("real/hermite_quadrature.jl")
+
 include("real/gaussian1d.jl")
 include("real/hermite_fct_1d.jl")
-include("real/hermite_quadrature.jl")
+include("real/gaussian.jl")
 
 include("complex/gaussian_wave_packet_1d.jl")
 include("complex/hermite_wave_packet_1d.jl")

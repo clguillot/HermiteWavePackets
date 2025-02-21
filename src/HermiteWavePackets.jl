@@ -16,6 +16,7 @@ export HermiteFct1D
 export Gaussian
 export GaussianWavePacket1D
 export HermiteWavePacket1D
+export GaussianWavePacket
 
 # Functions
 export hermite_discrete_transform

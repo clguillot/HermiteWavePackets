@@ -29,9 +29,9 @@ function legendre_quadrature(X, M, F)
     return ComplexF64(I)
 end
 
-function complex_cubature(f, a, b; reltol=1e-13)
-    Ir = hcubature(x -> real(f(x)), a, b; reltol=reltol)
-    Ic = hcubature(x -> imag(f(x)), a, b; reltol=reltol)
+function complex_cubature(f, a, b; reltol=1e-13, abstol=0)
+    Ir = hcubature(x -> real(f(x)), a, b; reltol=reltol, abstol=abstol)
+    Ic = hcubature(x -> imag(f(x)), a, b; reltol=reltol, abstol=abstol)
     return complex(Ir[1], Ic[1])
 end
 

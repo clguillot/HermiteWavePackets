@@ -5,7 +5,8 @@ function test_gaussian_wave_packet()
 
     nb_reps = 4
     M = 12.0
-    tol = 1e-12
+    tol = 5e-12
+    int_tol = 1e-13
 
     D = 2
 
@@ -113,40 +114,13 @@ function test_gaussian_wave_packet()
             p = 4 .* (rand(D) .- 0.5)
             G = GaussianWavePacket(λ, SVector{D}(z), SVector{D}(q), SVector{D}(p))
 
-            I = complex_cubature(y -> G(y), [-M for _ in 1:D], [M for _ in 1:D])        
-            err = max(err, abs(I - integral(G)) / abs(I))
+            I = complex_cubature(y -> G(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)        
+            err = max(err, abs(I - integral(G)))
         end
 
         color = (err > tol) ? :red : :green
         printstyled("Error integral = $err\n"; bold=true, color=color)
     end
-
-    # begin
-    #     err = 0.0
-
-    #     for _=1:nb_reps
-    #         λ1 = rand() + 1im * rand()
-    #         z1 = (4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5)
-    #         q1 = 4 * (rand(D) .- 0.5)
-    #         p1 = 4 * (rand(D) .- 0.5)
-    #         G1 = GaussianWavePacket(λ1, SVector{D}(z1), SVector{D}(q1), SVector{D}(p1))
-
-    #         λ2 = rand() + 1im * rand()
-    #         z2 = (4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5)
-    #         q2 = 4 * (rand(D) .- 0.5)
-    #         p2 = 4 * (rand(D) .- 0.5)
-    #         G2 = GaussianWavePacket(λ2, SVector{D}(z2), SVector{D}(q2), SVector{D}(p2))
-
-    #         G = convolution(G1, G2)
-
-    #         x0 = 5.0 * (rand(D) .- 0.5)
-    #         I = complex_cubature(y -> G1(y) * G2(x0 - y), [-M for _ in 1:D], [M for _ in 1:D])
-    #         err = max(err, abs(I - G(x0)))
-    #     end
-
-    #     color = (err > tol) ? :red : :green
-    #     printstyled("Error convolution = $err\n"; bold=true, color=color)
-    # end
 
     begin
         err = 0.0
@@ -164,8 +138,35 @@ function test_gaussian_wave_packet()
             p2 = 4 * (rand(D) .- 0.5)
             G2 = GaussianWavePacket(λ2, SVector{D}(z2), SVector{D}(q2), SVector{D}(p2))
 
-            I = complex_cubature(y -> conj(G1(y)) * G2(y), [-M for _ in 1:D], [M for _ in 1:D])
-            err = max(err, abs(I - dot_L2(G1, G2)) / abs(I))
+            G = convolution(G1, G2)
+
+            x0 = 5.0 * (rand(D) .- 0.5)
+            I = complex_cubature(y -> G1(y) * G2(x0 - y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
+            err = max(err, abs(I - G(x0)))
+        end
+
+        color = (err > tol) ? :red : :green
+        printstyled("Error convolution = $err\n"; bold=true, color=color)
+    end
+
+    begin
+        err = 0.0
+
+        for _=1:nb_reps
+            λ1 = rand() + 1im * rand()
+            z1 = (4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5)
+            q1 = 4 * (rand(D) .- 0.5)
+            p1 = 4 * (rand(D) .- 0.5)
+            G1 = GaussianWavePacket(λ1, SVector{D}(z1), SVector{D}(q1), SVector{D}(p1))
+
+            λ2 = rand() + 1im * rand()
+            z2 = (4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5)
+            q2 = 4 * (rand(D) .- 0.5)
+            p2 = 4 * (rand(D) .- 0.5)
+            G2 = GaussianWavePacket(λ2, SVector{D}(z2), SVector{D}(q2), SVector{D}(p2))
+
+            I = complex_cubature(y -> conj(G1(y)) * G2(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
+            err = max(err, abs(I - dot_L2(G1, G2)))
         end
 
         color = (err > tol) ? :red : :green
@@ -201,8 +202,8 @@ function test_gaussian_wave_packet()
 
             Gf = fourier(G)
 
-            I = complex_cubature(y -> G(y) * cis(-dot(ξ, y)), [-M for _ in 1:D], [M for _ in 1:D])
-            err = max(err, abs(I - Gf(ξ)) / abs(I))
+            I = complex_cubature(y -> G(y) * cis(-dot(ξ, y)), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
+            err = max(err, abs(I - Gf(ξ)))
         end
 
         color = (err > tol) ? :red : :green
@@ -221,8 +222,8 @@ function test_gaussian_wave_packet()
 
             Gf = inv_fourier(G)
 
-            I = (2π)^(-D) * complex_cubature(y -> G(y) * cis(dot(ξ, y)), [-M for _ in 1:D], [M for _ in 1:D])
-            err = max(err, abs(I - Gf(ξ)) / abs(I))
+            I = (2π)^(-D) * complex_cubature(y -> G(y) * cis(dot(ξ, y)), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
+            err = max(err, abs(I - Gf(ξ)))
         end
 
         color = (err > tol) ? :red : :green

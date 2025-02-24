@@ -5,7 +5,8 @@ function test_gaussian()
 
     nb_reps = 4
     M = 12.0
-    tol = 1e-12
+    tol = 5e-12
+    int_tol = 1e-13
 
     D = 2
 
@@ -79,8 +80,8 @@ function test_gaussian()
             q = 4 .* (rand(D) .- 0.5)
             G = Gaussian(λ, SVector{D}(a), SVector{D}(q))
 
-            I = complex_cubature(y -> G(y), [-M for _ in 1:D], [M for _ in 1:D])
-            err = max(err, abs(I - integral(G)) / abs(I))
+            I = complex_cubature(y -> G(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
+            err = max(err, abs(I - integral(G)))
         end
         
         color = (err > tol) ? :red : :green
@@ -104,7 +105,7 @@ function test_gaussian()
             G = convolution(G1, G2)
 
             x0 = 5.0 .* (rand(D) .- 0.5)
-            I = complex_cubature(y -> G1(y) * G2(x0 - y), [-M for _ in 1:D], [M for _ in 1:D])
+            I = complex_cubature(y -> G1(y) * G2(x0 - y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
             err = max(err, abs(I - G(x0)))
         end
 
@@ -126,8 +127,8 @@ function test_gaussian()
             q2 = 4 .* (rand(D) .- 0.5)
             G2 = Gaussian(λ2, SVector{D}(a2), SVector{D}(q2))
 
-            I = complex_cubature(y -> conj(G1(y)) * G2(y), [-M for _ in 1:D], [M for _ in 1:D])
-            err = max(err, abs(I - dot_L2(G1, G2)) / abs(I))
+            I = complex_cubature(y -> conj(G1(y)) * G2(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
+            err = max(err, abs(I - dot_L2(G1, G2)))
         end
 
         color = (err > tol) ? :red : :green

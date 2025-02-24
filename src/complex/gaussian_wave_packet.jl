@@ -115,7 +115,7 @@ function unitary_product(b::AbstractVector{<:Real}, q::AbstractVector{<:Real}, p
     q = SVector{D}(q)
     p = SVector{D}(p)
     u = @. b * (G.q + q) * (G.q - q)
-    λ_ = G.λ * cis(sum(u)/2)
+    λ_ = G.λ * cis(sum(u) / 2)
     z_ = @. G.z + complex(0, b)
     q_ = G.q
     p_ = @. G.p + p - b * (G.q - q)
@@ -124,10 +124,11 @@ end
 # Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
 function unitary_product(b::AbstractVector{<:Real}, G::GaussianWavePacket{D}) where D
     b = SVector{D}(b)
-    λ_ = G.λ * cis(dot(G.q, Diagonal(b / 2), G.q))
+    u = @. b * G.q^2
+    λ_ = G.λ * cis(sum(u) / 2)
     z_ = @. G.z + complex(0, b)
     q_ = G.q
-    p_ = @. G.p + b * G.q
+    p_ = @. G.p - b * G.q
     return GaussianWavePacket(λ_, z_, q_, p_)
 end
 

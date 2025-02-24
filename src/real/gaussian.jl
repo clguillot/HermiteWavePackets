@@ -74,14 +74,15 @@ end
 # Evaluates a gaussian at x
 function (G::Gaussian{D, Tλ, Ta, Tq})(x::AbstractVector{<:Number}) where{D, Tλ, Ta, Tq}
     xs = SVector{D}(x)
-    u = @. G.a/2 * (xs - G.q)^2
-    return G.λ * exp(-sum(u))
+    u = @. G.a * (xs - G.q)^2
+    return G.λ * exp(-sum(u) / 2)
 end
 
 # Evaluates a gaussian at every point in x
 function evaluate(G::Gaussian{D, Tλ, Ta, Tq}, x::SMatrix{D, M, <:Number}) where{D, Tλ, Ta, Tq, M}
-    u = @. G.a/2 * (x - G.q)^2
-    return G.λ .* exp.(.- reshape(sum(u; dim=1), M))
+    u = @. G.a * (x - G.q)^2
+    v = reshape(sum(u; dim=1), M)
+    return @. G.λ * exp(-v / 2)
 end
 
 #=

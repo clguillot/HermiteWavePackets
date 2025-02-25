@@ -42,7 +42,7 @@ end
 
 # 
 function Base.promote_rule(::Type{<:GaussianWavePacket}, ::Type{GaussianWavePacket})
-    return GaussianWavePacket1D
+    return GaussianWavePacket
 end
 function Base.promote_rule(::Type{GaussianWavePacket{D, Tλ1, Tz1, Tq1, Tp1}}, ::Type{GaussianWavePacket{D, Tλ2, Tz2, Tq2, Tp2}}) where{D, Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
     return GaussianWavePacket{D, promote_type(Tλ1, Tλ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2)}
@@ -50,9 +50,9 @@ end
 
 # 
 function Base.promote_rule(::Type{<:Gaussian}, ::Type{GaussianWavePacket})
-    return GaussianWavePacket1D
+    return GaussianWavePacket
 end
-function Base.promote_rule(::Type{Gaussian{D, Tλ, Ta, Tq}}, ::Type{TG}) where{D, Tλ, Ta, Tq, TG<:GaussianWavePacket1D}
+function Base.promote_rule(::Type{Gaussian{D, Tλ, Ta, Tq}}, ::Type{TG}) where{D, Tλ, Ta, Tq, TG<:GaussianWavePacket}
     return promote_type(GaussianWavePacket{D, Tλ, Tq, Tq, Tq}, TG)
 end
 
@@ -68,7 +68,7 @@ end
 
 # Creates a copy of a gaussian
 function copy(G::GaussianWavePacket)
-    return GaussianWavePacket1D(G.λ, G.z, G.q, G.p)
+    return GaussianWavePacket(G.λ, G.z, G.q, G.p)
 end
 
 #
@@ -99,7 +99,7 @@ end
 
 # Computes the product of a scalar and a gaussian
 function (*)(w::Number, G::GaussianWavePacket)
-    return GaussianWavePacket1D(w * G.λ, G.z, G.q, G.p)
+    return GaussianWavePacket(w * G.λ, G.z, G.q, G.p)
 end
 
 # Computes the product of two gaussians

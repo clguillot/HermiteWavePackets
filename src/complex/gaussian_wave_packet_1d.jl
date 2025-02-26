@@ -143,7 +143,7 @@ end
 end
 
 # 
-@inline function Base.(-)(G::GaussianWavePacket1D)
+@inline function Base.:-(G::GaussianWavePacket1D)
     return GaussianWavePacket1D(-G.λ, G.z, G.q, G.p)
 end
 

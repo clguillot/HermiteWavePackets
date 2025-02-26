@@ -98,7 +98,7 @@ end
 =#
 
 # 
-function Base.(-)(G::GaussianWavePacket)
+function Base.:-(G::GaussianWavePacket)
     return GaussianWavePacket(-G.λ, G.z, G.q, G.p)
 end
 

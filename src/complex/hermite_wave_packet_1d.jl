@@ -152,7 +152,7 @@ end
 =#
 
 # 
-@inline function Base.(-)(H::HermiteWavePacket1D)
+@inline function Base.:-(H::HermiteWavePacket1D)
     return HermiteWavePacket1D(-H.Λ, H.z, H.q, H.p)
 end
 

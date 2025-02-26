@@ -90,7 +90,7 @@ end
 =#
 
 # 
-function Base.(-)(G::Gaussian)
+function Base.:-(G::Gaussian)
     return Gaussian(-G.λ, G.a, G.q)
 end
 

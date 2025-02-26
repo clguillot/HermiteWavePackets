@@ -113,7 +113,7 @@ function evaluate(H::HermiteFct1D, x::SVector{M, <:Number}) where M
 end
 
 # Computes the product of a scalar and a hermite function
-@inline function Base.(-)(H::HermiteFct1D)
+@inline function Base.:-(H::HermiteFct1D)
     return HermiteFct1D(-H.Λ, H.a, H.q)
 end
 

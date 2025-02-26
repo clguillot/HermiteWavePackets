@@ -100,7 +100,7 @@ end
 end
 
 # 
-@inline function Base.(-)(G::Gaussian1D)
+@inline function Base.:-(G::Gaussian1D)
     return Gaussian1D(-G.λ, G.a, G.q)
 end
 

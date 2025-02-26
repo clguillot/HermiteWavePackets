@@ -18,7 +18,7 @@ function fitting_float(::Type{WavePacketArray{ArrayType}}) where ArrayType
 end
 
 # Returns the list of all centers of elements inside a wave packet array
-function center(G::WavePacketArray)
+function centers(G::WavePacketArray)
     return center.(G.g)
 end
 

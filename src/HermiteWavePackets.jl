@@ -22,6 +22,7 @@ export WavePacketArray
 # Functions
 export hermite_discrete_transform
 export hermite_quadrature
+export center
 export integral
 export evaluate
 export unitary_product

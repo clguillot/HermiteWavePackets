@@ -128,6 +128,11 @@ function fitting_float(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N,
     return fitting_float(promote_type(TΛ, Tz, Tq, Tp))
 end
 
+# Returns the center of mass of a hermite wave packet
+@inline function center(H::HermiteWavePacket1D)
+    return H.q
+end
+
 # Returns the complex conjugate of a hermite wave packet
 @inline function conj(H::HermiteWavePacket1D)
     return HermiteWavePacket1D(conj.(H.Λ), conj.(H.z), H.q, -H.p)

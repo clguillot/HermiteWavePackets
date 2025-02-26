@@ -81,6 +81,11 @@ function fitting_float(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ,
     return fitting_float(promote_type(Tλ, Tz, Tq, Tp))
 end
 
+# Returns the center of mass of a gaussian
+@inline function center(G::GaussianWavePacket1D)
+    return G.q
+end
+
 # Returns the complex conjugate of a gaussian
 @inline function conj(G::GaussianWavePacket1D)
     return GaussianWavePacket1D(conj(G.λ), conj(G.z), G.q, -G.p)

@@ -87,6 +87,11 @@ function fitting_float(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, T
     return fitting_float(promote_type(TΛ, Ta, Tq))
 end
 
+# Returns the center of mass of a hermite function
+@inline function center(H::HermiteFct1D)
+    return H.q
+end
+
 # Returns the complex conjugate of a hermite function
 @inline function conj(H::HermiteFct1D)
     return HermiteFct1D(conj.(H.Λ), H.a, H.q)

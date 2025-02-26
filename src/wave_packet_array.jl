@@ -85,8 +85,8 @@ function norm2_L2(G::WavePacketArray)
     s = zero(real(core_type(G)))
     for k in eachindex(G.g)
         s += norm2_L2(G.g[k])
-        for l in k+1:length(G.g)
-            s += 2 * real(dot_L2(G[k], G[l]))
+        for l in Iterators.drop(eachindex(G.g), k)
+            s += 2 * real(dot_L2(G.g[k], G.g[l]))
         end
     end
     return s

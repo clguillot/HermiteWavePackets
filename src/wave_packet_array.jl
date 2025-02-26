@@ -20,8 +20,8 @@ end
 #=
     Computes ∑ₖ G[k](x)
 =#
-function (G::WavePacketArray)(x::T) where{T<:Number}
-    s = zero(promote_type(core_type(G), T))
+function (G::WavePacketArray)(x)
+    s = zero(promote_type(core_type(G), eltype(x)))
     for g in G.g
         s += g(x)
     end

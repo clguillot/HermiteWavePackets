@@ -72,7 +72,7 @@ function conj(G::Gaussian)
 end
 
 # Evaluates a gaussian at x
-function (G::Gaussian{D})(x::AbstractVector{<:Number}) where{D}
+function (G::Gaussian{D})(x::AbstractVector{<:Number}) where D
     xs = SVector{D}(x)
     u = @. G.a * (xs - G.q)^2
     return G.λ * exp(-sum(u) / 2)

@@ -17,6 +17,7 @@ export Gaussian
 export GaussianWavePacket1D
 export HermiteWavePacket1D
 export GaussianWavePacket
+export WavePacketArray
 
 # Functions
 export hermite_discrete_transform
@@ -51,7 +52,7 @@ include("complex/gaussian_wave_packet_1d.jl")
 include("complex/hermite_wave_packet_1d.jl")
 include("complex/gaussian_wave_packet.jl")
 
-include("hermite_array.jl")
+include("wave_packet_array.jl")
 include("generics.jl")
 
 end

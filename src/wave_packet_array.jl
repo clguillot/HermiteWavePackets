@@ -12,6 +12,11 @@ function core_type(::Type{WavePacketArray{ArrayType}}) where ArrayType
     return core_type(eltype(ArrayType))
 end
 
+#
+function fitting_float(::Type{WavePacketArray{ArrayType}}) where ArrayType
+    return fitting_float(eltype(ArrayType))
+end
+
 #=
     Computes ∑ₖ G[k](x)
 =#

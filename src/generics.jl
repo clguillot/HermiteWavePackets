@@ -11,10 +11,6 @@ function fitting_float(::T) where{T<:AbstractWavePacket}
     return fitting_float(T)
 end
 
-function centers(G::AbstractWavePacket)
-    return SVector{1}(center(G))
-end
-
 @inline function (*)(G::AbstractWavePacket, w::Number)
     return w * G
 end

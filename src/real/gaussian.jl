@@ -66,11 +66,6 @@ function fitting_float(::Type{Gaussian{D, Tλ, Ta, Tq}}) where{D, Tλ, Ta, Tq}
     return fitting_float(promote_type(Tλ, Ta, Tq))
 end
 
-# Returns the center of mass of a gaussian
-function center(G::Gaussian)
-    return G.q
-end
-
 # Returns the complex conjugate of a gaussian
 function conj(G::Gaussian)
     return Gaussian(conj.(G.λ), G.a, G.q)

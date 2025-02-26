@@ -114,7 +114,7 @@ end
 end
 
 # Creates a copy of a hermite wave packet
-@inline function copy(H::HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}) where{N, TΛ, Tz, Tq, Tp}
+@inline function copy(H::HermiteWavePacket1D)
     return HermiteWavePacket1D(H.Λ, H.z, H.q, H.p)
 end
 
@@ -126,11 +126,6 @@ end
 # 
 function fitting_float(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
     return fitting_float(promote_type(TΛ, Tz, Tq, Tp))
-end
-
-# Returns the center of mass of a hermite wave packet
-@inline function center(H::HermiteWavePacket1D)
-    return H.q
 end
 
 # Returns the complex conjugate of a hermite wave packet

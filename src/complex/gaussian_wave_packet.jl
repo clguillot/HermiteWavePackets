@@ -83,7 +83,7 @@ end
 
 # Returns the complex conjugate of a gaussian
 function conj(G::GaussianWavePacket)
-    return GaussianWavePacket(conj(G.λ), conj(G.z), G.q, -G.p)
+    return GaussianWavePacket(conj.(G.λ), conj.(G.z), G.q, -G.p)
 end
 
 # Evaluates a gaussian at x
@@ -96,6 +96,11 @@ end
 #=
     TRANSFORMATIONS
 =#
+
+# 
+function Base.(-)(G::GaussianWavePacket)
+    return GaussianWavePacket(-G.λ, G.z, G.q, G.p)
+end
 
 # Computes the product of a scalar and a gaussian
 function (*)(w::Number, G::GaussianWavePacket)

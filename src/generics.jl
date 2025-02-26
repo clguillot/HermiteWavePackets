@@ -11,6 +11,10 @@ function fitting_float(::T) where{T<:AbstractWavePacket}
     return fitting_float(T)
 end
 
+@inline function (*)(G::AbstractWavePacket, w::Number)
+    return w * G
+end
+
 @inline function norm_L2(G::AbstractWavePacket)
     return sqrt(norm2_L2(G))
 end

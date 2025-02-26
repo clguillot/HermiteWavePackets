@@ -71,9 +71,6 @@ end
 @inline function zero(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return HermiteFct1D(zeros(SVector{N, TΛ}), one(Ta), zero(Tq))
 end
-@inline function zero(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
-    return zero(HermiteFct1D{N, TΛ, Ta, Tq})
-end
 
 # Creates a copy of a gaussian
 @inline function copy(H::HermiteFct1D)
@@ -84,25 +81,19 @@ end
 function core_type(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return promote_type(TΛ, Ta, Tq)
 end
-function core_type(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
-    return core_type(HermiteFct1D{N, TΛ, Ta, Tq})
-end
 
 # 
 function fitting_float(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return fitting_float(promote_type(TΛ, Ta, Tq))
 end
-function fitting_float(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
-    return fitting_float(HermiteFct1D{N, TΛ, Ta, Tq})
-end
 
 # Returns the complex conjugate of a hermite function
-@inline function conj(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+@inline function conj(H::HermiteFct1D)
     return HermiteFct1D(conj.(H.Λ), H.a, H.q)
 end
 
 # Evaluates a hermite function at x using Clenshaw's algorithm
-function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Number) where{N, TΛ, Ta, Tq}
+function (H::HermiteFct1D)(x::Number)
     T = promote_type(fitting_float(H), fitting_float(x))
 
     b = sqrt(2*H.a)
@@ -112,7 +103,7 @@ function (H::HermiteFct1D{N, TΛ, Ta, Tq})(x::Number) where{N, TΛ, Ta, Tq}
 end
 
 # Evaluates a hermite function at all the points in x
-function evaluate(H::HermiteFct1D{N, TΛ, Ta, Tq}, x::SVector{M, Tx}) where{N, TΛ, Ta, Tq, M, Tx<:Number}
+function evaluate(H::HermiteFct1D, x::SVector{M, <:Number}) where M
     T = promote_type(fitting_float(H), fitting_float(x))
 
     b = sqrt(2*H.a)
@@ -122,12 +113,17 @@ function evaluate(H::HermiteFct1D{N, TΛ, Ta, Tq}, x::SVector{M, Tx}) where{N, T
 end
 
 # Computes the product of a scalar and a hermite function
-@inline function (*)(w::Number, H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+@inline function Base.(-)(H::HermiteFct1D)
+    return HermiteFct1D(-H.Λ, H.a, H.q)
+end
+
+# Computes the product of a scalar and a hermite function
+@inline function (*)(w::Number, H::HermiteFct1D)
     return HermiteFct1D(w .* H.Λ, H.a, H.q)
 end
 
 # Computes the product of two hermite functions
-function (*)(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+function (*)(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
     a1, q1 = H1.a, H1.q
     a2, q2 = H2.a, H2.q
     a, q = gaussian_product_arg(a1, q1, a2, q2)
@@ -147,7 +143,7 @@ end
     Computes the product of a hermite function with a polynomial
         P(x) = ∑ₖ P[k](x-q)^k
 =#
-function polynomial_product(q::Tq1, P::SVector{N1, TΛ1}, H::HermiteFct1D{N2, TΛ2, Tq2}) where{Tq1<:Real, N1, TΛ1, N2, TΛ2, Tq2}
+function polynomial_product(q::Tq1, P::SVector{N1, TΛ1}, H::HermiteFct1D{N2}) where{Tq1<:Real, N1, TΛ1, N2}
     N = max(N1+N2-1, 0)
     x, _ = hermite_quadrature(H.a, H.q, Val(N))
     T = promote_type(eltype(x), Tq1, TΛ1)
@@ -181,7 +177,7 @@ function integral(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
 end
 
 # Computes the convolution product of two hermite functions
-function convolution(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+function convolution(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
     T = promote_type(fitting_float(H1), fitting_float(H2))
     N = max(N1 + N2 - 1, 0)
     
@@ -197,8 +193,8 @@ function convolution(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, 
 
     a = inv(Hf.a)
     q = H1.q + H2.q
-    cond_real(z) = complex_truncation(promote_type(TΛ1, TΛ2), z)
-    Λ = T(sqrt(2π)) .* SVector{N}(cond_real((1im)^n * Hf.Λ[n+1]) for n=0:N-1)
+    cond_real(z) = complex_truncation(promote_type(core_type(H1), core_type(H2)), z)
+    Λ = T(sqrt(2π)) .* SVector{N}(cond_real.((1im)^n * Hf.Λ[n+1]) for n=0:N-1)
     return HermiteFct1D(Λ, a, q)
 end
 
@@ -206,7 +202,7 @@ end
     Computes the L² product of two hermite functions
         ∫dx conj(H1(x)) H2(x)
 =#
-function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+function dot_L2(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
     N = max(N1 + N2 - 1, 0)
     a, q = gaussian_product_arg(H1.a, H1.q, H2.a, H2.q)
 
@@ -219,18 +215,14 @@ function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2,
 
     return dot(w, Φ)
 end
-@inline function dot_L2(G1::Gaussian1D{Tλ1, Ta1, Tq1}, H2::HermiteFct1D{N2, TΛ2, Ta2, Tq2}) where{Tλ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
+@inline function dot_L2(G1::Gaussian1D, H2::HermiteFct1D)
     return dot_L2(HermiteFct1D(G1), H2)
 end
-@inline function dot_L2(H1::HermiteFct1D{N1, TΛ1, Ta1, Tq1}, G2::Gaussian1D{Tλ2, Ta2, Tq2}) where{N1, TΛ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
+@inline function dot_L2(H1::HermiteFct1D, G2::Gaussian1D)
     return dot_L2(H1, HermiteFct1D(G2))
 end
 
 # Computes the square L² norm of a hermite function
-@inline function norm2_L2(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
+@inline function norm2_L2(H::HermiteFct1D)
     return real(dot(H.Λ, H.Λ))
-end
-# Computes the L² norm of a hermite function
-@inline function norm_L2(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
-    return sqrt(norm2_L2(H))
 end

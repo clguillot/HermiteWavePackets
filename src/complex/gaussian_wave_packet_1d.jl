@@ -142,6 +142,10 @@ end
     return complex_gaussian_inv_fourier_arg(z_tf, q_tf, p_tf)
 end
 
+# 
+@inline function Base.(-)(G::GaussianWavePacket1D)
+    return GaussianWavePacket1D(-G.λ, G.z, G.q, G.p)
+end
 
 # Computes the product of a scalar and a gaussian
 @inline function (*)(w::Number, G::GaussianWavePacket1D)

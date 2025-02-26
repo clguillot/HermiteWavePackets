@@ -99,6 +99,11 @@ end
     return a, q
 end
 
+# 
+@inline function Base.(-)(G::Gaussian1D)
+    return Gaussian1D(-G.λ, G.a, G.q)
+end
+
 # Computes the product of a scalar and a gaussian
 @inline function (*)(w::Number, G::Gaussian1D)
     return Gaussian1D(w * G.λ, G.a, G.q)

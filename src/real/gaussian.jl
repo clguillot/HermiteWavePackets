@@ -47,12 +47,12 @@ end
 =#
 
 # Returns a null gaussian
-@inline function zero(::Type{Gaussian{D, Tλ, Ta, Tq}}) where{D, Tλ, Ta, Tq}
+function zero(::Type{Gaussian{D, Tλ, Ta, Tq}}) where{D, Tλ, Ta, Tq}
     return Gaussian(zero(Tλ), (@SVector ones(Ta, D)), (@SVector zeros(Tq, D)))
 end
 
 # Creates a copy of a gaussian
-@inline function copy(G::Gaussian{D, Tλ, Ta, Tq}) where{D, Tλ, Ta, Tq}
+function copy(G::Gaussian)
     return Gaussian(G.λ, G.a, G.q)
 end
 
@@ -67,19 +67,19 @@ function fitting_float(::Type{Gaussian{D, Tλ, Ta, Tq}}) where{D, Tλ, Ta, Tq}
 end
 
 # Returns the complex conjugate of a gaussian
-function conj(G::Gaussian{D, Tλ, Ta, Tq}) where{D, Tλ, Ta, Tq}
-    return Gaussian(conj(G.λ), G.a, G.q)
+function conj(G::Gaussian)
+    return Gaussian(conj.(G.λ), G.a, G.q)
 end
 
 # Evaluates a gaussian at x
-function (G::Gaussian{D, Tλ, Ta, Tq})(x::AbstractVector{<:Number}) where{D, Tλ, Ta, Tq}
+function (G::Gaussian{D})(x::AbstractVector{<:Number}) where{D}
     xs = SVector{D}(x)
     u = @. G.a * (xs - G.q)^2
     return G.λ * exp(-sum(u) / 2)
 end
 
 # Evaluates a gaussian at every point in x
-function evaluate(G::Gaussian{D, Tλ, Ta, Tq}, x::SMatrix{D, M, <:Number}) where{D, Tλ, Ta, Tq, M}
+function evaluate(G::Gaussian{D}, x::SMatrix{D, M, <:Number}) where{D, M}
     u = @. G.a * (x - G.q)^2
     v = reshape(sum(u; dim=1), M)
     return @. G.λ * exp(-v / 2)
@@ -89,27 +89,32 @@ end
     TRANSFORMATIONS
 =#
 
+# 
+function Base.(-)(G::Gaussian)
+    return Gaussian(-G.λ, G.a, G.q)
+end
+
 # Computes the product of a scalar and a gaussian
-function (*)(w::Number, G::Gaussian{D, Tλ, Ta, Tq}) where{D, Tλ, Ta, Tq}
+function (*)(w::Number, G::Gaussian)
     return Gaussian(w * G.λ, G.a, G.q)
 end
 
 # Computes the product of two gaussians
-function (*)(G1::Gaussian{D, Tλ1, Ta1, Tq1}, G2::Gaussian{D, Tλ2, Ta2, Tq2}) where{D, Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
+function (*)(G1::Gaussian{D}, G2::Gaussian{D}) where D
     a, q = gaussian_product_arg(G1.a, G1.q, G2.a, G2.q)
     λ = G1(q) * G2(q)
     return Gaussian(λ, a, q)
 end
 
 # Computes the integral of a gaussian
-function integral(G::Gaussian{D, Tλ, Ta, Tq}) where{D, Tλ, Ta, Tq}
+function integral(G::Gaussian{D}) where D
     T = fitting_float(G)
     u = @. T(sqrt(2π)) * G.a^T(-1/2)
     return G.λ * prod(u)
 end
 
 # Computes the convolution product of two gaussians
-function convolution(G1::Gaussian{D, Tλ1, Ta1, Tq1}, G2::Gaussian{D, Tλ2, Ta2, Tq2}) where{D, Tλ1, Ta1, Tq1, Tλ2, Ta2, Tq2}
+function convolution(G1::Gaussian{D}, G2::Gaussian{D}) where D
     a, q = gaussian_convolution_arg(G1.a, G1.q, G2.a, G2.q)
     λ = integral(G1 * Gaussian(G2.λ, G2.a, q - G2.q))
     return Gaussian(λ, a, q)
@@ -124,7 +129,7 @@ function dot_L2(G1::Gaussian{D, Tλ1, Ta1, Tq1}, G2::Gaussian{D, Tλ2, Ta2, Tq2}
 end
 
 # Computes the square L² norm of a gaussian
-function norm2_L2(G::Gaussian{D, Tλ, Ta, Tq}) where{D, Tλ, Ta, Tq}
+function norm2_L2(G::Gaussian{D}) where D
     T = fitting_float(G)
     u = @. T(sqrt(π)) * G.a^T(-1/2)
     return abs2(G.λ) * prod(u)

@@ -17,7 +17,7 @@ export Gaussian
 export GaussianWavePacket1D
 export HermiteWavePacket1D
 export GaussianWavePacket
-export WavePacketArray
+export WavePacketSum
 
 # Functions
 export hermite_discrete_transform

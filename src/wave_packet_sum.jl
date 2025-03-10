@@ -12,6 +12,22 @@ struct WavePacketSum{Ctype<:Union{AbstractArray{<:AbstractWavePacket}, Tuple{Var
     g::Ctype
 end
 
+#=
+    CREATION
+=#
+
+function Base.:+(G1::AbstractWavePacket, G2::AbstractWavePacket)
+    return WavePacketSum((G1, G2))
+end
+
+function Base.:-(G1::AbstractWavePacket, G2::AbstractWavePacket)
+    return WavePacketSum((G1, -G2))
+end
+
+#=
+    BASIC OPERATIONS
+=#
+
 #
 function core_type(::Type{WavePacketSum{Ctype}}) where{Ctype<:AbstractArray}
     return core_type(eltype(Ctype))
@@ -25,6 +41,11 @@ function fitting_float(::Type{WavePacketSum{Ctype}}) where Ctype
     return fitting_float(core_type(Ctype))
 end
 
+#
+function Base.conj(G::WavePacketSum)
+    return WavePacketSum(conj.(G.g))
+end
+
 #=
     Computes ∑ₖ G[k](x)
 =#
@@ -34,6 +55,36 @@ function (G::WavePacketSum)(x)
         s += g(x)
     end
     return s
+end
+
+#=
+    TRANSFORMATIONS
+=#
+
+#
+function Base.:-(G1::WavePacketSum)
+    return WavePacketSum(.- G1.g)
+end
+
+#
+function Base.:*(w::Number, G::WavePacketSum)
+    return WavePacketSum(w .* G.g)
+end
+
+#
+function Base.:*(G1::AbstractWavePacket, G2::WavePacketSum)
+    return WavePacketSum(G1 .* G2.g)
+end
+@inline function Base.:*(G1::WavePacketSum, G2::AbstractWavePacket)
+    return G2 * G1
+end
+
+#
+function convolution(G1::AbstractWavePacket, G2::WavePacketSum)
+    return WavePacketSum(convolution.(G1, G2.g))
+end
+@inline function convolution(G1::WavePacketSum, G2::AbstractWavePacket)
+    return convolution(G2, G1)
 end
 
 #=
@@ -64,18 +115,6 @@ end
 
 #=
     Computes the dot product
-        ∑ₖ dot_L2(G1[k], G2)
-=#
-function dot_L2(G1::WavePacketSum, G2::AbstractWavePacket)
-    s = zero(promote_type(core_type(G1), core_type(G2)))
-    for g1 in G1.g
-        s += dot_L2(g1, G2)
-    end
-    return s
-end
-
-#=
-    Computes the dot product
         ∑ₗ dot_L2(G1, G2[l])
 =#
 function dot_L2(G1::AbstractWavePacket, G2::WavePacketSum)
@@ -84,6 +123,13 @@ function dot_L2(G1::AbstractWavePacket, G2::WavePacketSum)
         s += dot_L2(G1, g2)
     end
     return s
+end
+#=
+    Computes the dot product
+        ∑ₖ dot_L2(G1[k], G2)
+=#
+@inline function dot_L2(G1::WavePacketSum, G2::AbstractWavePacket)
+    return dot_L2(G2, G1)
 end
 
 #=

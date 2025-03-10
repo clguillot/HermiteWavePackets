@@ -17,7 +17,7 @@ function core_type(::Type{WavePacketSum{Ctype}}) where{Ctype<:AbstractArray}
     return core_type(eltype(Ctype))
 end
 function core_type(::Type{WavePacketSum{Ctype}}) where{Ctype<:Tuple}
-    return promote_type(core_type(T) for T in fieldtypes(Ctype))
+    return promote_type(core_type.(fieldtypes(Ctype))...)
 end
 
 #

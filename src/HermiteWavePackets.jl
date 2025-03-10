@@ -35,12 +35,6 @@ export norm2_L2
 export norm_L2
 export core_type
 
-import Base.*
-import Base.convert
-import Base.copy
-import Base.zero
-import Base.conj
-
 include("utils.jl")
 
 include("real/hermite_quadrature.jl")
@@ -53,7 +47,7 @@ include("complex/gaussian_wave_packet_1d.jl")
 include("complex/hermite_wave_packet_1d.jl")
 include("complex/gaussian_wave_packet.jl")
 
-include("wave_packet_array.jl")
+include("wave_packet_sum.jl")
 include("generics.jl")
 
 end

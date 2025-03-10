@@ -33,20 +33,20 @@ end
     CONVERSIONS
 =#
 
-function convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, G::Gaussian1D) where{N, TΛ, Tz, Tq, Tp}
+function Base.convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, G::Gaussian1D) where{N, TΛ, Tz, Tq, Tp}
     T = fitting_float(G)
     Λ = [convert(TΛ, (G.a / π)^T(-1/4) * G.λ); zero(SVector{N - 1, TΛ})]
     return HermiteWavePacket1D(Λ, convert(Tz, G.a), convert(Tq, G.q), zero(Tp))
 end
 
-function convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket1D) where{N, TΛ, Tz, Tq, Tp}
+function Base.convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket1D) where{N, TΛ, Tz, Tq, Tp}
     T = fitting_float(G)
     a = real(G.z)
     Λ = [convert(TΛ, (a / π)^T(-1/4) * G.λ); zero(SVector{N - 1, TΛ})]
     return HermiteWavePacket1D(Λ, convert(Tz, G.z), convert(Tq, G.q),convert(Tp, G.p))
 end
 
-function convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, H::HermiteFct1D{N2}) where{N, TΛ, Tz, Tq, Tp, N2}
+function Base.convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, H::HermiteFct1D{N2}) where{N, TΛ, Tz, Tq, Tp, N2}
     if N < N2
         throw(InexactError("Cannot convert HermiteFct1D{N2} to HermiteWavePacket1D{N}: N = $N is smaller than N2 = $N2. Ensure that N ≥ N2 for a valid conversion."))
     end
@@ -109,12 +109,12 @@ end
 =#
 
 # Returns a null hermite wave packet
-@inline function zero(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
+@inline function Base.zero(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
     return HermiteWavePacket1D(zero(SVector{N, TΛ}), one(Tz), zero(Tq), zero(Tp))
 end
 
 # Creates a copy of a hermite wave packet
-@inline function copy(H::HermiteWavePacket1D)
+@inline function Base.copy(H::HermiteWavePacket1D)
     return HermiteWavePacket1D(H.Λ, H.z, H.q, H.p)
 end
 
@@ -129,7 +129,7 @@ function fitting_float(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N,
 end
 
 # Returns the complex conjugate of a hermite wave packet
-@inline function conj(H::HermiteWavePacket1D)
+@inline function Base.conj(H::HermiteWavePacket1D)
     return HermiteWavePacket1D(conj.(H.Λ), conj.(H.z), H.q, -H.p)
 end
 
@@ -157,12 +157,12 @@ end
 end
 
 # Computes the product of a scalar and a gaussian
-@inline function (*)(w::Number, H::HermiteWavePacket1D)
+@inline function Base.:*(w::Number, H::HermiteWavePacket1D)
     return HermiteWavePacket1D(w .* H.Λ, H.z, H.q, H.p)
 end
 
 # Computes the product of two hermite wave packets
-function (*)(H1::HermiteWavePacket1D{N1}, H2::HermiteWavePacket1D{N2}) where{N1, N2}
+function Base.:*(H1::HermiteWavePacket1D{N1}, H2::HermiteWavePacket1D{N2}) where{N1, N2}
     N = max(N1 + N2 - 1, 0)
     z1, q1, p1 = H1.z, H1.q, H1.p
     z2, q2, p2 = H2.z, H2.q, H2.p

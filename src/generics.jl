@@ -1,5 +1,5 @@
 
-function zero(::T) where{T<:AbstractWavePacket}
+function Base.zero(::T) where{T<:AbstractWavePacket}
     return zero(T)
 end
 
@@ -11,7 +11,7 @@ function fitting_float(::T) where{T<:AbstractWavePacket}
     return fitting_float(T)
 end
 
-@inline function (*)(G::AbstractWavePacket, w::Number)
+@inline function Base.:*(G::AbstractWavePacket, w::Number)
     return w * G
 end
 

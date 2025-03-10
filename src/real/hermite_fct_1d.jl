@@ -68,12 +68,12 @@ end
 =#
 
 # Returns a null hermite function
-@inline function zero(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
+@inline function Base.zero(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return HermiteFct1D(zeros(SVector{N, TΛ}), one(Ta), zero(Tq))
 end
 
 # Creates a copy of a gaussian
-@inline function copy(H::HermiteFct1D)
+@inline function Base.copy(H::HermiteFct1D)
     return HermiteFct1D(H.Λ, H.a, H.q)
 end
 
@@ -88,7 +88,7 @@ function fitting_float(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, T
 end
 
 # Returns the complex conjugate of a hermite function
-@inline function conj(H::HermiteFct1D)
+@inline function Base.conj(H::HermiteFct1D)
     return HermiteFct1D(conj.(H.Λ), H.a, H.q)
 end
 
@@ -118,12 +118,12 @@ end
 end
 
 # Computes the product of a scalar and a hermite function
-@inline function (*)(w::Number, H::HermiteFct1D)
+@inline function Base.:*(w::Number, H::HermiteFct1D)
     return HermiteFct1D(w .* H.Λ, H.a, H.q)
 end
 
 # Computes the product of two hermite functions
-function (*)(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
+function Base.:*(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
     a1, q1 = H1.a, H1.q
     a2, q2 = H2.a, H2.q
     a, q = gaussian_product_arg(a1, q1, a2, q2)

@@ -14,7 +14,7 @@ end
     CONVERSIONS
 =#
 
-function convert(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, G::GaussianWavePacket1D) where {Tλ, Tz, Tq, Tp}
+function Base.convert(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, G::GaussianWavePacket1D) where {Tλ, Tz, Tq, Tp}
     return GaussianWavePacket1D(
         convert(Tλ, G.λ),
         convert(Tz, G.z),
@@ -23,7 +23,7 @@ function convert(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, G::GaussianWaveP
     )
 end
 
-function convert(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, G::Gaussian1D) where {Tλ, Tz, Tq, Tp}
+function Base.convert(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, G::Gaussian1D) where {Tλ, Tz, Tq, Tp}
     return GaussianWavePacket1D(
         convert(Tλ, G.λ),
         convert(Tz, G.a),
@@ -62,12 +62,12 @@ end
 =#
 
 # Returns a null gaussian
-@inline function zero(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
+@inline function Base.zero(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ, Tz, Tq, Tp}
     return GaussianWavePacket1D(zero(Tλ), one(Tz), zero(Tq), zero(Tp))
 end
 
 # Creates a copy of a gaussian
-@inline function copy(G::GaussianWavePacket1D)
+@inline function Base.copy(G::GaussianWavePacket1D)
     return GaussianWavePacket1D(G.λ, G.z, G.q, G.p)
 end
 
@@ -82,7 +82,7 @@ function fitting_float(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}) where{Tλ,
 end
 
 # Returns the complex conjugate of a gaussian
-@inline function conj(G::GaussianWavePacket1D)
+@inline function Base.conj(G::GaussianWavePacket1D)
     return GaussianWavePacket1D(conj(G.λ), conj(G.z), G.q, -G.p)
 end
 
@@ -148,12 +148,12 @@ end
 end
 
 # Computes the product of a scalar and a gaussian
-@inline function (*)(w::Number, G::GaussianWavePacket1D)
+@inline function Base.:*(w::Number, G::GaussianWavePacket1D)
     return GaussianWavePacket1D(w * G.λ, G.z, G.q, G.p)
 end
 
 # Computes the product of two gaussians
-@inline function (*)(G1::GaussianWavePacket1D, G2::GaussianWavePacket1D)
+@inline function Base.:*(G1::GaussianWavePacket1D, G2::GaussianWavePacket1D)
     z, q, p = complex_gaussian_product_arg(G1.z, G1.q, G1.p, G2.z, G2.q, G2.p)
     λ = G1(q) * G2(q) * cis(-p*q)
     return GaussianWavePacket1D(λ, z, q, p)

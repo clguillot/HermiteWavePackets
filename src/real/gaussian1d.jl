@@ -39,12 +39,12 @@ end
 =#
 
 # Returns a null gaussian
-@inline function zero(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
+@inline function Base.zero(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return Gaussian1D(zero(Tλ), one(Ta), zero(Tq))
 end
 
 # Creates a copy of a gaussian
-@inline function copy(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
+@inline function Base.copy(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
     return Gaussian1D(G.λ, G.a, G.q)
 end
 
@@ -59,7 +59,7 @@ function fitting_float(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
 end
 
 # Returns the complex conjugate of a gaussian
-@inline function conj(G::Gaussian1D)
+@inline function Base.conj(G::Gaussian1D)
     return Gaussian1D(conj(G.λ), G.a, G.q)
 end
 
@@ -105,12 +105,12 @@ end
 end
 
 # Computes the product of a scalar and a gaussian
-@inline function (*)(w::Number, G::Gaussian1D)
+@inline function Base.:*(w::Number, G::Gaussian1D)
     return Gaussian1D(w * G.λ, G.a, G.q)
 end
 
 # Computes the product of two gaussians
-@inline function (*)(G1::Gaussian1D, G2::Gaussian1D)
+@inline function Base.:*(G1::Gaussian1D, G2::Gaussian1D)
     a, q = gaussian_product_arg(G1.a, G1.q, G2.a, G2.q)
     λ = G1(q) * G2(q)
     return Gaussian1D(λ, a, q)

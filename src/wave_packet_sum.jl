@@ -51,10 +51,7 @@ end
 =#
 function (G::WavePacketSum)(x)
     s = zero(promote_type(core_type(G), eltype(x)))
-    for g in G.g
-        s += g(x)
-    end
-    return s
+    return sum(g(x) for g in G.g; init=s)
 end
 
 #=
@@ -93,10 +90,7 @@ end
 =#
 function integral(G::WavePacketSum)
     s = zero(core_type(G))
-    for g in G.g
-        s += integral(g)
-    end
-    return s
+    return sum(integral(g) for g in G.g; init=s)
 end
 
 #=
@@ -105,12 +99,7 @@ end
 =#
 function dot_L2(G1::WavePacketSum, G2::WavePacketSum)
     s = zero(promote_type(core_type(G1), core_type(G2)))
-    for g1 in G1.g
-        for g2 in G2.g
-            s += dot_L2(g1, g2)
-        end
-    end
-    return s
+    return sum(dot_L2(g1, g2) for g1 in G1.g for g2 in G2.g; init=s)
 end
 
 #=
@@ -119,10 +108,7 @@ end
 =#
 function dot_L2(G1::AbstractWavePacket, G2::WavePacketSum)
     s = zero(promote_type(core_type(G1), core_type(G2)))
-    for g2 in G2.g
-        s += dot_L2(G1, g2)
-    end
-    return s
+    return sum(dot_L2(G1, g2) for g2 in G2.g; init=s)
 end
 #=
     Computes the dot product
@@ -137,11 +123,46 @@ end
 =#
 function norm2_L2(G::WavePacketSum)
     s = zero(real(core_type(G)))
-    for k in eachindex(G.g)
-        s += norm2_L2(G.g[k])
-        for l in Iterators.drop(eachindex(G.g), k)
-            s += 2 * real(dot_L2(G.g[k], G.g[l]))
+    S1 = sum(norm2_L2(g) for g in G.g; init=s)
+    S2 = sum(real(dot_L2(G.g[k], G.g[l])) for k in eachindex(G.g) for l in Iterators.drop(eachindex(G.g), k); init=s)
+    return S1 + 2 * S2
+end
+
+#=
+    ITERATOR
+    It is allowed to iterate over a WavePacketSum
+    The iteration will be performed over all elements of the sum,
+    by breaking down internal WavePacketSum
+=#
+function Base.iterate(G::WavePacketSum)
+    sup_state = iterate(G.g)
+    while !isnothing(sup_state)
+        sub_state = iterate(sup_state)
+        if !isnothing(sub_state)
+            return (sub_state[1], (sup_state..., sub_state[2]))
         end
+        sup_state = iterate(G.g, sup_state[2])
     end
-    return s
+    return nothing
+end
+function Base.iterate(G::WavePacketSum, state)
+    sup_state = (state[1], state[2])
+    sub_state = iterate(sup_state, state[3])
+
+    # If an iterated element is found on the current element
+    if !isnothing(sub_state)
+        return (sub_state[1], (sup_state..., sub_state[2]))
+    end
+
+    # If no iterated element is found on the current element
+    sup_state = iterate(G.g, sup_state[2])
+    while !isnothing(sup_state)
+        sub_state = iterate(sup_state[1])
+        if !isnothing(sub_state)
+            return (sub_state[1], (sup_state..., sub_state[2]))
+        end
+        sup_state = iterate(G.g, sup_state[2])
+    end
+
+    return nothing
 end

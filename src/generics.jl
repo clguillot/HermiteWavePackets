@@ -15,6 +15,13 @@ end
     return w * G
 end
 
+function Base.iterate(G::AbstractWavePacket)
+    return (G, nothing)
+end
+function Base.iterate(::AbstractWavePacket, ::Nothing)
+    return nothing
+end
+
 @inline function norm_L2(G::AbstractWavePacket)
     return sqrt(norm2_L2(G))
 end

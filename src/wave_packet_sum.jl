@@ -137,7 +137,7 @@ end
 function Base.iterate(G::WavePacketSum)
     sup_state = iterate(G.g)
     while !isnothing(sup_state)
-        sub_state = iterate(sup_state)
+        sub_state = iterate(sup_state[1])
         if !isnothing(sub_state)
             return (sub_state[1], (sup_state..., sub_state[2]))
         end
@@ -147,7 +147,7 @@ function Base.iterate(G::WavePacketSum)
 end
 function Base.iterate(G::WavePacketSum, state)
     sup_state = (state[1], state[2])
-    sub_state = iterate(sup_state, state[3])
+    sub_state = iterate(sup_state[1], state[3])
 
     # If an iterated element is found on the current element
     if !isnothing(sub_state)

@@ -8,7 +8,7 @@
     Wraps a container of AbstractWavePacket into a WavePacketSum <: AbstractWavePacket
     Represents the function x -> sum(p(x) for p in g)
 =#
-struct WavePacketSum{Ctype<:Union{AbstractArray{<:AbstractWavePacket}, Tuple{Vararg{<:AbstractWavePacket}}}} <: AbstractWavePacket
+struct WavePacketSum{Ctype<:Union{AbstractArray{<:AbstractWavePacket}, Tuple{Vararg{AbstractWavePacket}}}} <: AbstractWavePacket
     g::Ctype
 end
 

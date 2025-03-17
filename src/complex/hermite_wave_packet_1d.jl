@@ -181,6 +181,12 @@ function Base.:*(H1::HermiteWavePacket1D{N1}, H2::HermiteWavePacket1D{N2}) where
     Λ = hermite_discrete_transform(Φ, a, q, Val(N))
     return HermiteWavePacket1D(Λ, z, q, p)
 end
+@inline function Base.:*(G1::GaussianWavePacket1D, H2::HermiteWavePacket1D)
+    return HermiteWavePacket1D(G1) * H2
+end
+@inline function Base.:*(H1::HermiteWavePacket1D, G2::GaussianWavePacket1D)
+    return G2 * H1
+end
 
 #=
     Computes the product of a hermite wave packet with a polynomial

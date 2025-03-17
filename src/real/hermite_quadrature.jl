@@ -50,14 +50,10 @@ end
 @generated function hermite_primitive_discrete_transform(::Type{T}, ::Val{N}) where{N, T<:Union{Float16, Float32, Float64}}
     x, w, M = hermite_primitive_discrete_transform(T, N)
 
-    if N <= 32
-        xs = SizedVector{N}(x)
-        ws = SizedVector{N}(w)
-        Ms = SizedMatrix{N, N}(M)
-        return :( $xs, $ws, $Ms)
-    else
-        return :( $x, $w, $M)
-    end
+    xs = SVector{N}(x)
+    ws = SVector{N}(w)
+    Ms = SMatrix{N, N}(M)
+    return :( $xs, $ws, $Ms)
 end
 
 #=
@@ -68,7 +64,7 @@ end
         Λ = (λₙ)ₙ
     Returns Λ
 =#
-function hermite_discrete_transform(Λ::AbstractVector{TΛ}, U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N}) where{TΛ<:Number, TU<:Number, Ta<:Real, Tq<:Real, N}
+function hermite_discrete_transform!(Λ::AbstractVector{TΛ}, U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N}) where{TΛ<:Number, TU<:Number, Ta<:Real, Tq<:Real, N}
     T = fitting_float(promote_type(TΛ, TU, Ta, Tq))
     _, _, M0 = hermite_primitive_discrete_transform(T, Val(N))
 
@@ -82,10 +78,7 @@ function hermite_discrete_transform(U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N
     T = fitting_float(TΛ)
     _, _, M0 = hermite_primitive_discrete_transform(T, Val(N))
 
-    Λ = zero(MVector{N, TΛ})
-    mul!(Λ, M0, U, a^T(-1/4), zero(TΛ))
-
-    return SVector{N}(Λ)
+    return a^T(-1/4) .* (M0 * U)
 end
 
 
@@ -105,8 +98,8 @@ function hermite_quadrature(a::Real, q::Real, ::Val{N}) where{N}
     x0, w0, _ = hermite_primitive_discrete_transform(T, Val(N))
 
     c = a^T(-1/2)
-    x = SVector{N}(x0) .* c .+ q
-    w = SVector{N}(w0) .* c
+    x = x0 .* c .+ q
+    w = w0 .* c
 
     return x, w
 end

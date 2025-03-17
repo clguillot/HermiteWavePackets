@@ -36,6 +36,10 @@ function GaussianWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where {Tλ, Ta, Tq}
     return convert(GaussianWavePacket1D{Tλ, Ta, Tq, Tq}, G)
 end
 
+function truncate_to_gaussian(G::GaussianWavePacket1D)
+    return G
+end
+
 #=
     PROMOTIONS
 =#

@@ -43,6 +43,11 @@ function HermiteFct1D(G::Gaussian1D{TΛ, Ta, Tq}) where {TΛ, Ta, Tq}
     return convert(HermiteFct1D{1, TΛ, Ta, Tq}, G)
 end
 
+function truncate_to_gaussian(H::HermiteFct1D)
+    T = fitting_float(H)
+    return Gaussian1D((H.a / π)^T(1/4) * first(H.Λ), H.a, H.q)
+end
+
 #=
     PROMOTIONS
 =#

@@ -67,6 +67,12 @@ function HermiteWavePacket1D(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, 
     return convert(HermiteWavePacket1D{N, TΛ, Ta, Tq, Tq}, H)
 end
 
+function truncate_to_gaussian(H::HermiteWavePacket1D)
+    T = fitting_float(H)
+    a = real(H.z)
+    return GaussianWavePacket1D((a / π)^T(1/4) * first(H.Λ), H.z, H.q, H.p)
+end
+
 #=
     PROMOTIONS
 =#

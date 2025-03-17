@@ -29,6 +29,10 @@ function Base.convert(::Type{Gaussian{1, TÎ», Ta, Tq}}, G::Gaussian1D) where {TÎ
     )
 end
 
+function truncate_to_gaussian(G::Gaussian)
+    return G
+end
+
 #=
     PROMOTIONS
 =#

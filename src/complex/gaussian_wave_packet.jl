@@ -92,9 +92,8 @@ end
 
 # Evaluates a gaussian at x
 function (G::GaussianWavePacket{D})(x::AbstractVector{<:Number}) where D
-    xs = SVector{D}(x)
-    u1 = @. G.z/2 * (xs - G.q)^2
-    return G.λ * exp(-sum(u1)) * cis(dot(G.p, xs))
+    xs = SizedVector{D}(x)
+    return G.λ * exp(-sum(z/2 * (y - q)^2 for (z, q, y) in zip(G.z, G.q, xs))) * cis(dot(G.p, xs))
 end
 
 #=
@@ -109,6 +108,11 @@ end
 # Computes the product of a scalar and a gaussian
 function Base.:*(w::Number, G::GaussianWavePacket)
     return GaussianWavePacket(w * G.λ, G.z, G.q, G.p)
+end
+
+# Computes the product of a gaussian by a scalar
+function Base.:/(G::GaussianWavePacket, w::Number)
+    return GaussianWavePacket(G.λ / w, G.z, G.q, G.p)
 end
 
 # Computes the product of two gaussians
@@ -144,8 +148,7 @@ end
 # Computes the integral of a gaussian
 function integral(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
-    u = @. G.p^2 / (2*G.z)
-    return T(sqrt(2π)^D) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q)) * exp(-sum(u))
+    return T((2π)^(D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q)) * exp(-sum(p^2 / (2*z) for (z, p) in zip(G.z, G.p)))
 end
 
 #=
@@ -156,7 +159,7 @@ end
 function fourier(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
     z_tf, q_tf, p_tf = complex_gaussian_fourier_arg(G.z, G.q, G.p)
-    λ_tf = T(sqrt(2π)^D) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
+    λ_tf = T((2π)^(D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
     return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
 
@@ -189,5 +192,5 @@ end
 # Computes the square L² norm of a gaussian wave packet
 function norm2_L2(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
-    return T(sqrt(π)^D) * abs2(G.λ) * prod((real.(G.z)).^T(-1/2))
+    return T(sqrt(π)^D) * abs2(G.λ) * prod(real.(G.z))^T(-1/2)
 end

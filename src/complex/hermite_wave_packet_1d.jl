@@ -167,6 +167,11 @@ end
     return HermiteWavePacket1D(w .* H.Λ, H.z, H.q, H.p)
 end
 
+# Computes the division of a hermite wave packet by a scalar
+@inline function Base.:/(H::HermiteWavePacket1D, w::Number)
+    return HermiteWavePacket1D(H.Λ ./ w, H.z, H.q, H.p)
+end
+
 # Computes the product of two hermite wave packets
 function Base.:*(H1::HermiteWavePacket1D{N1}, H2::HermiteWavePacket1D{N2}) where{N1, N2}
     N = max(N1 + N2 - 1, 0)

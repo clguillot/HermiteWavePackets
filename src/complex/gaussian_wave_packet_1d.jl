@@ -156,6 +156,11 @@ end
     return GaussianWavePacket1D(w * G.λ, G.z, G.q, G.p)
 end
 
+# Computes the product of a gaussian by a scalar
+@inline function Base.:/(G::GaussianWavePacket1D, w::Number)
+    return GaussianWavePacket1D(G.λ / w, G.z, G.q, G.p)
+end
+
 # Computes the product of two gaussians
 @inline function Base.:*(G1::GaussianWavePacket1D, G2::GaussianWavePacket1D)
     z, q, p = complex_gaussian_product_arg(G1.z, G1.q, G1.p, G2.z, G2.q, G2.p)

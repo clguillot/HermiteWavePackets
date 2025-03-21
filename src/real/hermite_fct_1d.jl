@@ -127,6 +127,11 @@ end
     return HermiteFct1D(w .* H.Λ, H.a, H.q)
 end
 
+# Computes the division of a hermite function by a scalar
+@inline function Base.:/(H::HermiteFct1D, w::Number)
+    return HermiteFct1D(H.Λ ./ w, H.a, H.q)
+end
+
 # Computes the product of two hermite functions
 function Base.:*(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
     a1, q1 = H1.a, H1.q

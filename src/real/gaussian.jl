@@ -77,16 +77,8 @@ end
 
 # Evaluates a gaussian at x
 function (G::Gaussian{D})(x::AbstractVector{<:Number}) where D
-    xs = SVector{D}(x)
-    u = @. G.a * (xs - G.q)^2
-    return G.λ * exp(-sum(u) / 2)
-end
-
-# Evaluates a gaussian at every point in x
-function evaluate(G::Gaussian{D}, x::SMatrix{D, M, <:Number}) where{D, M}
-    u = @. G.a * (x - G.q)^2
-    v = reshape(sum(u; dim=1), M)
-    return @. G.λ * exp(-v / 2)
+    xs = SizedVector{D}(x)
+    return G.λ * exp(-sum(a * (y - q)^2 for (a, q, y) in zip(G.a, G.q, xs)) / 2)
 end
 
 #=
@@ -103,6 +95,11 @@ function Base.:*(w::Number, G::Gaussian)
     return Gaussian(w * G.λ, G.a, G.q)
 end
 
+# Computes the product of a gaussian by a scalar
+function Base.:/(G::Gaussian, w::Number)
+    return Gaussian(G.λ / w, G.a, G.q)
+end
+
 # Computes the product of two gaussians
 function Base.:*(G1::Gaussian{D}, G2::Gaussian{D}) where D
     a, q = gaussian_product_arg(G1.a, G1.q, G2.a, G2.q)
@@ -113,8 +110,7 @@ end
 # Computes the integral of a gaussian
 function integral(G::Gaussian{D}) where D
     T = fitting_float(G)
-    u = @. T(sqrt(2π)) * G.a^T(-1/2)
-    return G.λ * prod(u)
+    return T((2π)^(D/2)) * G.λ * prod(G.a)^T(-1/2)
 end
 
 # Computes the convolution product of two gaussians
@@ -135,6 +131,5 @@ end
 # Computes the square L² norm of a gaussian
 function norm2_L2(G::Gaussian{D}) where D
     T = fitting_float(G)
-    u = @. T(sqrt(π)) * G.a^T(-1/2)
-    return abs2(G.λ) * prod(u)
+    return T(sqrt(π)^D) * abs2(G.λ) * prod(G.a)^T(-1/2)
 end

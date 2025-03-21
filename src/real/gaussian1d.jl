@@ -72,11 +72,6 @@ end
     return G.λ * exp(-G.a/2 * (x - G.q)^2)
 end
 
-# Evaluates a gaussian at every point in x
-@inline function evaluate(G::Gaussian1D, x::SVector{M, <:Number}) where{M}
-    return @. G.λ * exp(-G.a/2 * (x - G.q)^2)
-end
-
 #=
     TRANSFORMATIONS
 =#
@@ -111,6 +106,11 @@ end
 # Computes the product of a scalar and a gaussian
 @inline function Base.:*(w::Number, G::Gaussian1D)
     return Gaussian1D(w * G.λ, G.a, G.q)
+end
+
+# Computes the product of a gaussian by a scalar
+function Base.:/(G::Gaussian1D, w::Number)
+    return Gaussian1D(G.λ / w, G.a, G.q)
 end
 
 # Computes the product of two gaussians

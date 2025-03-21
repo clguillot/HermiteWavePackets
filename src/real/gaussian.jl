@@ -77,7 +77,7 @@ end
 
 # Evaluates a gaussian at x
 function (G::Gaussian{D})(x::AbstractVector{<:Number}) where D
-    xs = SizedVector{D}(x)
+    xs = SVector{D}(x)
     return G.λ * exp(-sum(a * (y - q)^2 for (a, q, y) in zip(G.a, G.q, xs)) / 2)
 end
 

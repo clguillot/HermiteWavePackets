@@ -92,7 +92,7 @@ end
 
 # Evaluates a gaussian at x
 function (G::GaussianWavePacket{D})(x::AbstractVector{<:Number}) where D
-    xs = SizedVector{D}(x)
+    xs = SVector{D}(x)
     return G.λ * exp(-sum(z/2 * (y - q)^2 for (z, q, y) in zip(G.z, G.q, xs))) * cis(dot(G.p, xs))
 end
 

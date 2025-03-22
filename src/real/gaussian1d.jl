@@ -57,11 +57,6 @@ function core_type(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
     return promote_type(Tλ, Ta, Tq)
 end
 
-# 
-function fitting_float(::Type{Gaussian1D{Tλ, Ta, Tq}}) where{Tλ, Ta, Tq}
-    return fitting_float(promote_type(Tλ, Ta, Tq))
-end
-
 # Returns the complex conjugate of a gaussian
 @inline function Base.conj(G::Gaussian1D)
     return Gaussian1D(conj(G.λ), G.a, G.q)

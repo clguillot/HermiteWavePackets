@@ -7,6 +7,10 @@ function core_type(::T) where{T<:AbstractWavePacket}
     return core_type(T)
 end
 
+function fitting_float(::Type{T}) where{T<:AbstractWavePacket}
+    return fitting_float(core_type(T))
+end
+
 function fitting_float(::T) where{T<:AbstractWavePacket}
     return fitting_float(T)
 end

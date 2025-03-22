@@ -87,11 +87,6 @@ function core_type(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
     return promote_type(TΛ, Ta, Tq)
 end
 
-# 
-function fitting_float(::Type{HermiteFct1D{N, TΛ, Ta, Tq}}) where{N, TΛ, Ta, Tq}
-    return fitting_float(promote_type(TΛ, Ta, Tq))
-end
-
 # Returns the complex conjugate of a hermite function
 @inline function Base.conj(H::HermiteFct1D)
     return HermiteFct1D(conj.(H.Λ), H.a, H.q)

@@ -129,11 +129,6 @@ function core_type(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ
     return promote_type(TΛ, Tz, Tq, Tp)
 end
 
-# 
-function fitting_float(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}) where{N, TΛ, Tz, Tq, Tp}
-    return fitting_float(promote_type(TΛ, Tz, Tq, Tp))
-end
-
 # Returns the complex conjugate of a hermite wave packet
 @inline function Base.conj(H::HermiteWavePacket1D)
     return HermiteWavePacket1D(conj.(H.Λ), conj.(H.z), H.q, -H.p)

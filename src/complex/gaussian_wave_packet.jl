@@ -80,11 +80,6 @@ function core_type(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}) where{D, Tλ,
     return promote_type(Tλ, Tz, Tq, Tp)
 end
 
-# 
-function fitting_float(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}) where{D, Tλ, Tz, Tq, Tp}
-    return fitting_float(promote_type(Tλ, Tz, Tq, Tp))
-end
-
 # Returns the complex conjugate of a gaussian
 function Base.conj(G::GaussianWavePacket)
     return GaussianWavePacket(conj.(G.λ), conj.(G.z), G.q, -G.p)

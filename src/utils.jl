@@ -12,14 +12,12 @@
     end
 end
 
-@generated function fitting_float(x::T) where{T<:Real}
-    Tf = fitting_float(T)
-    return :( $Tf )
+function fitting_float(x::T) where{T<:Real}
+    return fitting_float(T)
 end
 
-@generated function fitting_float(x::AbstractArray{T}) where{T<:Number}
-    Tf = fitting_float(T)
-    return :( $Tf )
+function fitting_float(x::AbstractArray{T}) where{T<:Number}
+    return fitting_float(T)
 end
 
 # Returns real(x) if T<:Real, and x if T<:Complex

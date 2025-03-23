@@ -1,25 +1,4 @@
 
-@generated function fitting_float(::Type{T}) where{T<:Number}
-    prec = precision(real(T))
-    if prec == precision(Float16)
-        return :( Float16 )
-    elseif prec == precision(Float32)
-        return :( Float32 )
-    elseif prec == precision(Float64)
-        return :( Float64 )
-    else
-        throw(ArgumentError("The precision format of $T is unsupported"))
-    end
-end
-
-function fitting_float(x::T) where{T<:Real}
-    return fitting_float(T)
-end
-
-function fitting_float(x::AbstractArray{T}) where{T<:Number}
-    return fitting_float(T)
-end
-
 # Returns real(x) if T<:Real, and x if T<:Complex
 @generated function complex_truncation(::Type{T}, x::Tx) where{T<:Number, Tx<:Number}
     if T<:Real

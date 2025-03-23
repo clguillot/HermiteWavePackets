@@ -11,11 +11,24 @@ function core_type(x...)
     return promote_type(core_type.(x)...)
 end
 
+@generated function fitting_float(::Type{T}) where{T<:Number}
+    prec = precision(real(T))
+    if prec == precision(Float16)
+        return :( Float16 )
+    elseif prec == precision(Float32)
+        return :( Float32 )
+    elseif prec == precision(Float64)
+        return :( Float64 )
+    else
+        throw(ArgumentError("The precision format of $T is unsupported"))
+    end
+end
+
 function fitting_float(::Type{T}) where{T<:AbstractWavePacket}
     return fitting_float(core_type(T))
 end
 
-function fitting_float(::T) where{T<:AbstractWavePacket}
+function fitting_float(::T) where T
     return fitting_float(T)
 end
 

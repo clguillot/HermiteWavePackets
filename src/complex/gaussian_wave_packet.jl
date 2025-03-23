@@ -67,7 +67,7 @@ end
 
 # Returns a null gaussian
 function Base.zero(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}) where{D, Tλ, Tz, Tq, Tp}
-    return GaussianWavePacket(zero(Tλ), (@SVector ones(Tz, D)), (@SVector zeros(Tq, D)), (@SVector zeros(Tp, D)))
+    return GaussianWavePacket(zero(Tλ), ones(SVector{D, Tz}), zeros(SVector{D, Tq}), zeros(SVector{D, Tp}))
 end
 
 # Creates a copy of a gaussian

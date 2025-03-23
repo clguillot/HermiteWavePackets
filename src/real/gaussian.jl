@@ -52,7 +52,7 @@ end
 
 # Returns a null gaussian
 function Base.zero(::Type{Gaussian{D, Tλ, Ta, Tq}}) where{D, Tλ, Ta, Tq}
-    return Gaussian(zero(Tλ), (@SVector ones(Ta, D)), (@SVector zeros(Tq, D)))
+    return Gaussian(zero(Tλ), ones(SVector{D, Ta}), zeros(SVector{D, Tq}))
 end
 
 # Creates a copy of a gaussian

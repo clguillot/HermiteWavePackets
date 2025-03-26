@@ -154,7 +154,7 @@ end
 
 # 
 @inline function Base.:-(H::HermiteWavePacket1D)
-    return HermiteWavePacket1D(-H.Λ, H.z, H.q, H.p)
+    return HermiteWavePacket1D(.- H.Λ, H.z, H.q, H.p)
 end
 
 # Computes the product of a scalar and a gaussian

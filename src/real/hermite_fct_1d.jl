@@ -114,7 +114,7 @@ end
 
 # Computes the product of a scalar and a hermite function
 @inline function Base.:-(H::HermiteFct1D)
-    return HermiteFct1D(-H.Λ, H.a, H.q)
+    return HermiteFct1D(.- H.Λ, H.a, H.q)
 end
 
 # Computes the product of a scalar and a hermite function

@@ -81,6 +81,56 @@ function hermite_discrete_transform(U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N
     return a^T(-1/4) .* (M0 * U)
 end
 
+#
+function hermite_grid(a::Ta, q::Tq, ::Val{N}) where{N, Ta<:Number, Tq<:Real}
+    T = fitting_float(promote_type(typeof(a), typeof(q)))    
+    x0, _, _ = hermite_primitive_discrete_transform(T, Val(N))
+    return x0 .* a^T(-1/2) .+ q
+end
+@generated function hermite_grid(a::SVector{D, <:Number}, q::SVector{D, <:Number}, ::Type{N}) where{N<:Tuple, D}
+    if length(N.parameters) != D
+        throw(DimensionMismatch("Expected N to have length $D, but got length $(length(N.parameters))"))
+    end
+    
+    zs = zero(SVector{D, Bool})
+    expr = [:( hermite_grid(a[$k], q[$k], Val($n)) ) for (n, k) in zip(N.parameters, eachindex(zs))]
+    return :( return tuple($(expr...)) )
+end
+
+# 
+@generated function hermite_discrete_transform(Λ::SArray{N, TΛ, D}) where{N, D, TΛ<:Number}
+    if D > 1
+        T = fitting_float(TΛ)
+        S = size(Λ)
+        _, _, M0 = hermite_primitive_discrete_transform(T, Val(S[end]))
+
+        zt = tuple((false for _ in last(axes(M0)))...)
+        expr1 = [:( static_tensor_contraction(Λ, $(M0[k, :])) ) for k in last(axes(M0))]
+        expr2 = [:( hermite_discrete_transform(A[$k]) ) for k in eachindex(zt)]
+        expr3 = [:( reshape(B[$k], Size(length(B[$k]))) ) for k in eachindex(zt)]
+        code =
+            quote
+                A = tuple($(expr1...))
+                B = tuple($(expr2...))
+                return reshape(vcat($(expr3...)), $(Size(Λ)))
+            end
+        return code
+    elseif D == 1
+        T = fitting_float(TΛ)
+        S = size(Λ)
+        _, _, M0 = hermite_primitive_discrete_transform(T, Val(S[end]))
+        return :( return $M0 * Λ )
+    else
+        return :( return Λ )
+    end
+end
+
+# 
+function hermite_discrete_transform(Λ::SArray{N, TΛ, D}, a::SVector{D, Ta}) where{N, D, TΛ<:Number, Ta<:Number}
+    T = fitting_float(TΛ, Ta)
+    return prod(a)^T(-1/4) .* hermite_discrete_transform(Λ)
+end
+
 
 #=
 

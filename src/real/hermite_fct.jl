@@ -1,3 +1,23 @@
+#=
+    Reminder :
+    -gausshermite(p) computes the weights (wⱼ)ⱼ and nodes (xⱼ)ⱼ (j=1,...,m) such that the quadrature formula
+     ∫dx f(x)exp(-x²) ≈ ∑ⱼ wⱼf(xⱼ)
+     is exact for any polynomial f up to degree 2m-1
+
+    We have the folowing properties (cf https://mathworld.wolfram.com/HermitePolynomial.html)
+        ∫dx Hₘ(x)Hₙ(x)exp(-x²) = δₘₙ2ⁿn!√π
+        Hₙ₊₁(x) = 2xHₙ(x) - 2nHₙ₋₁(x)
+        Hₙ'(x) = 2n Hₙ₋₁(x)
+
+    Now define for a > 0, and q a real number
+        ψₙ(a, q, x) = (a/π)^(1/4) / √(2ⁿn!) * Hₙ(√a*(x - q)) * exp(-a(x - q)²/2)
+    (we shall only write ψₙ(x) when the context is clear enough)
+    then it follows from the previous properties that
+        ∫ψₘψₙ = δₘₙ
+        ψₙ₊₁ = (√(2a)*x*ψₙ - √n*ψₙ₋₁) / √(n+1)
+        ̂ψₙ = √(2π) * (-i)ⁿ * exp(-iqξ) * ψₙ(1/a, 0, ξ)
+=#
+
 
 #=
     Represents the function
@@ -22,21 +42,20 @@ end
 
 function Base.convert(::Type{HermiteFct{D, N, TΛ, Ta, Tq}}, G::Gaussian{D}) where{N, TΛ, Ta, Tq, D}
     T = fitting_float(G)
-    f(::Size{s}) where s = s
-    S = f(Size(N))
     λ = convert(TΛ, T(π^(D/4)) * G.λ * prod(G.a)^T(-1/4))
-    Λ = SArray{N}(ifelse(all(k -> k==1, n), λ, zero(TΛ)) for n in Iterators.product((1:Nj for Nj in S)...))
+    Λ = SArray{N}(ifelse(all(k -> k==1, n), λ, zero(TΛ)) for n in Iterators.product((1:Nj for Nj in N.parameters)...))
     return HermiteFct(Λ, Ta.(G.a), Tq.(G.q))
 end
 
-function HermiteFct1D(G::Gaussian{D, TΛ, Ta, Tq}) where{D, TΛ, Ta, Tq}
-    return convert(HermiteFct{Tuple{}, TΛ, Ta, Tq}, G)
+@generated function HermiteFct(G::Gaussian{D, TΛ, Ta, Tq}) where{D, TΛ, Ta, Tq}
+    N = Tuple{ntuple(_ -> 1, D)...}
+    return :( return convert(HermiteFct{$N, TΛ, Ta, Tq}, G) )
 end
 
-# function truncate_to_gaussian(H::HermiteFct1D)
-#     T = fitting_float(H)
-#     return Gaussian1D((H.a / π)^T(1/4) * first(H.Λ), H.a, H.q)
-# end
+function truncate_to_gaussian(H::HermiteFct)
+    T = fitting_float(H)
+    return Gaussian(T(π^(-1/4)) * prod(H.a)^T(1/4) * first(H.Λ), H.a, H.q)
+end
 
 # #=
 #     PROMOTIONS
@@ -63,8 +82,8 @@ end
 # =#
 
 # Returns a null hermite function
-@inline function Base.zero(::Type{HermiteFct{D, N, TΛ, Ta, Tq}}) where{D, N, TΛ, Ta, Tq}
-    return HermiteFct((zeros(SArray{N, TΛ})), (@SVector ones(Ta, D)), (@SVector zeros(Tq, D)))
+@inline function Base.zero(::Type{<:HermiteFct{D, N, TΛ, Ta, Tq, L}}) where{D, N, TΛ, Ta, Tq, L}
+    return HermiteFct((zero(SArray{N, TΛ})), (SVector{D}(ones(Ta, D))), (SVector{D}(zeros(Tq, D))))
 end
 
 # Creates a copy of a gaussian
@@ -73,7 +92,7 @@ end
 end
 
 #
-function core_type(::Type{HermiteFct{D, N, TΛ, Ta, Tq}}) where{D, N, TΛ, Ta, Tq}
+function core_type(::Type{<:HermiteFct{D, N, TΛ, Ta, Tq}}) where{D, N, TΛ, Ta, Tq}
     return promote_type(TΛ, Ta, Tq)
 end
 
@@ -82,94 +101,95 @@ end
     return HermiteFct(conj.(H.Λ), H.a, H.q)
 end
 
-# # Evaluates a hermite function at x using Clenshaw's algorithm
-# function (H::HermiteFct1D)(x::Number)
-#     T = promote_type(fitting_float(H), fitting_float(x))
 
-#     b = sqrt(2*H.a)
-#     ψ0 = T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
+# 
+@generated function evaluate_grid(H::HermiteFct{D}, x::Tuple) where D
+    if length(x.parameters) != D
+        throw(DimensionMismatch("Expecting the length of x to be $D, but got $(length(x.parameters)) instead"))
+    end
+    for y in x.parameters
+        if !(y <: SVector && eltype(y) <: Number)
+            throw(ArgumentError("All elements of `x` must be `SVector` with numeric element types"))
+        end
+    end
 
-#     return clenshaw_hermite_eval(H.Λ, b, x - H.q, ψ0)
-# end
-
-# # Evaluates a hermite function at all the points in x
-# function evaluate(H::HermiteFct1D, x::SVector{M, <:Number}) where M
-#     T = promote_type(fitting_float(H), fitting_float(x))
-
-#     b = sqrt(2*H.a)
-#     ψ0 = @. T(π^(-1/4)) * (H.a)^T(1/4) * exp(-H.a * (x - H.q)^2 / 2)
-
-#     return clenshaw_hermite_eval(H.Λ, b, x .- H.q, ψ0)
-# end
-
-# # Computes the product of a scalar and a hermite function
-# @inline function Base.:-(H::HermiteFct1D)
-#     return HermiteFct1D(-H.Λ, H.a, H.q)
-# end
-
-# # Computes the product of a scalar and a hermite function
-# @inline function Base.:*(w::Number, H::HermiteFct1D)
-#     return HermiteFct1D(w .* H.Λ, H.a, H.q)
-# end
-
-# # Computes the division of a hermite function by a scalar
-# @inline function Base.:/(H::HermiteFct1D, w::Number)
-#     return HermiteFct1D(H.Λ ./ w, H.a, H.q)
-# end
-
-# # Computes the product of two hermite functions
-# function Base.:*(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
-#     a1, q1 = H1.a, H1.q
-#     a2, q2 = H2.a, H2.q
-#     a, q = gaussian_product_arg(a1, q1, a2, q2)
-#     N = N1 + N2 - 1
-
-#     x, _ = hermite_quadrature(a, q, Val(N))
-#     Φ1 = evaluate(H1, x)
-#     Φ2 = evaluate(H2, x)
-#     Φ = Φ1 .* Φ2
+    T = fitting_float(H, eltype.(x.parameters)...)
+    m = T(π^(-D/4))
     
-#     Λ = hermite_discrete_transform(Φ, a, q, Val(N))
+    zs = zero(SVector{D, Bool})
+    zt = tuple((false for _ in 1:D)...)
+    expr_x = [:( x[$kx] .- H.q[$k] ) for (kx, k) in zip(eachindex(zt), eachindex(zs))]
+    expr_α = [:( @. exp(-H.a[$k]/2 * (x[$kx] - H.q[$k])^2) ) for (kx, k) in zip(eachindex(zt), eachindex(zs))]
+    μ = SVector{D}((true for _ in 1:D)...)
+    return :( ($m * prod(H.a)^$T(1/4)) .* clenshaw_hermite_transform_grid(H.Λ, sqrt.(2 .* H.a), tuple($(expr_x...)), $μ, tuple($(expr_α...))))
+end
 
-#     return HermiteFct1D(Λ, a, q)
-# end
+# Evaluates a hermite function at x using Clenshaw's algorithm
+function (H::HermiteFct{D})(x::AbstractVector{<:Number}) where D
+    xs = SVector{D}(x)
+    return first(evaluate_grid(H, tuple((SVector{1}(y) for y in xs)...)))
+end
 
-# #=
-#     Computes the product of a hermite function with a polynomial
-#         P(x) = ∑ₖ P[k](x-q)^k
-# =#
-# function polynomial_product(q::Tq1, P::SVector{N1, TΛ1}, H::HermiteFct1D{N2}) where{Tq1<:Real, N1, TΛ1, N2}
-#     N = max(N1+N2-1, 0)
-#     x, _ = hermite_quadrature(H.a, H.q, Val(N))
-#     T = promote_type(eltype(x), Tq1, TΛ1)
-    
-#     Φ = evaluate(H, x)
-    
-#     Φ_P = zero(SVector{N, T})
-#     for k in N1:-1:1
-#         Φ_P = @. (x - q) * Φ_P + P[k]
-#     end
+# Computes the product of a scalar and a hermite function
+@inline function Base.:-(H::HermiteFct)
+    return HermiteFct(.- H.Λ, H.a, H.q)
+end
 
-#     Λ = hermite_discrete_transform(Φ .* Φ_P, H.a, H.q, Val(N))
+# Computes the product of a scalar and a hermite function
+@inline function Base.:*(w::Number, H::HermiteFct)
+    return HermiteFct(w .* H.Λ, H.a, H.q)
+end
 
-#     return HermiteFct1D(Λ, H.a, H.q)
-# end
+# Computes the division of a hermite function by a scalar
+@inline function Base.:/(H::HermiteFct, w::Number)
+    return HermiteFct(H.Λ ./ w, H.a, H.q)
+end
 
-# # Computes the integral of a hermite function
-# function integral(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
-#     T = fitting_float(H)
+# Computes the product of two hermite functions
+@generated function Base.:*(H1::HermiteFct{D, N1}, H2::HermiteFct{D, N2}) where{D, N1, N2}
+    N = Tuple{(@. max(N1.parameters + N2.parameters - 1, 0))...}
+    code =
+        quote
+            a, q = gaussian_product_arg(H1.a, H1.q, H2.a, H2.q)
 
-#     m = 2 * fld(N-1, 2) + 1
-#     val = zero(promote_type(TΛ, T))
-#     if N > 0
-#         val = H.Λ[m]
-#         for k=m-2:-2:1
-#             val = H.Λ[k] + sqrt(T(k) / T(k+1)) * val
-#         end
-#     end
+            x = hermite_grid(a, q, $N)
+            Φ1 = evaluate_grid(H1, x)
+            Φ2 = evaluate_grid(H2, x)
+            Λ = hermite_discrete_transform(Φ1 .* Φ2, a)
 
-#     return H.a^T(-1/4) * T(sqrt(2) * π^(1/4)) * val
-# end
+            return HermiteFct(Λ, a, q)
+        end
+    return code
+end
+
+#=
+    Computes the product of a hermite function with a polynomial
+        P(x) = ∑ₖ P[k](x-q)^k
+=#
+@generated function polynomial_product(q::SVector{D, <:Number}, P::SArray{N1, <:Number, D}, H::HermiteFct{D, N2}) where{D, N1, N2}
+    N = Tuple{(max(n1+n2-1, 0) for (n1, n2) in zip(N1.parameters, N2.parameters))...}
+    λ = SVector{D}(ntuple(_ -> true, D)...)
+    code =
+        quote
+            x = hermite_grid(H.a, H.q, $N)
+            Φ = evaluate_grid(H, x)
+            Φ_P = horner_transform_grid(P, $λ, q, x)
+            Λ = hermite_discrete_transform(Φ .* Φ_P, H.a)
+            return HermiteFct(Λ, H.a, H.q)
+        end
+    return code
+end
+
+# Computes the integral of a hermite function
+function integral(H::HermiteFct{D, N}) where{D, N}
+    T = fitting_float(H)
+    z = SVector((true for _ in 1:D)...)
+    x = tuple((SVector(false) for _ in 1:D)...)
+    μ = SVector{D}((-1 for _ in 1:D)...)
+    α0 = tuple((SVector(true) for _ in 1:D)...)
+    val = first(clenshaw_hermite_transform_grid(H.Λ, z, x, μ, α0))
+    return prod(H.a)^T(-1/4) * T((4π)^(D/4)) * val
+end
 
 # # Computes the convolution product of two hermite functions
 # function convolution(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
@@ -193,31 +213,28 @@ end
 #     return HermiteFct1D(Λ, a, q)
 # end
 
-# #=
-#     Computes the L² product of two hermite functions
-#         ∫dx conj(H1(x)) H2(x)
-# =#
-# function dot_L2(H1::HermiteFct1D{N1}, H2::HermiteFct1D{N2}) where{N1, N2}
-#     N = max(N1 + N2 - 1, 0)
-#     a, q = gaussian_product_arg(H1.a, H1.q, H2.a, H2.q)
+#=
+    Computes the L² product of two hermite functions
+        ∫dx conj(H1(x)) H2(x)
+=#
+# @generated function dot_L2(H1::HermiteFct1D{D, N1}, H2::HermiteFct1D{D, N2}) where{D, N1, N2}
+#     N = Tuple{(cld(n1+n2-1, 2) for (n1, n2) in zip(N1.parameters, N2.parameters))...}
+#     code =
+#         quote
+#             a, q = gaussian_product_arg(H1.a, H1.q, H2.a, H2.q)
 
-#     m = cld(N, 2)
-#     x, w = hermite_quadrature(a/2, q, Val(m))
+#             x, w = hermite_quadrature(a/2, q, Val(m))
 
-#     Φ1 = evaluate(H1, x)
-#     Φ2 = evaluate(H2, x)
-#     Φ = @. conj(Φ1) * Φ2
+#             Φ1 = evaluate(H1, x)
+#             Φ2 = evaluate(H2, x)
+#             Φ = @. conj(Φ1) * Φ2
 
-#     return dot(w, Φ)
-# end
-# @inline function dot_L2(G1::Gaussian1D, H2::HermiteFct1D)
-#     return dot_L2(HermiteFct1D(G1), H2)
-# end
-# @inline function dot_L2(H1::HermiteFct1D, G2::Gaussian1D)
-#     return dot_L2(H1, HermiteFct1D(G2))
+#             return dot(w, Φ)
+#         end
+#     return code
 # end
 
-# # Computes the square L² norm of a hermite function
-# @inline function norm2_L2(H::HermiteFct1D)
-#     return real(dot(H.Λ, H.Λ))
-# end
+# Computes the square L² norm of a hermite function
+function norm2_L2(H::HermiteFct)
+    return sum(abs2, H.Λ; init=zero(real(eltype(H.Λ))))
+end

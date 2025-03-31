@@ -21,6 +21,8 @@ export GaussianWavePacket
 export WavePacketSum
 
 # Functions
+export hermite_grid
+export evaluate_grid
 export hermite_discrete_transform
 export hermite_quadrature
 export truncate_to_gaussian

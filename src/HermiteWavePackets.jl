@@ -37,6 +37,7 @@ export norm_L2
 export core_type
 
 include("utils.jl")
+include("nullnumber.jl")
 
 include("real/hermite_quadrature.jl")
 

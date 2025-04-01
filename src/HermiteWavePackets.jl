@@ -44,12 +44,10 @@ include("real/hermite_quadrature.jl")
 include("complex/gaussian_wave_packet.jl")
 include("complex/hermite_wave_packet.jl")
 
-include("real/gaussian1d.jl")
 include("real/hermite_fct_1d.jl")
 include("real/gaussian.jl")
 include("real/hermite_fct.jl")
 
-include("complex/gaussian_wave_packet_1d.jl")
 include("complex/hermite_wave_packet_1d.jl")
 
 include("wave_packet_sum.jl")

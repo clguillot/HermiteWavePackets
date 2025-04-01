@@ -82,12 +82,12 @@ function hermite_discrete_transform(U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N
 end
 
 #
-function hermite_grid(a::Ta, q::Tq, ::Val{N}) where{N, Ta<:Number, Tq<:Real}
-    T = fitting_float(promote_type(typeof(a), typeof(q)))    
+function hermite_grid(a::Real, q::Real, ::Val{N}) where N
+    T = fitting_float(typeof(a), typeof(q))  
     x0, _, _ = hermite_primitive_discrete_transform(T, Val(N))
     return x0 .* a^T(-1/2) .+ q
 end
-@generated function hermite_grid(a::SVector{D, <:Number}, q::SVector{D, <:Number}, ::Type{N}) where{N<:Tuple, D}
+@generated function hermite_grid(a::SVector{D, <:Number}, q::SVector{D, <:Number}, ::Type{N}) where{D, N<:Tuple}
     if length(N.parameters) != D
         throw(DimensionMismatch("Expected N to have length $D, but got length $(length(N.parameters))"))
     end
@@ -143,8 +143,8 @@ end
         ∫dx f(x)exp(-a(x-q)²) ≈ ∑ⱼ wⱼf(xⱼ) (j=1,...,N)
     is exact for any polynomial f up to degree 2N-1
 =#
-function hermite_quadrature(a::Real, q::Real, ::Val{N}) where{N}
-    T = fitting_float(promote_type(typeof(a), typeof(q)))    
+function hermite_quadrature(a::Real, q::Real, ::Val{N}) where N
+    T = fitting_float(typeof(a), typeof(q))    
     x0, w0, _ = hermite_primitive_discrete_transform(T, Val(N))
 
     c = a^T(-1/2)
@@ -153,3 +153,19 @@ function hermite_quadrature(a::Real, q::Real, ::Val{N}) where{N}
 
     return x, w
 end
+# @generated function hermite_quadrature(a::SVector{D, <:Number}, q::SVector{D, <:Number}, ::Type{N}) where{D, N<:Tuple}
+#     if length(N.parameters) != D
+#         throw(DimensionMismatch("Expected N to have length $D, but got length $(length(N.parameters))"))
+#     end
+    
+#     zs = zero(SVector{D, Bool})
+#     expr = [:( hermite_grid(a[$k], q[$k], Val($n)) ) for (n, k) in zip(N.parameters, eachindex(zs))]
+#     expr_x = [:( first(A[$k]) ) for k in eachindex(zs)]
+#     expr_w = [:( last(A[$k]) ) for k in eachindex(zs)]
+#     return :( return tuple($(expr...)) )
+#     code =
+#         quote
+#             A = tuple($(expr...))
+#             return tuple($(expr_x...)), tuple($(expr_w...))
+#         end
+# end

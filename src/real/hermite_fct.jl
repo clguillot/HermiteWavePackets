@@ -217,19 +217,17 @@ end
     Computes the L² product of two hermite functions
         ∫dx conj(H1(x)) H2(x)
 =#
-# @generated function dot_L2(H1::HermiteFct1D{D, N1}, H2::HermiteFct1D{D, N2}) where{D, N1, N2}
+# @generated function dot_L2(H1::HermiteFct{D, N1}, H2::HermiteFct{D, N2}) where{D, N1, N2}
 #     N = Tuple{(cld(n1+n2-1, 2) for (n1, n2) in zip(N1.parameters, N2.parameters))...}
 #     code =
 #         quote
 #             a, q = gaussian_product_arg(H1.a, H1.q, H2.a, H2.q)
+#             x, w = hermite_quadrature(a ./ 2, q, $N)
 
-#             x, w = hermite_quadrature(a/2, q, Val(m))
+#             Φ1 = evaluate_grid(H1, x)
+#             Φ2 = evaluate_grid(H2, x)
 
-#             Φ1 = evaluate(H1, x)
-#             Φ2 = evaluate(H2, x)
-#             Φ = @. conj(Φ1) * Φ2
-
-#             return dot(w, Φ)
+#             return static_tensor_contraction(Φ1 .* Φ2, w...)
 #         end
 #     return code
 # end

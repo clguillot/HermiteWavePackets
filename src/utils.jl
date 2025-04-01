@@ -234,7 +234,7 @@ end
     code =
         quote
             B = zero(SArray{$new_size, $TC})
-            for (k, x) in zip(axes(A, dim), X)
+            for (k, x) in zip(reverse(axes(A, dim)), reverse(X))
                 B = @. B + x * $array_access_drop
             end
             return B

@@ -1,26 +1,31 @@
 #=
 
-    STATIC ARRAY OF WAVE PACKETS
+    SUM OF WAVE PACKETS
 
 =#
 
-#=
-    Wraps a container of AbstractWavePacket into a WavePacketSum <: AbstractWavePacket
-    Represents the function x -> sum(p(x) for p in g)
-=#
-struct WavePacketSum{Ctype<:Union{AbstractArray{<:AbstractWavePacket}, Tuple{Vararg{AbstractWavePacket}}}} <: AbstractWavePacket
+struct WavePacketSum{D, Ctype} <: AbstractWavePacket{D}
     g::Ctype
 end
+
+# Constrain Ctype using an inner constructor
+function WavePacketSum{D}(g::Ctype) where{D, Ctype<:Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}}
+    new{D, Ctype}(g)
+end
+function WavePacketSum(g::Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}) where D
+    return WavePacketSum{D}(g)
+end
+
 
 #=
     CREATION
 =#
 
-function Base.:+(G1::AbstractWavePacket, G2::AbstractWavePacket)
+function Base.:+(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D
     return WavePacketSum((G1, G2))
 end
 
-function Base.:-(G1::AbstractWavePacket, G2::AbstractWavePacket)
+function Base.:-(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D
     return WavePacketSum((G1, -G2))
 end
 

@@ -3,7 +3,7 @@
     Represents the complex gaussian function
         λ*exp(-∑ₖ zₖ/2*(xₖ-qₖ)²)*exp(i∑ₖpₖxₖ)
 =#
-struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: AbstractWavePacket
+struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: AbstractWavePacket{D}
     λ::Tλ
     z::SVector{D, Tz}
     q::SVector{D, Tq}
@@ -23,19 +23,6 @@ function Base.convert(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}, G::Gaussia
     )
 end
 
-function Base.convert(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}, G::Gaussian{D}) where{D, Tλ, Tz, Tq, Tp}
-    return GaussianWavePacket(
-        convert(Tλ, G.λ),
-        Tz.(G.a),
-        Tq.(G.q),
-        zero(SVector{D, Tp})
-    )
-end
-
-function GaussianWavePacket(G::Gaussian{D, Tλ, Ta, Tq}) where{D, Tλ, Ta, Tq}
-    return convert(GaussianWavePacket{D, Tλ, Ta, Tq, Tq}, G)
-end
-
 function truncate_to_gaussian(G::GaussianWavePacket)
     return G
 end
@@ -50,14 +37,6 @@ function Base.promote_rule(::Type{<:GaussianWavePacket}, ::Type{GaussianWavePack
 end
 function Base.promote_rule(::Type{GaussianWavePacket{D, Tλ1, Tz1, Tq1, Tp1}}, ::Type{GaussianWavePacket{D, Tλ2, Tz2, Tq2, Tp2}}) where{D, Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
     return GaussianWavePacket{D, promote_type(Tλ1, Tλ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2)}
-end
-
-# 
-function Base.promote_rule(::Type{<:Gaussian}, ::Type{GaussianWavePacket})
-    return GaussianWavePacket
-end
-function Base.promote_rule(::Type{Gaussian{D, Tλ, Ta, Tq}}, ::Type{TG}) where{D, Tλ, Ta, Tq, TG<:GaussianWavePacket}
-    return promote_type(GaussianWavePacket{D, Tλ, Tq, Tq, Tq}, TG)
 end
 
 
@@ -82,7 +61,7 @@ end
 
 # Returns the complex conjugate of a gaussian
 function Base.conj(G::GaussianWavePacket)
-    return GaussianWavePacket(conj.(G.λ), conj.(G.z), G.q, -G.p)
+    return GaussianWavePacket(conj.(G.λ), conj.(G.z), G.q, .- G.p)
 end
 
 # Evaluates a gaussian at x

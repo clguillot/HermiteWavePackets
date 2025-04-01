@@ -25,7 +25,7 @@ function test_hermite()
             H = HermiteFct(Λ, SVector{D}(a), SVector{D}(q))
 
             @time μ1 = H(x)
-            μ2 = sum(Λ[j...] * prod(ψ(H.a[k], H.q[k], j[k]-1, x[k]) for k in 1:D) for j in Iterators.product(axes(Λ)...))
+            μ2 = sum(Λ[j...] * prod(ψ(H.z[k], H.q[k], j[k]-1, x[k]) for k in 1:D) for j in Iterators.product(axes(Λ)...))
             err = max(err, abs(μ1 - μ2) / abs(μ1))
         end
 

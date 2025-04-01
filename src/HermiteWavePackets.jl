@@ -5,10 +5,8 @@ using StaticArrays
 using FastGaussQuadrature
 
 # Abtract types
-abstract type AbstractWavePacket end
-abstract type AbstractWavePacket1D <: AbstractWavePacket end
+abstract type AbstractWavePacket{D} end
 export AbstractWavePacket
-export AbstractWavePacket1D
 
 # Concrete types
 export Gaussian1D

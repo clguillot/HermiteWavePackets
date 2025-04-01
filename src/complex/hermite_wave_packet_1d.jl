@@ -22,7 +22,7 @@
     Represents the complex hermite function
         ∑ₙ Λ[n+1] ψₙ(z, q, p, x) (n=0,...,N-1)
 =#
-struct HermiteWavePacket1D{N, TΛ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: AbstractWavePacket1D
+struct HermiteWavePacket1D{N, TΛ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: AbstractWavePacket{1}
     Λ::SVector{N, TΛ}
     z::Tz
     q::Tq

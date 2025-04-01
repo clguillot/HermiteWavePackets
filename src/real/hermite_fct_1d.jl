@@ -23,7 +23,7 @@
     Represents the function
         ∑ₙ Λ[n+1]*ψₙ(a, q, x) (n=0,...,N-1)
 =#
-struct HermiteFct1D{N, TΛ<:Number, Ta<:Real, Tq<:Real} <: AbstractWavePacket1D
+struct HermiteFct1D{N, TΛ<:Number, Ta<:Real, Tq<:Real} <: AbstractWavePacket{1}
     Λ::SVector{N, TΛ}
     a::Ta
     q::Tq

@@ -7,12 +7,18 @@ function core_type(::T) where{T<:AbstractWavePacket}
     return core_type(T)
 end
 
-function core_type(::Type{T}) where{T<:Number}
+function core_type(::Type{T}) where{T<:Union{Number, NullNumber}}
     return T
 end
-
-function core_type(::T) where T
+function core_type(::T) where{T<:Union{Number, NullNumber}}
     return core_type(T)
+end
+
+function core_type(S, T)
+    return promote_type(core_type(S), core_type(T))
+end
+function core_type(S, T, U...)
+    return promote_type(core_type(S), core_type(T), core_type(U...))
 end
 
 @generated function fitting_float(::Type{T}) where{T<:Number}
@@ -27,17 +33,8 @@ end
         throw(ArgumentError("The precision format of $T is unsupported"))
     end
 end
-
-function fitting_float(::Type{T}) where{T<:AbstractWavePacket}
-    return fitting_float(core_type(T))
-end
-
-function fitting_float(::T) where T
-    return fitting_float(T)
-end
-
-function fitting_float(x...)
-    return promote_type((fitting_float.(x))...)
+function fitting_float(T...)
+    return fitting_float(core_type(T...))
 end
 
 @inline function Base.:*(G::AbstractWavePacket, w::Number)

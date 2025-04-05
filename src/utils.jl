@@ -68,10 +68,11 @@ end
     Computes the clenshaw algorithm along dimension dim:
         ∑ₙ λₙ αₙ(z, x)
     where
+        α₀ = α
         αₙ₊₁ = (x*αₙ(z, x) - √n*αₙ₋₁(z, x)) / √(n+1)
     By default, performs the transformation along the last axis of Λ
 =#
-@generated function clenshaw_hermite_transform(Λ::SArray{N, TΛ}, x::Tx, μ::Tμ, α::Tα, ::Val{dim}=Val(lastindex(axes(Λ)))) where{N, TΛ<:Number, Tx<:Number, Tμ<:Number, Tα<:Number, dim}
+@generated function clenshaw_hermite_transform(Λ::SArray{N, TΛ}, x::Tx, μ::Tμ, α::Tα, ::Val{dim}=Val(lastindex(axes(Λ)))) where{N, TΛ<:Number, Tx, Tμ, Tα, dim}
     TC = promote_type(TΛ, Tx, Tμ)
     T = fitting_float(TC)
     S = size(Λ)
@@ -88,9 +89,9 @@ end
             v = zero(SArray{$sub_size, $TC})
             for (n, k) in zip($t_size-1:-1:0, reverse(axes(Λ, $dim)))
                 (u, v) =
-                    ($TC.($array_access_drop .+ (x / sqrt($T(n+1))) .* u .- (μ * sqrt($T(n+1) / $T(n+2))) .* v), u)
+                    ($TC.($array_access_drop .+ (x / sqrt($T(n+1))) * u .- (μ * sqrt($T(n+1) / $T(n+2))) * v), u)
             end
-            return α .* u
+            return α * u
         end
     return code
 end
@@ -101,7 +102,7 @@ end
         α₀ = α0
         αₙ₊₁ = (z*x*αₙ(z, x) - μ * √n*αₙ₋₁(z, x)) / √(n+1)
 =#
-@generated function clenshaw_hermite_transform_grid(Λ::SArray{N, <:Number, D}, z::SVector{D, <:Number}, x::Tuple, μ::SVector{D, <:Number}, α0::Tuple) where{N, D}
+@generated function clenshaw_hermite_transform_grid(Λ::SArray{N, TΛ, D}, z::SVector{D}, x::Tuple, μ::SVector{D}, α0::Tuple) where{N, D, TΛ}
     if length(x.parameters) != D
         throw(DimensionMismatch("Expecting the length of x to be $D, but got $(length(x.parameters)) instead"))
     end
@@ -109,11 +110,11 @@ end
         throw(DimensionMismatch("Expecting the length of α0 to be $D, but got $(length(α0.parameters)) instead"))
     end
     for (y, α) in zip(x.parameters, α0.parameters)
-        if !(y<:SVector && eltype(y) <: Number)
-            throw(ArgumentError("All elements of `x` must be `SVector` with numeric element types"))
+        if !(y<:SVector)
+            throw(ArgumentError("All elements of `x` must be `SVector`"))
         end
-        if !(α<:SVector && eltype(α) <: Number)
-            throw(ArgumentError("All elements of `α0` must be `SVector` with numeric element types"))
+        if !(α<:SVector)
+            throw(ArgumentError("All elements of `α0` must be `SVector`"))
         end
         if length(y) != length(α)
             throw(DimensionMismatch("Elements of x and α0 must have compatible size"))
@@ -157,7 +158,7 @@ end
         αₙ₊₁(x) = x*αₙ(x)
     By default, performs the transformation along the last axis of Λ
 =#
-@generated function horner_transform(Λ::SArray{N, TΛ}, x::Tx, ::Val{dim}=Val(lastindex(axes(Λ)))) where{N, TΛ<:Number, Tx<:Number, dim}
+@generated function horner_transform(Λ::SArray{N, TΛ}, x::Tx, ::Val{dim}=Val(lastindex(axes(Λ)))) where{N, TΛ, Tx, dim}
     TC = promote_type(TΛ, Tx)
     S = size(Λ)
     if !(dim in eachindex(S))
@@ -184,13 +185,13 @@ end
         αₙ₊₁(x) = λ*(x-q)*αₙ(x)
     By default, performs the transformation along the last axis of Λ
 =#
-@generated function horner_transform_grid(Λ::SArray{N, <:Number, D}, λ::SVector{D, <:Number}, q::SVector{D, <:Number}, x::Tuple) where{N, D}
+@generated function horner_transform_grid(Λ::SArray{N, <:Number, D}, λ::SVector{D}, q::SVector{D}, x::Tuple) where{N, D}
     if length(x.parameters) != D
         throw(DimensionMismatch("Expecting the length of x to be $D, but got $(length(x.parameters)) instead"))
     end
     for y in x.parameters
-        if !(y<:SVector && eltype(y) <: Number)
-            throw(ArgumentError("All elements of `x` must be `SVector` with numeric element types"))
+        if !(y<:SVector)
+            throw(ArgumentError("All elements of `x` must be `SVector`"))
         end
     end
     
@@ -216,28 +217,37 @@ end
     end
 end
 
-
 #=
-
-    STATIC TENSOR CONTRACTION
-
+    STATIC TENSOR TRANSFORM
 =#
-@generated function static_tensor_contraction(A::SArray{N, Ta}, X::SVector{n, Tx}, ::Val{dim}=Val(lastindex(axes(A)))) where{N, n, Ta<:Number, Tx<:Number, dim}
-    TC = promote_type(Ta, Tx)
-    S = size(A)
-    if n != S[dim]
-        throw(DimensionMismatch("Expected dimension $dim of A to have size $n, but found size $(S[dim]) instead"))
+@generated function static_tensor_transform(A::SArray{N, Ta, D}, M::Tuple) where{N, Ta, D}
+    if length(M.parameters) != D
+        throw(DimensionMismatch("Expecting the length of M to be $D, but got $(length(M.parameters)) instead"))
     end
-    kdim = length(S[begin:dim])
-    array_access_drop = Meta.parse("A[" * ":,"^(kdim-1) * "k," * ":,"^(length(S)-kdim) * "]")
-    new_size = Tuple{S[begin:dim-1]..., S[dim+1:end]...}
-    code =
-        quote
-            B = zero(SArray{$new_size, $TC})
-            for (k, x) in zip(reverse(axes(A, dim)), reverse(X))
-                B = @. B + x * $array_access_drop
-            end
-            return B
+    for (y, n) in zip(M.parameters, N.parameters)
+        if !(y<:SMatrix)
+            throw(ArgumentError("All elements of `M` must be `SMatrix`"))
         end
-    return code
+        if last(size(y)) != n
+            throw(DimensionMismatch("Incompatible transform dimension"))
+        end
+    end
+    if D > 1
+        new_size = tuple((first(size(m)) for m in M.parameters)...)
+        tz = tuple((nothing for _ in last(axes(A)))...)
+        expr_1 = [:( static_tensor_transform($(Meta.parse("A[" * ":,"^(D-1) * "$k]")), M_red) ) for k in last(axes(A))]
+        expr_2 = [:( reshape(B[$k], $(Size(prod(Base.front(new_size))))) ) for k in eachindex(tz)]
+        code =
+            quote
+                M_red = Base.front(M)
+                B = tuple($(expr_1...))
+                C = tuple($(expr_2...))
+                return reshape(hcat(C...) * permutedims(M[end]), $(Size(new_size...)))
+            end
+        return code
+    elseif D == 1
+        return :( M[end] * A )
+    else
+        return :( return A )
+    end
 end

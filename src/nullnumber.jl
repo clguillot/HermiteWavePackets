@@ -5,7 +5,6 @@ struct NullNumber end  # Struct to represent the fully absorbing zero number
 @inline Base.:*(::NullNumber, ::NullNumber) = NullNumber()
 @inline Base.:*(::Number, ::NullNumber) = NullNumber()
 @inline Base.:*(::NullNumber, ::Number) = NullNumber()
-@inline Base.:*(::NullNumber, ::SArray{N, <:Union{Number, NullNumber}}) where N = zeros(SArray{N, NullNumber})
 # Addition
 @inline Base.:+(::NullNumber, ::NullNumber) = NullNumber()
 @inline Base.:+(x::Number, ::NullNumber) = x
@@ -18,6 +17,11 @@ struct NullNumber end  # Struct to represent the fully absorbing zero number
 # Division
 @inline Base.:/(::NullNumber, ::NullNumber) = throw(DivideError())
 @inline Base.:/(::NullNumber, ::Number) = NullNumber()
+
+# Defines special operations with SArray
+@inline Base.:*(::NullNumber, ::SArray{N, <:Union{Number, NullNumber}}) where N = zeros(SArray{N, NullNumber})
+@inline LinearAlgebra.dot(::SArray{N, NullNumber}, ::SArray{N, <:Union{Number, NullNumber}}) where N = NullNumber()
+@inline LinearAlgebra.dot(::SArray{N, <:Number}, ::SArray{N, NullNumber}) where N = NullNumber()
 
 # Special functions
 @inline Base.exp(::NullNumber) = true

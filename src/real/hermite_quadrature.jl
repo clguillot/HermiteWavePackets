@@ -98,31 +98,10 @@ end
 end
 
 # 
-@generated function hermite_discrete_transform(Λ::SArray{N, TΛ, D}) where{N, D, TΛ<:Number}
-    if D > 1
-        T = fitting_float(TΛ)
-        S = size(Λ)
-        _, _, M0 = hermite_primitive_discrete_transform(T, Val(S[end]))
-
-        zt = tuple((false for _ in last(axes(M0)))...)
-        expr1 = [:( static_tensor_contraction(Λ, $(M0[k, :])) ) for k in last(axes(M0))]
-        expr2 = [:( hermite_discrete_transform(A[$k]) ) for k in eachindex(zt)]
-        expr3 = [:( reshape(B[$k], Size(length(B[$k]))) ) for k in eachindex(zt)]
-        code =
-            quote
-                A = tuple($(expr1...))
-                B = tuple($(expr2...))
-                return reshape(vcat($(expr3...)), $(Size(Λ)))
-            end
-        return code
-    elseif D == 1
-        T = fitting_float(TΛ)
-        S = size(Λ)
-        _, _, M0 = hermite_primitive_discrete_transform(T, Val(S[end]))
-        return :( return $M0 * Λ )
-    else
-        return :( return Λ )
-    end
+@generated function hermite_discrete_transform(Λ::SArray{N}) where{N}
+    T = fitting_float(eltype(Λ))
+    M = tuple((last(hermite_primitive_discrete_transform(T, Val(n))) for n in N.parameters)...)
+    return :( static_tensor_transform(Λ, $M) )
 end
 
 # 

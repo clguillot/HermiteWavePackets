@@ -3,11 +3,21 @@
     Represents the complex gaussian function
         λ*exp(-∑ₖ zₖ/2*(xₖ-qₖ)²)*exp(i∑ₖpₖxₖ)
 =#
-struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Real, Tp<:Real} <: AbstractWavePacket{D}
+struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}} <: AbstractWavePacket{D}
     λ::Tλ
     z::SVector{D, Tz}
     q::SVector{D, Tq}
     p::SVector{D, Tp}
+end
+
+#=
+    Represents the gaussian function
+        λ*exp(-∑ₖ aₖ/2*(xₖ-qₖ)²)
+=#
+const Gaussian{D, Tλ<:Number, Tz<:Real, Tq<:Real} = GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}
+
+function Gaussian(λ::Number, z::SVector{D, <:Real}, q::SVector{D, <:Real}) where D
+    return GaussianWavePacket(λ, z, q, zeros(SVector{D, NullNumber}))
 end
 
 #=
@@ -64,16 +74,6 @@ function Base.conj(G::GaussianWavePacket)
     return GaussianWavePacket(conj.(G.λ), conj.(G.z), G.q, .- G.p)
 end
 
-# Evaluates a gaussian at x
-function (G::GaussianWavePacket{D})(x::AbstractVector{<:Number}) where D
-    xs = SVector{D}(x)
-    return G.λ * exp(-sum(z/2 * (y - q)^2 for (z, q, y) in zip(G.z, G.q, xs))) * cis(dot(G.p, xs))
-end
-
-#=
-    TRANSFORMATIONS
-=#
-
 # 
 function Base.:-(G::GaussianWavePacket)
     return GaussianWavePacket(-G.λ, G.z, G.q, G.p)
@@ -89,15 +89,18 @@ function Base.:/(G::GaussianWavePacket, w::Number)
     return GaussianWavePacket(G.λ / w, G.z, G.q, G.p)
 end
 
-# Computes the product of two gaussians
-function Base.:*(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
-    z, q, p = complex_gaussian_product_arg(G1.z, G1.q, G1.p, G2.z, G2.q, G2.p)
-    λ = G1(q) * G2(q) * cis(-dot(p, q))
-    return GaussianWavePacket(λ, z, q, p)
+# Evaluates a gaussian at x
+function (G::GaussianWavePacket{D})(x::AbstractVector{<:Number}) where D
+    xs = SVector{D}(x)
+    return G.λ * exp(-sum(z/2 * (y - q)^2 for (z, q, y) in zip(G.z, G.q, xs))) * cis(dot(G.p, xs))
 end
 
+#=
+    TRANSFORMATIONS
+=#
+
 # Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(b::AbstractVector{<:Real}, q::AbstractVector{<:Real}, p::AbstractVector{<:Real}, G::GaussianWavePacket{D}) where D
+function unitary_product(b::AbstractVector{<:Real}, q::AbstractVector{<:Union{Real, NullNumber}}, p::AbstractVector{<:Union{Real, NullNumber}}, G::GaussianWavePacket{D}) where D
     b = SVector{D}(b)
     q = SVector{D}(q)
     p = SVector{D}(p)
@@ -110,13 +113,14 @@ function unitary_product(b::AbstractVector{<:Real}, q::AbstractVector{<:Real}, p
 end
 # Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
 function unitary_product(b::AbstractVector{<:Real}, G::GaussianWavePacket{D}) where D
-    b = SVector{D}(b)
-    u = @. b * G.q^2
-    λ_ = G.λ * cis(sum(u) / 2)
-    z_ = @. G.z + complex(0, b)
-    q_ = G.q
-    p_ = @. G.p - b * G.q
-    return GaussianWavePacket(λ_, z_, q_, p_)
+    return unitary_product(b, zeros(SVector{D, NullNumber}), zeros(SVector{D, NullNumber}), G)
+end
+
+# Computes the product of two gaussians
+function Base.:*(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
+    z, q, p = complex_gaussian_product_arg(G1.z, G1.q, G1.p, G2.z, G2.q, G2.p)
+    λ = G1(q) * G2(q) * cis(-dot(p, q))
+    return GaussianWavePacket(λ, z, q, p)
 end
 
 # Computes the integral of a gaussian
@@ -161,6 +165,10 @@ end
 # Computes the L² product of two gaussian wave packets
 function dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     return integral(conj(G1) * G2)
+end
+# Computes the L² product of two real gaussians
+function dot_L2(G1::Gaussian{D, Tλ1}, G2::Gaussian{D}) where{D, Tλ1<:Real}
+    return integral(G1 * G2)
 end
 
 # Computes the square L² norm of a gaussian wave packet

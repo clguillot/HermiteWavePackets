@@ -1,4 +1,4 @@
-struct NullNumber <: Real end  # Struct to represent the fully absorbing zero number
+struct NullNumber end  # Struct to represent the fully absorbing zero number
 
 # Define arithmetic properties
 # Multiplication
@@ -23,8 +23,8 @@ struct NullNumber <: Real end  # Struct to represent the fully absorbing zero nu
 @inline Base.cis(::NullNumber) = true
 
 # Define promotion rules
-@inline Base.promote_rule(::Type{NullNumber}, ::Type{T}) where{T<:Real} = T
-@inline Base.promote_rule(::Type{T}, ::Type{NullNumber}) where{T<:Real} = T
+@inline Base.promote_rule(::Type{NullNumber}, ::Type{T}) where{T<:Number} = T
+@inline Base.promote_rule(::Type{T}, ::Type{NullNumber}) where{T<:Number} = T
 
 # 
 @inline Base.zero(::Type{NullNumber}) = NullNumber()

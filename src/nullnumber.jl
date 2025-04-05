@@ -5,6 +5,7 @@ struct NullNumber end  # Struct to represent the fully absorbing zero number
 @inline Base.:*(::NullNumber, ::NullNumber) = NullNumber()
 @inline Base.:*(::Number, ::NullNumber) = NullNumber()
 @inline Base.:*(::NullNumber, ::Number) = NullNumber()
+@inline Base.:*(::NullNumber, ::SArray{N, <:Union{Number, NullNumber}}) where N = zeros(SArray{N, NullNumber})
 # Addition
 @inline Base.:+(::NullNumber, ::NullNumber) = NullNumber()
 @inline Base.:+(x::Number, ::NullNumber) = x

@@ -20,6 +20,10 @@ struct NullNumber end  # Struct to represent the fully absorbing zero number
 # Power
 @inline Base.:^(::NullNumber, x::Number) = NullNumber()
 
+# Special imag
+@inline imagz(::Real) = NullNumber()
+@inline imagz(z::Number) = imag(z)
+
 # Defines special operations with SArray
 @inline Base.:*(::NullNumber, ::SArray{N, <:Union{Number, NullNumber}}) where N = zeros(SArray{N, NullNumber})
 @inline LinearAlgebra.dot(::SArray{N, NullNumber}, ::SArray{N, <:Union{Number, NullNumber}}) where N = NullNumber()

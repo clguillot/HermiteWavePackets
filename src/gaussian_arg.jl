@@ -4,10 +4,11 @@
         C * exp(-z1/2*(x-q1)²)*exp(ip1*x) * exp(-z2/2*(x-q2)²)*exp(ip2*x)
     where C is some constant
 =#
-function complex_gaussian_product_arg(z1, q1, p1, z2, q2, p2)
+function complex_gaussian_product_arg(z1::SVector{D, <:Number}, q1::SVector{D, <:Union{Real, NullNumber}}, p1::SVector{D, <:Union{Real, NullNumber}},
+                z2::SVector{D, <:Number}, q2::SVector{D, <:Union{Real, NullNumber}}, p2::SVector{D, <:Union{Real, NullNumber}}) where D
     z = @. z1 + z2
     q = @. (real(z1) * q1 + real(z2) * q2) / (real(z1) + real(z2))
-    p0 = @. (imag(z1) * q1 + imag(z2) * q2) - (imag(z1) + imag(z2)) * q
+    p0 = @. (imagz(z1) * q1 + imagz(z2) * q2) - (imagz(z1) + imagz(z2)) * q
     p = @. p2 + p1 + p0
     return z, q, p
 end

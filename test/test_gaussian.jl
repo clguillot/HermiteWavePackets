@@ -198,26 +198,26 @@ function test_gaussian()
     let
         D = 3
 
-        λ1 = rand(Float32) + 1im * rand(Float32)
+        λ1 = rand(Float32)
         z1 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
         q1 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
         G1 = Gaussian(λ1, z1, q1)
 
-        λ2 = rand(Float32) + 1im * rand(Float32)
+        λ2 = rand(Float32)
         z2 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
         q2 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
         G2 = Gaussian(λ2, z2, q2)
 
-        λ3 = rand(Float32) + 1im * rand(Float32)
+        λ3 = rand(Float32)
         z3 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
         q3 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
         G3 = Gaussian(λ3, z3, q3)
 
-        G = convolution(G1 * fourier(G2), inv_fourier(G3))
+        G = convolution(G1 * G2, G3)
         res = G(rand(Float32, D)) + integral(G) + norm_L2(G)
         T_type = typeof(res)
 
-        color = (T_type != ComplexF32) ? :red : :green
-        printstyled("Expecting $ComplexF32 and got $T_type\n"; bold=true, color=color)
+        color = (T_type != Float32) ? :red : :green
+        printstyled("Expecting $Float32 and got $T_type\n"; bold=true, color=color)
     end
 end

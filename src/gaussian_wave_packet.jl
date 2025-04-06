@@ -14,9 +14,9 @@ end
     Represents the gaussian function
         λ*exp(-∑ₖ aₖ/2*(xₖ-qₖ)²)
 =#
-const Gaussian{D, Tλ<:Number, Tz<:Real, Tq<:Real} = GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}
+const Gaussian{D, Tλ<:Number, Tz<:Real, Tq<:Union{Real, NullNumber}} = GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}
 
-function Gaussian(λ::Number, z::SVector{D, <:Real}, q::SVector{D, <:Real}) where D
+function Gaussian(λ::Number, z::SVector{D, <:Real}, q::SVector{D, <:Union{Real, NullNumber}}) where D
     return GaussianWavePacket(λ, z, q, zeros(SVector{D, NullNumber}))
 end
 
@@ -144,6 +144,10 @@ function inv_fourier(G::GaussianWavePacket{D}) where D
 end
 
 # Computes the convolution product of two gaussians
+function convolution(G1::Gaussian{D, Tλ1}, G2::Gaussian{D, Tλ2}) where{D, Tλ1<:Real, Tλ2<:Real}
+    G = inv_fourier(fourier(G1) * fourier(G2))
+    return Gaussian(real(G.λ), G.z, G.q)
+end
 function convolution(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     return inv_fourier(fourier(G1) * fourier(G2))
 end

@@ -176,19 +176,16 @@ end
 =#
 
 # Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(b::AbstractVector{<:Real}, q::AbstractVector{<:Real}, p::AbstractVector{<:Real}, H::HermiteWavePacket{D}) where D
-    b = SVector{D}(b)
-    q = SVector{D}(q)
-    p = SVector{D}(p)
+function unitary_product(b::SVector{D, <:Real}, q::SVector{D, <:Union{Real, NullNumber}}, p::SVector{D, <:Union{Real, NullNumber}}, H::HermiteWavePacket{D}) where D
     u = @. b * (H.q + q) * (H.q - q)
     Λ_ = cis(sum(u) / 2) .* H.Λ
-    z_ = @. H.z + complex(0, b)
+    z_ = @. complex(real(H.z), imag(H.z) + b)
     q_ = H.q
     p_ = @. H.p + p - b * (H.q - q)
     return HermiteWavePacket(Λ_, z_, q_, p_)
 end
 # Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
-function unitary_product(b::AbstractVector{<:Real}, H::HermiteWavePacket{D}) where D
+function unitary_product(b::SVector{D, <:Real}, H::HermiteWavePacket{D}) where D
     return unitary_product(b, zeros(SVector{D, NullNumber}), zeros(SVector{D, NullNumber}), H)
 end
 
@@ -209,9 +206,12 @@ end
     return code
 end
 function Base.:*(H1::HermiteWavePacket{D}, H2::HermiteWavePacket{D}) where D
-    z, q, p = complex_gaussian_product_arg(H1.z, H1.q, H1.p, H2.z, H2.q, H2.z)
+    z, q, p = complex_gaussian_product_arg(H1.z, H1.q, H1.p, H2.z, H2.q, H2.p)
     Hr = HermiteFct(H1.Λ, real.(H1.z), H1.q) * HermiteFct(H2.Λ, real.(H2.z), H2.q)
-    return unitary_product(imag.(z), q, p, Hr)
+    G1 = GaussianWavePacket(true, im * imag.(H1.z), H1.q, H1.p)
+    G2 = GaussianWavePacket(true, im * imag.(H2.z), H2.q, H2.p)
+    λ = G1(q) * G2(q) * cis(-dot(q, p))
+    return HermiteWavePacket(λ * Hr.Λ, z, q, p)
 end
 
 #=
@@ -246,6 +246,9 @@ function integral(H::HermiteFct{D}) where D
     val = first(clenshaw_hermite_transform_grid(H.Λ, z, x, μ, α0))
     return prod(H.z)^T(-1/4) * T((4π)^(D/4)) * val
 end
+function integral(H::HermiteWavePacket{D}) where D
+    return fourier(H)(zeros(SVector{D, Bool}))
+end
 
 # Computes the Fourier transform of a hermite function with real variance
 @generated function fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz<:Real}
@@ -254,14 +257,25 @@ end
     code =
         quote
             zf, qf, pf = complex_gaussian_fourier_arg(H.z, H.q, H.p)
-            return HermiteWavePacket($T((2π)^($D/2)) .* $M .* H.Λ, zf, qf, pf)
+            return HermiteWavePacket(($T((2π)^($D/2)) * cis(dot(H.p, H.q))) .* $M .* H.Λ, zf, qf, pf)
         end
     return code
 end
-# # Complex variance
-# @generated function fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz<:Complex}
-#     
-# end
+# Complex variance
+@generated function fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz<:Number}
+    T = fitting_float(H)
+    zs = zeros(SVector{D, Bool})
+    expr_d = [(:( α[$k]^$j ) for j in 0:n-1) for (n, k) in zip(N.parameters, eachindex(zs))]
+    expr_D = [:( Diagonal(SVector{$n}($(d...))) ) for (n, d) in zip(N.parameters, expr_d)]
+    code =
+        quote
+            Gf = fourier(GaussianWavePacket(prod(real.(H.z))^$T(1/4), H.z, H.q, H.p))            
+            α = @. - im * conj(H.z) / abs(H.z)
+            Λf = static_tensor_transform(H.Λ, tuple($(expr_D...)))
+            return HermiteWavePacket((Gf.λ * prod(real.(Gf.z))^$T(-1/4)) .* Λf, Gf.z, Gf.q, Gf.p)
+        end
+    return code
+end
 
 # Computes the inverse Fourier transform of a hermite function with real variance
 @generated function inv_fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz<:Real}
@@ -274,10 +288,21 @@ end
         end
     return code
 end
-# # Complex variance
-# @generated function fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz<:Complex}
-#     
-# end
+# Complex variance
+@generated function inv_fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz<:Number}
+    T = fitting_float(H)
+    zs = zeros(SVector{D, Bool})
+    expr_d = [(:( α[$k]^$j ) for j in 0:n-1) for (n, k) in zip(N.parameters, eachindex(zs))]
+    expr_D = [:( Diagonal(SVector{$n}($(d...))) ) for (n, d) in zip(N.parameters, expr_d)]
+    code =
+        quote
+            Gf = inv_fourier(GaussianWavePacket(prod(real.(H.z))^$T(1/4), H.z, H.q, H.p))            
+            α = @. im * conj(H.z) / abs(H.z)
+            Λf = static_tensor_transform(H.Λ, tuple($(expr_D...)))
+            return HermiteWavePacket((Gf.λ * prod(real.(Gf.z))^$T(-1/4)) .* Λf, Gf.z, Gf.q, Gf.p)
+        end
+    return code
+end
 
 # Convolution of two Hermite functions
 function convolution(H1::HermiteFct{D, N1, TΛ1}, H2::HermiteFct{D, N2, TΛ2}) where{D, N1, TΛ1<:Real, N2, TΛ2<:Real}

@@ -225,8 +225,8 @@ end
         throw(DimensionMismatch("Expecting the length of M to be $D, but got $(length(M.parameters)) instead"))
     end
     for (y, n) in zip(M.parameters, N.parameters)
-        if !(y<:SMatrix)
-            throw(ArgumentError("All elements of `M` must be `SMatrix`"))
+        if !(y<:AbstractMatrix)
+            throw(ArgumentError("All elements of `M` must be matrices"))
         end
         if last(size(y)) != n
             throw(DimensionMismatch("Incompatible transform dimension"))

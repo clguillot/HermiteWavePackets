@@ -13,6 +13,7 @@ export Gaussian1D
 export HermiteFct1D
 export Gaussian
 export HermiteFct
+export HermiteWavePacket
 export GaussianWavePacket1D
 export HermiteWavePacket1D
 export GaussianWavePacket

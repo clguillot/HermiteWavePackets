@@ -33,19 +33,6 @@ end
     CONVERSIONS
 =#
 
-function Base.convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, G::Gaussian1D) where{N, TΛ, Tz, Tq, Tp}
-    T = fitting_float(G)
-    Λ = [convert(TΛ, (G.a / π)^T(-1/4) * G.λ); zero(SVector{N - 1, TΛ})]
-    return HermiteWavePacket1D(Λ, convert(Tz, G.a), convert(Tq, G.q), zero(Tp))
-end
-
-function Base.convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket1D) where{N, TΛ, Tz, Tq, Tp}
-    T = fitting_float(G)
-    a = real(G.z)
-    Λ = [convert(TΛ, (a / π)^T(-1/4) * G.λ); zero(SVector{N - 1, TΛ})]
-    return HermiteWavePacket1D(Λ, convert(Tz, G.z), convert(Tq, G.q),convert(Tp, G.p))
-end
-
 function Base.convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, H::HermiteFct1D{N2}) where{N, TΛ, Tz, Tq, Tp, N2}
     if N < N2
         throw(InexactError("Cannot convert HermiteFct1D{N2} to HermiteWavePacket1D{N}: N = $N is smaller than N2 = $N2. Ensure that N ≥ N2 for a valid conversion."))
@@ -53,14 +40,6 @@ function Base.convert(::Type{HermiteWavePacket1D{N, TΛ, Tz, Tq, Tp}}, H::Hermit
 
     Λ = [TΛ.(H.Λ) ; zero(SVector{N - N2, TΛ})]
     return HermiteWavePacket1D(Λ, Tz(H.a), Tq(H.q), zero(Tp))
-end
-
-function HermiteWavePacket1D(G::Gaussian1D{Tλ, Ta, Tq}) where{Tλ, Ta, Tq}
-    return convert(HermiteWavePacket1D{1, Tλ, Ta, Tq, Tq}, G)
-end
-
-function HermiteWavePacket1D(G::GaussianWavePacket1D{Tλ, Tz, Tq, Tp}) where{Tλ, Tz, Tq, Tp}
-    return convert(HermiteWavePacket1D{1, Tλ, Tz, Tq, Tp}, G)
 end
 
 function HermiteWavePacket1D(H::HermiteFct1D{N, TΛ, Ta, Tq}) where{N, TΛ, Ta, Tq}
@@ -83,22 +62,6 @@ function Base.promote_rule(::Type{<:HermiteWavePacket1D}, ::Type{HermiteWavePack
 end
 function Base.promote_rule(::Type{HermiteWavePacket1D{N1, TΛ1, Tz1, Tq1, Tp1}}, ::Type{HermiteWavePacket1D{N2, TΛ2, Tz2, Tq2, Tp2}}) where{N1, TΛ1, Tz1, Tq1, Tp1, N2, TΛ2, Tz2, Tq2, Tp2}
     return HermiteWavePacket1D{max(N1, N2), promote_type(TΛ1, TΛ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2)}
-end
-
-# 
-function Base.promote_rule(::Type{<:Gaussian1D}, ::Type{HermiteWavePacket1D})
-    return HermiteWavePacket1D
-end
-function Base.promote_rule(::Type{Gaussian1D{Tλ, Ta, Tq}}, ::Type{TH}) where{Tλ, Ta, Tq, TH<:HermiteWavePacket1D}
-    return promote_type(HermiteWavePacket1D{1, Tλ, Ta, Tq, Tq}, TH)
-end
-
-# 
-function Base.promote_rule(::Type{<:GaussianWavePacket1D}, ::Type{HermiteWavePacket1D})
-    return HermiteWavePacket1D
-end
-function Base.promote_rule(::Type{GaussianWavePacket1D{Tλ, Tz, Tq, Tp}}, ::Type{TH}) where{Tλ, Tz, Tq, Tp, TH<:HermiteWavePacket1D}
-    return promote_type(HermiteWavePacket1D{1, Tλ, Tz, Tq, Tp}, TH)
 end
 
 # 
@@ -180,12 +143,6 @@ function Base.:*(H1::HermiteWavePacket1D{N1}, H2::HermiteWavePacket1D{N2}) where
     Φ = SVector{N}(Φ1[j] * Φ2[j] * cis(b * (x[j] - q)^2 / 2) * cis(- p * x[j]) for j in 1:N)
     Λ = hermite_discrete_transform(Φ, a, q, Val(N))
     return HermiteWavePacket1D(Λ, z, q, p)
-end
-@inline function Base.:*(G1::GaussianWavePacket1D, H2::HermiteWavePacket1D)
-    return HermiteWavePacket1D(G1) * H2
-end
-@inline function Base.:*(H1::HermiteWavePacket1D, G2::GaussianWavePacket1D)
-    return G2 * H1
 end
 
 #=
@@ -286,17 +243,6 @@ end
 # Computes the convolution product of two hermite wave packets
 @inline function convolution(H1::HermiteWavePacket1D, H2::HermiteWavePacket1D)
     return inv_fourier(fourier(H1) * fourier(H2))
-end
-
-# Computes the L² product of two hermite wave packets
-@inline function dot_L2(H1::HermiteWavePacket1D, H2::HermiteWavePacket1D)
-    return integral(conj(H1) * H2)
-end
-@inline function dot_L2(G1::GaussianWavePacket1D, H2::HermiteWavePacket1D)
-    return dot_L2(HermiteWavePacket1D(G1), H2)
-end
-@inline function dot_L2(H1::HermiteWavePacket1D, G2::GaussianWavePacket1D)
-    return dot_L2(H1, HermiteWavePacket1D(G2))
 end
 
 # Computes the square L² norm of a hermite wave packet

@@ -1,7 +1,7 @@
 
-function test_gaussian_wave_packet()
+function test_gaussian()
 
-    printstyled("Testing gaussian wave packet:\n"; bold=true, color=:blue)
+    printstyled("Testing gaussian:\n"; bold=true, color=:blue)
 
     nb_reps = 1
     M = 10.0
@@ -14,12 +14,11 @@ function test_gaussian_wave_packet()
         for _=1:nb_reps
             x = SVector{D}(4.0 .* (rand(D) .- 0.5))
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z = SVector{D}((4 * rand(D) .+ 0.5))
             q = SVector{D}(4 * (rand(D) .- 0.5))
-            p = SVector{D}(4 * (rand(D) .- 0.5))
-            G = GaussianWavePacket(λ, z, q, p)
+            G = Gaussian(λ, z, q)
 
-            u = @. exp(-z/2 * (x - q)^2 + im * p*x)
+            u = @. exp(-z/2 * (x - q)^2)
             μ = λ * prod(u)
             err = max(err, abs(G(x) - μ) / abs(μ))
         end
@@ -34,11 +33,10 @@ function test_gaussian_wave_packet()
         for _=1:nb_reps
             x = SVector{D}(4.0 .* (rand(D) .- 0.5))
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z = SVector{D}((4 * rand(D) .+ 0.5))
             q = SVector{D}(4 * (rand(D) .- 0.5))
-            p = SVector{D}(4 * (rand(D) .- 0.5))
-            G = GaussianWavePacket(λ, z, q, p)
-            
+            G = Gaussian(λ, z, q)
+
             Gc = conj(G)
 
             err = max(err, abs(Gc(x) - conj(G(x))) / abs(Gc(x)))
@@ -53,16 +51,14 @@ function test_gaussian_wave_packet()
         err = 0.0
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
-            z1 = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z1 = SVector{D}((4 * rand(D) .+ 0.5))
             q1 = SVector{D}(4 * (rand(D) .- 0.5))
-            p1 = SVector{D}(4 * (rand(D) .- 0.5))
-            G1 = GaussianWavePacket(λ1, z1, q1, p1)
+            G1 = Gaussian(λ1, z1, q1)
 
             λ2 = rand() + 1im * rand()
-            z2 = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z2 = SVector{D}((4 * rand(D) .+ 0.5))
             q2 = SVector{D}(4 * (rand(D) .- 0.5))
-            p2 = SVector{D}(4 * (rand(D) .- 0.5))
-            G2 = GaussianWavePacket(λ2, z2, q2, p2)
+            G2 = Gaussian(λ2, z2, q2)
 
             f(x) = G1(x) * G2(x)
             G = G1 * G2
@@ -78,43 +74,15 @@ function test_gaussian_wave_packet()
     end
 
     let
-        D = 3
-        err = 0.0
-        for _=1:nb_reps
-            λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
-            q = SVector{D}(4 * (rand(D) .- 0.5))
-            p = SVector{D}(4 * (rand(D) .- 0.5))
-            G = GaussianWavePacket(λ, z, q, p)
-
-            b = SVector{D}(4 * (rand(D) .- 0.5))
-            q2 = SVector{D}(4 * (rand(D) .- 0.5))
-            p2 = SVector{D}(4 * (rand(D) .- 0.5))
-
-            f(x) = G(x) * cis(-dot(x - q2, Diagonal(b/2), x - q2)) * cis(dot(p2, x))
-            G2 = unitary_product(G, b, q2, p2)
-
-            for _=1:100
-                x = SVector{D}(5 * (rand(D) .- 0.5))
-                err = max(err, abs(f(x) - G2(x)))
-            end
-        end
-
-        color = (err > tol) ? :red : :green
-        printstyled("Error unitary product = $err\n"; bold=true, color=color)
-    end
-
-    let
         D = 2
         err = 0.0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z = SVector{D}((4 * rand(D) .+ 0.5))
             q = SVector{D}(4 * (rand(D) .- 0.5))
-            p = SVector{D}(4 * (rand(D) .- 0.5))
-            G = GaussianWavePacket(λ, z, q, p)
+            G = Gaussian(λ, z, q)
 
-            I = complex_cubature(y -> G(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)        
+            I = complex_cubature(y -> G(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
             err = max(err, abs(I - integral(G)))
         end
 
@@ -127,16 +95,14 @@ function test_gaussian_wave_packet()
         err = 0.0
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
-            z1 = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z1 = SVector{D}((4 * rand(D) .+ 0.5))
             q1 = SVector{D}(4 * (rand(D) .- 0.5))
-            p1 = SVector{D}(4 * (rand(D) .- 0.5))
-            G1 = GaussianWavePacket(λ1, z1, q1, p1)
+            G1 = Gaussian(λ1, z1, q1)
 
             λ2 = rand() + 1im * rand()
-            z2 = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z2 = SVector{D}((4 * rand(D) .+ 0.5))
             q2 = SVector{D}(4 * (rand(D) .- 0.5))
-            p2 = SVector{D}(4 * (rand(D) .- 0.5))
-            G2 = GaussianWavePacket(λ2, z2, q2, p2)
+            G2 = Gaussian(λ2, z2, q2)
 
             G = convolution(G1, G2)
 
@@ -154,16 +120,14 @@ function test_gaussian_wave_packet()
         err = 0.0
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
-            z1 = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z1 = SVector{D}((4 * rand(D) .+ 0.5))
             q1 = SVector{D}(4 * (rand(D) .- 0.5))
-            p1 = SVector{D}(4 * (rand(D) .- 0.5))
-            G1 = GaussianWavePacket(λ1, z1, q1, p1)
+            G1 = Gaussian(λ1, z1, q1)
 
             λ2 = rand() + 1im * rand()
-            z2 = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z2 = SVector{D}((4 * rand(D) .+ 0.5))
             q2 = SVector{D}(4 * (rand(D) .- 0.5))
-            p2 = SVector{D}(4 * (rand(D) .- 0.5))
-            G2 = GaussianWavePacket(λ2, z2, q2, p2)
+            G2 = Gaussian(λ2, z2, q2)
 
             I = complex_cubature(y -> conj(G1(y)) * G2(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
             err = max(err, abs(I - dot_L2(G1, G2)))
@@ -178,10 +142,9 @@ function test_gaussian_wave_packet()
         err = 0.0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z = SVector{D}((4 * rand(D) .+ 0.5))
             q = SVector{D}(4 * (rand(D) .- 0.5))
-            p = SVector{D}(4 * (rand(D) .- 0.5))
-            G = GaussianWavePacket(λ, z, q, p)
+            G = Gaussian(λ, z, q)
 
             err = max(err, abs(norm_L2(G) - sqrt(dot_L2(G, G))) / norm_L2(G))
         end
@@ -196,10 +159,9 @@ function test_gaussian_wave_packet()
         for _=1:nb_reps
             ξ = 5 * (rand(D) .- 0.5)
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            z = SVector{D}((4 * rand(D) .+ 0.5))
             q = SVector{D}(4 * (rand(D) .- 0.5))
-            p = SVector{D}(4 * (rand(D) .- 0.5))
-            G = GaussianWavePacket(λ, z, q, p)
+            G = Gaussian(λ, z, q)
 
             Gf = fourier(G)
 
@@ -216,10 +178,9 @@ function test_gaussian_wave_packet()
         err = 0.0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
-            z = (4 .* rand(D) .+ 0.5) + 4im .* (rand(D) .- 0.5)
+            z = (4 .* rand(D) .+ 0.5)
             q = 4 .* (rand(D) .- 0.5)
-            p = 4 .* (rand(D) .- 0.5)
-            G = GaussianWavePacket(λ, SVector{D}(z), SVector{D}(q), SVector{D}(p))
+            G = Gaussian(λ, SVector{D}(z), SVector{D}(q))
             GF = fourier(G)
 
             G_ = inv_fourier(GF)
@@ -236,25 +197,21 @@ function test_gaussian_wave_packet()
 
     let
         D = 3
-        
+
         λ1 = rand(Float32) + 1im * rand(Float32)
-        z1 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0) + 1im * (4 * rand(Float32, D) .+ 0.5f0))
+        z1 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
         q1 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
-        p1 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
-        G1 = GaussianWavePacket(λ1, z1, q1, p1)
+        G1 = Gaussian(λ1, z1, q1)
 
         λ2 = rand(Float32) + 1im * rand(Float32)
-        z2 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0) + 1im * (4 * rand(Float32, D) .+ 0.5f0))
+        z2 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
         q2 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
-        p2 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
-        G2 = GaussianWavePacket(λ2, z2, q2, p2)
+        G2 = Gaussian(λ2, z2, q2)
 
         λ3 = rand(Float32) + 1im * rand(Float32)
-        z3 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0) + 1im * (4 * rand(Float32, D) .+ 0.5f0))
+        z3 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
         q3 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
-        p3 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
-        G3 = GaussianWavePacket(λ3, z3, q3, p3)
-
+        G3 = Gaussian(λ3, z3, q3)
 
         G = convolution(G1 * fourier(G2), inv_fourier(G3))
         res = G(rand(Float32, D)) + integral(G) + norm_L2(G)

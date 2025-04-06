@@ -35,6 +35,7 @@ function complex_cubature(f, a, b; reltol=1e-13, abstol=0)
     return complex(Ir[1], Ic[1])
 end
 
+include("test_gaussian.jl")
 include("test_gaussian_wave_packet.jl");
 include("test_hermite.jl");
 include("test_hermite_wave_packet.jl");

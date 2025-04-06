@@ -25,12 +25,7 @@ end
 =#
 
 function Base.convert(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}, G::GaussianWavePacket{D}) where {D, Tλ, Tz, Tq, Tp}
-    return GaussianWavePacket(
-        convert(Tλ, G.λ),
-        Tz.(G.z),
-        Tq.(G.q),
-        Tp.(G.p)
-    )
+    return GaussianWavePacket(convert(Tλ, G.λ), convert.(Tz, G.z), convert.(Tq, G.q), convert.(Tp, G.p))
 end
 
 function truncate_to_gaussian(G::GaussianWavePacket)
@@ -76,7 +71,7 @@ end
 
 # 
 function Base.:-(G::GaussianWavePacket)
-    return GaussianWavePacket(-G.λ, G.z, G.q, G.p)
+    return GaussianWavePacket(.- G.λ, G.z, G.q, G.p)
 end
 
 # Computes the product of a scalar and a gaussian
@@ -90,7 +85,7 @@ function Base.:/(G::GaussianWavePacket, w::Number)
 end
 
 # Evaluates a gaussian at x
-function (G::GaussianWavePacket{D})(x::AbstractVector{<:Number}) where D
+function (G::GaussianWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D
     xs = SVector{D}(x)
     return G.λ * exp(-sum(z/2 * (y - q)^2 for (z, q, y) in zip(G.z, G.q, xs))) * cis(dot(G.p, xs))
 end
@@ -100,17 +95,15 @@ end
 =#
 
 # Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(b::SVector{D, <:Real}, q::SVector{D, <:Union{Real, NullNumber}}, p::SVector{D, <:Union{Real, NullNumber}}, G::GaussianWavePacket{D}) where D
+function unitary_product(G::GaussianWavePacket{D}, b::SVector{D, <:Real},
+            q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
+            p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
     u = @. b * (G.q + q) * (G.q - q)
     λ_ = G.λ * cis(sum(u) / 2)
     z_ = @. complex(real(G.z), imag(G.z) + b)
     q_ = G.q
     p_ = @. G.p + p - b * (G.q - q)
     return GaussianWavePacket(λ_, z_, q_, p_)
-end
-# Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
-function unitary_product(b::SVector{D, <:Real}, G::GaussianWavePacket{D}) where D
-    return unitary_product(b, zeros(SVector{D, NullNumber}), zeros(SVector{D, NullNumber}), G)
 end
 
 # Computes the product of two gaussians
@@ -152,11 +145,7 @@ end
 
 # Computes the convolution product of two gaussians
 function convolution(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
-    z1, q1, p1 = G1.z, G1.q, G1.p
-    λ2, z2, q2, p2 = G2.λ, G2.z, G2.q, G2.p
-    z, q, p = complex_gaussian_convolution_product_arg(z1, q1, p1, z2, q2, p2)
-    λ = cis(dot(q, p2 - p)) * integral(G1 * GaussianWavePacket(λ2, z2, q - q2, -p2))
-    return GaussianWavePacket(λ, z, q, p)
+    return inv_fourier(fourier(G1) * fourier(G2))
 end
 
 # Computes the L² product of two gaussian wave packets
@@ -171,5 +160,5 @@ end
 # Computes the square L² norm of a gaussian wave packet
 function norm2_L2(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
-    return T(sqrt(π)^D) * abs2(G.λ) * prod(real.(G.z))^T(-1/2)
+    return T(π^(D/2)) * abs2(G.λ) * prod(real.(G.z))^T(-1/2)
 end

@@ -17,6 +17,8 @@ struct NullNumber end  # Struct to represent the fully absorbing zero number
 # Division
 @inline Base.:/(::NullNumber, ::NullNumber) = throw(DivideError())
 @inline Base.:/(::NullNumber, ::Number) = NullNumber()
+# Power
+@inline Base.:^(::NullNumber, x::Number) = NullNumber()
 
 # Defines special operations with SArray
 @inline Base.:*(::NullNumber, ::SArray{N, <:Union{Number, NullNumber}}) where N = zeros(SArray{N, NullNumber})

@@ -100,19 +100,16 @@ end
 =#
 
 # Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(b::AbstractVector{<:Real}, q::AbstractVector{<:Union{Real, NullNumber}}, p::AbstractVector{<:Union{Real, NullNumber}}, G::GaussianWavePacket{D}) where D
-    b = SVector{D}(b)
-    q = SVector{D}(q)
-    p = SVector{D}(p)
+function unitary_product(b::SVector{D, <:Real}, q::SVector{D, <:Union{Real, NullNumber}}, p::SVector{D, <:Union{Real, NullNumber}}, G::GaussianWavePacket{D}) where D
     u = @. b * (G.q + q) * (G.q - q)
     λ_ = G.λ * cis(sum(u) / 2)
-    z_ = @. G.z + complex(0, b)
+    z_ = @. complex(real(G.z), imag(G.z) + b)
     q_ = G.q
     p_ = @. G.p + p - b * (G.q - q)
     return GaussianWavePacket(λ_, z_, q_, p_)
 end
 # Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
-function unitary_product(b::AbstractVector{<:Real}, G::GaussianWavePacket{D}) where D
+function unitary_product(b::SVector{D, <:Real}, G::GaussianWavePacket{D}) where D
     return unitary_product(b, zeros(SVector{D, NullNumber}), zeros(SVector{D, NullNumber}), G)
 end
 

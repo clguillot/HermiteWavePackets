@@ -116,7 +116,7 @@ end
 
 # Computes the product of two gaussians
 function Base.:*(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
-    z, q, p = complex_gaussian_product_arg(G1.z, G1.q, G1.p, G2.z, G2.q, G2.p)
+    z, q, p = gaussian_product_arg(G1.z, G1.q, G1.p, G2.z, G2.q, G2.p)
     λ = G1(q) * G2(q) * cis(-dot(p, q))
     return GaussianWavePacket(λ, z, q, p)
 end

@@ -122,29 +122,27 @@ end
         ∫dx f(x)exp(-a(x-q)²) ≈ ∑ⱼ wⱼf(xⱼ) (j=1,...,N)
     is exact for any polynomial f up to degree 2N-1
 =#
-function hermite_quadrature(a::Real, q::Real, ::Val{N}) where N
+function hermite_quadrature(a::Real, q::Union{Real, NullNumber}, ::Val{N}) where N
     T = fitting_float(typeof(a), typeof(q))    
     x0, w0, _ = hermite_primitive_discrete_transform(T, Val(N))
 
     c = a^T(-1/2)
-    x = x0 .* c .+ q
-    w = w0 .* c
-
-    return x, w
+    q_broad = SVector{N}(ntuple(_ -> q, N)...)
+    return c.*x0.+q_broad, c.*w0
 end
-# @generated function hermite_quadrature(a::SVector{D, <:Number}, q::SVector{D, <:Number}, ::Type{N}) where{D, N<:Tuple}
-#     if length(N.parameters) != D
-#         throw(DimensionMismatch("Expected N to have length $D, but got length $(length(N.parameters))"))
-#     end
+@generated function hermite_quadrature(a::SVector{D, <:Real}, q::SVector{D, <:Union{Real, NullNumber}}, ::Type{N}) where{D, N<:Tuple}
+    if length(N.parameters) != D
+        throw(DimensionMismatch("Expected N to have length $D, but got length $(length(N.parameters))"))
+    end
     
-#     zs = zero(SVector{D, Bool})
-#     expr = [:( hermite_grid(a[$k], q[$k], Val($n)) ) for (n, k) in zip(N.parameters, eachindex(zs))]
-#     expr_x = [:( first(A[$k]) ) for k in eachindex(zs)]
-#     expr_w = [:( last(A[$k]) ) for k in eachindex(zs)]
-#     return :( return tuple($(expr...)) )
-#     code =
-#         quote
-#             A = tuple($(expr...))
-#             return tuple($(expr_x...)), tuple($(expr_w...))
-#         end
-# end
+    zs = zeros(SVector{D, Bool})
+    expr = [:( hermite_quadrature(a[$k], q[$k], Val($n)) ) for (n, k) in zip(N.parameters, eachindex(zs))]
+    expr_x = [:( first(A[$k]) ) for k in eachindex(zs)]
+    expr_w = [:( last(A[$k]) ) for k in eachindex(zs)]
+    code =
+        quote
+            A = tuple($(expr...))
+            return tuple($(expr_x...)), tuple($(expr_w...))
+        end
+    return code
+end

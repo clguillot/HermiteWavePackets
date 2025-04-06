@@ -1,7 +1,7 @@
 
 function test_hermite_wave_packets()
 
-    printstyled("Testing hermite functions:\n"; bold=true, color=:blue)
+    printstyled("Testing hermite wave packets:\n"; bold=true, color=:blue)
 
     nb_reps = 1
     M = 10.0

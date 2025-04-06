@@ -40,14 +40,13 @@ export core_type
 include("utils.jl")
 include("nullnumber.jl")
 
-include("complex/gaussian_arg.jl")
+include("gaussian_arg.jl")
+include("hermite_quadrature.jl")
+include("generics.jl")
 
-include("real/hermite_quadrature.jl")
-
-include("complex/gaussian_wave_packet.jl")
-include("complex/hermite_wave_packet.jl")
+include("gaussian_wave_packet.jl")
+include("hermite_wave_packet.jl")
 
 include("wave_packet_sum.jl")
-include("generics.jl")
 
 end

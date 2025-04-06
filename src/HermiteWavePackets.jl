@@ -9,14 +9,10 @@ abstract type AbstractWavePacket{D} end
 export AbstractWavePacket
 
 # Concrete types
-export Gaussian1D
-export HermiteFct1D
 export Gaussian
+export GaussianWavePacket
 export HermiteFct
 export HermiteWavePacket
-export GaussianWavePacket1D
-export HermiteWavePacket1D
-export GaussianWavePacket
 export WavePacketSum
 
 # Functions

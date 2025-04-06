@@ -8,15 +8,23 @@ struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber
     z::SVector{D, Tz}
     q::SVector{D, Tq}
     p::SVector{D, Tp}
+
+    function GaussianWavePacket(λ::Tλ, z::SVector{D, Tz},
+                q::SVector{D, Tq} = zeros(SVector{D, NullNumber}),
+                p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+        return new{D, Tλ, Tz, Tq, Tp}(λ, z, q, p)
+    end
 end
 
 #=
     Represents the gaussian function
         λ*exp(-∑ₖ aₖ/2*(xₖ-qₖ)²)
 =#
-const Gaussian{D, Tλ<:Number, Tz<:Real, Tq<:Union{Real, NullNumber}} = GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}
+const Gaussian{D, Tλ<:Number, Tz<:Real, Tq<:Union{Real, NullNumber}} =
+            GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}
 
-function Gaussian(λ::Number, z::SVector{D, <:Real}, q::SVector{D, <:Union{Real, NullNumber}}) where D
+function Gaussian(λ::Number, z::SVector{D, <:Real},
+                q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
     return GaussianWavePacket(λ, z, q, zeros(SVector{D, NullNumber}))
 end
 
@@ -100,7 +108,7 @@ function unitary_product(G::GaussianWavePacket{D}, b::SVector{D, <:Real},
             p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
     u = @. b * (G.q + q) * (G.q - q)
     λ_ = G.λ * cis(sum(u) / 2)
-    z_ = @. complex(real(G.z), imag(G.z) + b)
+    z_ = @. complex(real(G.z), imagz(G.z) + b)
     q_ = G.q
     p_ = @. G.p + p - b * (G.q - q)
     return GaussianWavePacket(λ_, z_, q_, p_)

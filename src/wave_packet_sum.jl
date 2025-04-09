@@ -34,16 +34,11 @@ end
 =#
 
 #
-function core_type(::Type{WavePacketSum{Ctype}}) where{Ctype<:AbstractArray}
+function core_type(::Type{WavePacketSum{D, Ctype}}) where{D, Ctype<:AbstractArray}
     return core_type(eltype(Ctype))
 end
-function core_type(::Type{WavePacketSum{Ctype}}) where{Ctype<:Tuple}
+function core_type(::Type{WavePacketSum{D, Ctype}}) where{D, Ctype<:Tuple}
     return promote_type(core_type.(fieldtypes(Ctype))...)
-end
-
-#
-function fitting_float(::Type{WavePacketSum{Ctype}}) where Ctype
-    return fitting_float(core_type(Ctype))
 end
 
 #

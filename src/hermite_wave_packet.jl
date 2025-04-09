@@ -64,10 +64,11 @@ end
     Represents the function
         ∑ₙ Λ[n]*ψₙ(a, q, x) (n=multi index)
 =#
-const HermiteFct{D, N<:Tuple, TΛ<:Number, Tz<:Real, Tq<:Real, L} =
+const HermiteFct{D, N<:Tuple, TΛ<:Number, Tz<:Real, Tq<:Union{Real, NullNumber}, L} =
         HermiteWavePacket{D, N, TΛ, Tz, Tq, NullNumber, L}
 
-function HermiteFct(Λ::SArray{N, <:Number, D}, z::SVector{D, <:Real}, q::SVector{D, <:Real}) where{D, N}
+function HermiteFct(Λ::SArray{N, <:Number, D}, z::SVector{D, <:Real},
+                q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where{D, N}
     return HermiteWavePacket(Λ, z, q, zeros(SVector{D, NullNumber}))
 end
 
@@ -169,7 +170,7 @@ end
 end
 
 # Evaluates a hermite function at x using Clenshaw's algorithm
-function (H::HermiteWavePacket{D})(x::AbstractVector{<:Number}) where D
+function (H::HermiteWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D
     xs = SVector{D}(x)
     return first(evaluate_grid(H, tuple((SVector{1}(y) for y in xs)...)))
 end
@@ -179,37 +180,35 @@ end
 =#
 
 # Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(b::SVector{D, <:Real}, q::SVector{D, <:Union{Real, NullNumber}}, p::SVector{D, <:Union{Real, NullNumber}}, H::HermiteWavePacket{D}) where D
+function unitary_product(H::HermiteWavePacket{D}, b::SVector{D, <:Real},
+                q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
+                p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
     u = @. b * (H.q + q) * (H.q - q)
     Λ_ = cis(sum(u) / 2) .* H.Λ
-    z_ = @. complex(real(H.z), imag(H.z) + b)
+    z_ = @. complex(real(H.z), imagz(H.z) + b)
     q_ = H.q
     p_ = @. H.p + p - b * (H.q - q)
     return HermiteWavePacket(Λ_, z_, q_, p_)
 end
-# Multiplies a gaussian wave packet by exp(-ib/2 * x^2)
-function unitary_product(b::SVector{D, <:Real}, H::HermiteWavePacket{D}) where D
-    return unitary_product(b, zeros(SVector{D, NullNumber}), zeros(SVector{D, NullNumber}), H)
-end
 
 # Computes the product of two hermite functions
-@generated function Base.:*(H1::HermiteFct{D, N1}, H2::HermiteFct{D, N2}) where{D, N1, N2}
+@generated function Base.:*(H1::HermiteWavePacket{D, N1, TΛ1, Tz1}, H2::HermiteFct{D, N2, TΛ2, Tz2}) where{D, N1, TΛ1, Tz1<:Real, N2, TΛ2, Tz2<:Real}
     N = Tuple{(@. max(N1.parameters + N2.parameters - 1, 0))...}
     code =
         quote
-            z, q = gaussian_product_arg(H1.z, H1.q, H2.z, H2.q)
+            z, q, p = gaussian_product_arg(H1.z, H1.q, H1.p, H2.z, H2.q, H2.p)
 
             x = hermite_grid(z, q, $N)
             Φ1 = evaluate_grid(H1, x)
             Φ2 = evaluate_grid(H2, x)
             Λ = hermite_discrete_transform(Φ1 .* Φ2, z)
 
-            return HermiteFct(Λ, z, q)
+            return HermiteWavePacket(Λ, z, q, p)
         end
     return code
 end
-function Base.:*(H1::HermiteWavePacket{D}, H2::HermiteWavePacket{D}) where D
-    z, q, p = complex_gaussian_product_arg(H1.z, H1.q, H1.p, H2.z, H2.q, H2.p)
+function Base.:*(H1::HermiteWavePacket{D, N1, TΛ1, Tz1}, H2::HermiteWavePacket{D, N2, TΛ2, Tz2}) where{D, N1, TΛ1, Tz1, N2, TΛ2, Tz2}
+    z, q, p = gaussian_product_arg(H1.z, H1.q, H1.p, H2.z, H2.q, H2.p)
     Hr = HermiteFct(H1.Λ, real.(H1.z), H1.q) * HermiteFct(H2.Λ, real.(H2.z), H2.q)
     G1 = GaussianWavePacket(true, im * imag.(H1.z), H1.q, H1.p)
     G2 = GaussianWavePacket(true, im * imag.(H2.z), H2.q, H2.p)
@@ -221,12 +220,13 @@ end
     Computes the product of a hermite function with a polynomial
         P(x) = ∑ₖ P[k](x-q)^k
 =#
-@generated function polynomial_product(q::SVector{D, <:Number}, P::SArray{N1, <:Number, D}, H::HermiteFct{D, N2}) where{D, N1, N2}
-    N = Tuple{(max(n1+n2-1, 0) for (n1, n2) in zip(N1.parameters, N2.parameters))...}
+@generated function polynomial_product(H::HermiteFct{D, N}, P::SArray{NP, <:Number, D},
+                        q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where{D, N, NP}
+    N1 = Tuple{(max(n1+n2-1, 0) for (n1, n2) in zip(N.parameters, NP.parameters))...}
     λ = SVector{D}(ntuple(_ -> true, D)...)
     code =
         quote
-            x = hermite_grid(H.z, H.q, $N)
+            x = hermite_grid(H.z, H.q, $N1)
             Φ = evaluate_grid(H, x)
             Φ_P = horner_transform_grid(P, $λ, q, x)
             Λ = hermite_discrete_transform(Φ .* Φ_P, H.z)
@@ -234,9 +234,10 @@ end
         end
     return code
 end
-function polynomial_product(q::SVector{D, <:Number}, P::SArray{N1, <:Number, D}, H::HermiteWavePacket{D, N2}) where{D, N1, N2}
-    Hr = polynomial_product(q, P, HermiteFct(H.Λ, real.(H.z), H.q))
-    return unitary_product(imag.(H.z), H.q, H.p, Hr)
+function polynomial_product(H::HermiteWavePacket{D, N}, P::SArray{NP, <:Number, D},
+                q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where{D, N, NP}
+    Hr = polynomial_product(HermiteFct(H.Λ, real.(H.z), H.q), P, q)
+    return HermiteWavePacket(Hr.Λ, H.z, H.q, H.p)
 end
 
 # Computes the integral of a hermite function
@@ -250,7 +251,7 @@ function integral(H::HermiteFct{D}) where D
     return prod(H.z)^T(-1/4) * T((4π)^(D/4)) * val
 end
 function integral(H::HermiteWavePacket{D}) where D
-    return fourier(H)(zeros(SVector{D, Bool}))
+    return fourier(H)(zeros(SVector{D, NullNumber}))
 end
 
 # Computes the Fourier transform of a hermite function with real variance
@@ -317,10 +318,6 @@ function convolution(H1::HermiteWavePacket, H2::HermiteWavePacket)
 end
 
 #=
-
-=#
-
-#=
     Computes the L² product of two hermite functions
         ∫dx conj(H1(x)) H2(x)
 =#
@@ -330,7 +327,7 @@ end
     expr_w = [:( reshape(w[$k], $(Size(1, n))) ) for (k, n) in zip(eachindex(zt), N.parameters)]
     code =
         quote
-            z, q = gaussian_product_arg(H1.z, H1.q, H2.z, H2.q)
+            z, q, _ = gaussian_product_arg(H1.z, H1.q, H1.p, H2.z, H2.q, H2.p)
             x, w = hermite_quadrature(z ./ 2, q, $N)
             wc = tuple($(expr_w...))
 

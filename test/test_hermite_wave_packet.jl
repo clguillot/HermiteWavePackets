@@ -67,6 +67,31 @@ function test_hermite_wave_packets()
 
     let
         err = 0.0
+        D = 3
+        N = (5, 4, 6)
+        for _=1:nb_reps
+            λ = rand() + 1im * rand()
+            z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
+            q = SVector{D}(4 * (rand(D) .- 0.5))
+            p = SVector{D}(4 * (rand(D) .- 0.5))
+            G = GaussianWavePacket(λ, z, q, p)
+
+            @time H = HermiteWavePacket(G)
+            @time G_ = truncate_to_gaussian(H)
+
+            for _ in 1:100
+                x = SVector{D}(4.0 .* (rand(D) .- 0.5))
+                err = max(err, abs(H(x) - G(x)))
+                err = max(err, abs(G_(x) - G(x)))
+            end
+        end
+
+        color = (err > tol) ? :red : :green
+        printstyled("Error convert from gaussian = $err\n"; bold=true, color=color)
+    end
+
+    let
+        err = 0.0
         D = 2
         N = (5, 3)
         for _=1:nb_reps
@@ -130,7 +155,7 @@ function test_hermite_wave_packets()
             Λ_P = SArray{Tuple{NP...}}(rand(NP...) + im * rand(NP...))
             q2 = SVector{D}(4 .* (rand(D) .- 0.5))
 
-            @time PH = polynomial_product(q2, Λ_P, H)
+            @time PH = polynomial_product(H, Λ_P, q2)
 
             f(x) = H(x) * dot(SArray{Tuple{NP...}}(prod((x-q2).^(k.-1); init=1.0) for k in Iterators.product((1:NP[j] for j in 1:D)...)), Λ_P)
 

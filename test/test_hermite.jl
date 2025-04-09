@@ -143,7 +143,7 @@ function test_hermite()
             Λ_P = (@SArray rand(NP...)) + 1im * (@SArray rand(NP...))
             q2 = SVector{D}(4 .* (rand(D) .- 0.5))
 
-            @time PH = polynomial_product(q2, Λ_P, H)
+            @time PH = polynomial_product(H, Λ_P, q2)
 
             f(x) = H(x) * dot(SArray{Tuple{NP...}}(prod((x-q2).^(k.-1); init=1.0) for k in Iterators.product((1:NP[j] for j in 1:D)...)), Λ_P)
 
@@ -223,5 +223,53 @@ function test_hermite()
 
         color = (err > tol) ? :red : :green
         printstyled("Error dot L2 = $err\n"; bold=true, color=color)
+    end
+
+    let
+        err = 0.0
+        D = 3
+        N = (5, 4, 7)
+        for _=1:nb_reps
+            Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
+            a = SVector{D}(4 .* rand(D) .+ 0.5)
+            q = SVector{D}(4 .* (rand(D) .- 0.5))
+            H = HermiteFct(Λ, a, q)
+
+            @time μ1 = norm_L2(H)
+            μ2 = sqrt(dot_L2(H, H))
+            err = max(err, abs(μ1 - μ2))
+        end
+
+        color = (err > tol) ? :red : :green
+        printstyled("Error norm_L2 = $err\n"; bold=true, color=color)
+    end
+
+    let
+        D = 3
+        N1 = (3, 2, 6)
+        N2 = (4, 7, 6)
+        N3 = (3, 2, 4)
+
+        Λ1 = SArray{Tuple{N1...}}(rand(Float32, N1...))
+        a1 = SVector{D}(4 .* rand(Float32, D) .+ 0.5f0)
+        q1 = SVector{D}(4 .* (rand(Float32, D) .- 0.5f0))
+        H1 = HermiteFct(Λ1, a1, q1)
+
+        Λ2 = SArray{Tuple{N2...}}(rand(Float32, N2...))
+        a2 = SVector{D}(4 .* rand(Float32, D) .+ 0.5f0)
+        q2 = SVector{D}(4 .* (rand(Float32, D) .- 0.5f0))
+        H2 = HermiteFct(Λ2, a2, q2)
+
+        Λ3 = SArray{Tuple{N3...}}(rand(Float32, N3...))
+        a3 = SVector{D}(4 .* rand(Float32, D) .+ 0.5f0)
+        q3 = SVector{D}(4 .* (rand(Float32, D) .- 0.5f0))
+        H3 = HermiteFct(Λ3, a3, q3)
+
+        H = convolution(H1 * H2, H3)
+        res = H(rand(Float32, D)) + integral(H) + norm_L2(H)
+        T_type = typeof(res)
+
+        color = (T_type != Float32) ? :red : :green
+        printstyled("Expecting $Float32 and got $T_type\n"; bold=true, color=color)
     end
 end

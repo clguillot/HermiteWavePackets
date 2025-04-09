@@ -26,6 +26,17 @@ struct HermiteWavePacket{D, N<:Tuple, TΛ<:Number, Tz<:Number, Tq<:Union{Real, N
     z::SVector{D, Tz}
     q::SVector{D, Tq}
     p::SVector{D, Tp}
+
+    function HermiteWavePacket(Λ::SArray{N, TΛ, D, L}, z::SVector{D, Tz},
+                    q::SVector{D, Tq} = zeros(SVector{D, NullNumber}),
+                    p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, N<:Tuple, TΛ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}, L}
+        return new{D, N, TΛ, Tz, Tq, Tp, L}(Λ, z, q, p)
+    end
+end
+
+@generated function HermiteWavePacket(G::GaussianWavePacket{D, Tλ, Tz, Tq, Tp}) where{D, Tλ, Tz, Tq, Tp}
+    N = Tuple{fill(1, D)...}
+    return :( return convert(HermiteWavePacket{D, $N, Tλ, Tz, Tq, Tp}, G) )
 end
 
 #=
@@ -60,46 +71,38 @@ function HermiteFct(Λ::SArray{N, <:Number, D}, z::SVector{D, <:Real}, q::SVecto
     return HermiteWavePacket(Λ, z, q, zeros(SVector{D, NullNumber}))
 end
 
+function HermiteFct(G::Gaussian)
+    return HermiteWavePacket(G)
+end
+
 #=
     CONVERSIONS
 =#
 
-# function Base.convert(::Type{HermiteFct{D, N, TΛ, Ta, Tq}}, G::Gaussian{D}) where{N, TΛ, Ta, Tq, D}
-#     T = fitting_float(G)
-#     λ = convert(TΛ, T(π^(D/4)) * G.λ * prod(G.a)^T(-1/4))
-#     Λ = SArray{N}(ifelse(all(k -> k==1, n), λ, zero(TΛ)) for n in Iterators.product((1:Nj for Nj in N.parameters)...))
-#     return HermiteFct(Λ, Ta.(G.a), Tq.(G.q))
-# end
-
-# @generated function HermiteFct(G::Gaussian{D, TΛ, Ta, Tq}) where{D, TΛ, Ta, Tq}
-#     N = Tuple{ntuple(_ -> 1, D)...}
-#     return :( return convert(HermiteFct{$N, TΛ, Ta, Tq}, G) )
-# end
+function Base.convert(::Type{<:HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket{D}) where{D, N, TΛ, Tz, Tq, Tp}
+    T = fitting_float(G)
+    λ = convert(TΛ, T(π^(D/4)) * G.λ * prod(real.(G.z))^T(-1/4))
+    Λ = SArray{N}(ifelse(all(k -> k==1, n), λ, zero(TΛ)) for n in Iterators.product((1:Nj for Nj in N.parameters)...))
+    return HermiteWavePacket(Λ, convert.(Tz, G.z), convert.(Tq, G.q), convert.(Tp, G.p))
+end
 
 function truncate_to_gaussian(H::HermiteWavePacket{D}) where D
     T = fitting_float(H)
-    return GaussianWavePacket(T(π^(-D/4)) * prod(H.z)^T(1/4) * first(H.Λ), H.z, H.q, H.p)
+    return GaussianWavePacket(T(π^(-D/4)) * prod(real.(H.z))^T(1/4) * first(H.Λ), H.z, H.q, H.p)
 end
 
 #=
     PROMOTIONS
 =#
 
-# # 
-# function Base.promote_rule(::Type{<:HermiteFct1D}, ::Type{HermiteFct1D})
-#     return HermiteFct1D
-# end
-# function Base.promote_rule(::Type{HermiteFct1D{N1, TΛ1, Ta1, Tq1}}, ::Type{HermiteFct1D{N2, TΛ2, Ta2, Tq2}}) where{N1, TΛ1, Ta1, Tq1, N2, TΛ2, Ta2, Tq2}
-#     return HermiteFct1D{max(N1, N2), promote_type(TΛ1, TΛ2), promote_type(Ta1, Ta2), promote_type(Tq1, Tq2)}
-# end
-
-# # 
-# function Base.promote_rule(::Type{<:Gaussian1D}, ::Type{HermiteFct1D})
-#     return HermiteFct1D
-# end
-# function Base.promote_rule(::Type{Gaussian1D{Tλ, Ta, Tq}}, ::Type{TH}) where{Tλ, Ta, Tq, TH<:HermiteFct1D}
-#     promote_type(HermiteFct1D{1, Tλ, Ta, Tq}, TH)
-# end
+# 
+function Base.promote_rule(::Type{<:HermiteWavePacket}, ::Type{HermiteWavePacket})
+    return HermiteWavePacket
+end
+function promote_rule(::Type{HermiteWavePacket{D, N, TΛ1, Tz1, Tq1, Tp1, L}},
+                      ::Type{HermiteWavePacket{D, N, TΛ2, Tz2, Tq2, Tp2, L}}) where{D, N, TΛ1, Tz1, Tq1, Tp1, TΛ2, Tz2, Tq2, Tp2, L}
+    return HermiteWavePacket{D, N, promote_type(TΛ1, TΛ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2), L}
+end
 
 #=
     BASIC OPERATIONS

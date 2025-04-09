@@ -6,14 +6,14 @@
 
 struct WavePacketSum{D, Ctype} <: AbstractWavePacket{D}
     g::Ctype
-end
 
-# Constrain Ctype using an inner constructor
-function WavePacketSum{D}(g::Ctype) where{D, Ctype<:Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}}
-    new{D, Ctype}(g)
-end
-function WavePacketSum(g::Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}) where D
-    return WavePacketSum{D}(g)
+    # Constrain Ctype using an inner constructor
+    function WavePacketSum{D}(g::Ctype) where{D, Ctype<:Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}}
+        new{D, Ctype}(g)
+    end
+    function WavePacketSum(g::Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}) where D
+        return WavePacketSum{D}(g)
+    end
 end
 
 

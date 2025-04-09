@@ -82,12 +82,13 @@ function hermite_discrete_transform(U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N
 end
 
 #
-function hermite_grid(a::Real, q::Real, ::Val{N}) where N
+function hermite_grid(a::Real, q::Union{Real, NullNumber}, ::Val{N}) where N
     T = fitting_float(typeof(a), typeof(q))  
     x0, _, _ = hermite_primitive_discrete_transform(T, Val(N))
-    return x0 .* a^T(-1/2) .+ q
+    q_broad = @SVector fill(q, N)
+    return x0 .* a^T(-1/2) .+ q_broad
 end
-@generated function hermite_grid(a::SVector{D, <:Number}, q::SVector{D, <:Number}, ::Type{N}) where{D, N<:Tuple}
+@generated function hermite_grid(a::SVector{D, <:Number}, q::SVector{D, <:Union{Real, NullNumber}}, ::Type{N}) where{D, N<:Tuple}
     if length(N.parameters) != D
         throw(DimensionMismatch("Expected N to have length $D, but got length $(length(N.parameters))"))
     end

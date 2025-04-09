@@ -74,12 +74,12 @@ end
 
 # Returns the complex conjugate of a gaussian
 function Base.conj(G::GaussianWavePacket)
-    return GaussianWavePacket(conj.(G.λ), conj.(G.z), G.q, .- G.p)
+    return GaussianWavePacket(conj(G.λ), conj.(G.z), G.q, .- G.p)
 end
 
 # 
 function Base.:-(G::GaussianWavePacket)
-    return GaussianWavePacket(.- G.λ, G.z, G.q, G.p)
+    return GaussianWavePacket(-G.λ, G.z, G.q, G.p)
 end
 
 # Computes the product of a scalar and a gaussian
@@ -103,12 +103,12 @@ end
 =#
 
 # Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(G::GaussianWavePacket{D}, b::SVector{D, <:Real},
+function unitary_product(G::GaussianWavePacket{D}, b::SVector{D, <:Union{Real, NullNumber}},
             q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
             p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
     u = @. b * (G.q + q) * (G.q - q)
     λ_ = G.λ * cis(sum(u) / 2)
-    z_ = @. complex(real(G.z), imagz(G.z) + b)
+    z_ = @. real(G.z) + im * (imagz(G.z) + b)
     q_ = G.q
     p_ = @. G.p + p - b * (G.q - q)
     return GaussianWavePacket(λ_, z_, q_, p_)
@@ -134,7 +134,7 @@ end
 =#
 function fourier(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
-    z_tf, q_tf, p_tf = complex_gaussian_fourier_arg(G.z, G.q, G.p)
+    z_tf, q_tf, p_tf = gaussian_fourier_arg(G.z, G.q, G.p)
     λ_tf = T((2π)^(D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
     return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
@@ -146,7 +146,7 @@ end
 =#
 function inv_fourier(G::GaussianWavePacket{D}) where D
     T = fitting_float(G)
-    z_tf, q_tf, p_tf = complex_gaussian_inv_fourier_arg(G.z, G.q, G.p)
+    z_tf, q_tf, p_tf = gaussian_inv_fourier_arg(G.z, G.q, G.p)
     λ_tf = T((2π)^(-D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
     return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
@@ -160,13 +160,13 @@ function convolution(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where
     return inv_fourier(fourier(G1) * fourier(G2))
 end
 
-# Computes the L² product of two gaussian wave packets
-function dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
-    return integral(conj(G1) * G2)
-end
 # Computes the L² product of two real gaussians
 function dot_L2(G1::Gaussian{D, Tλ1}, G2::Gaussian{D}) where{D, Tλ1<:Real}
     return integral(G1 * G2)
+end
+# Computes the L² product of two gaussian wave packets
+function dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
+    return integral(conj(G1) * G2)
 end
 
 # Computes the square L² norm of a gaussian wave packet

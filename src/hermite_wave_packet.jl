@@ -120,7 +120,7 @@ function Base.copy(H::HermiteWavePacket)
 end
 
 #
-function core_type(::Type{<:HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp, L}}) where{D, N, TΛ, Tz, Tq, Tp, L}
+function core_type(::Type{HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp, L}}) where{D, N, TΛ, Tz, Tq, Tp, L}
     return promote_type(TΛ, Tz, Tq, Tp)
 end
 
@@ -180,19 +180,15 @@ end
 =#
 
 # Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(H::HermiteWavePacket{D}, b::SVector{D, <:Real},
+function unitary_product(H::HermiteWavePacket{D}, b::SVector{D, <:Union{Real, NullNumber}},
                 q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
                 p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
-    u = @. b * (H.q + q) * (H.q - q)
-    Λ_ = cis(sum(u) / 2) .* H.Λ
-    z_ = @. complex(real(H.z), imagz(H.z) + b)
-    q_ = H.q
-    p_ = @. H.p + p - b * (H.q - q)
-    return HermiteWavePacket(Λ_, z_, q_, p_)
+    G = unitary_product(GaussianWavePacket(true, H.z, H.q, H.p), b, q, p)
+    return HermiteWavePacket(G.λ .* H.Λ, G.z, G.q, G.p)
 end
 
 # Computes the product of two hermite functions
-@generated function Base.:*(H1::HermiteWavePacket{D, N1, TΛ1, Tz1}, H2::HermiteFct{D, N2, TΛ2, Tz2}) where{D, N1, TΛ1, Tz1<:Real, N2, TΛ2, Tz2<:Real}
+@generated function Base.:*(H1::HermiteWavePacket{D, N1, TΛ1, Tz1}, H2::HermiteWavePacket{D, N2, TΛ2, Tz2}) where{D, N1, TΛ1, Tz1<:Real, N2, TΛ2, Tz2<:Real}
     N = Tuple{(@. max(N1.parameters + N2.parameters - 1, 0))...}
     code =
         quote
@@ -210,8 +206,8 @@ end
 function Base.:*(H1::HermiteWavePacket{D, N1, TΛ1, Tz1}, H2::HermiteWavePacket{D, N2, TΛ2, Tz2}) where{D, N1, TΛ1, Tz1, N2, TΛ2, Tz2}
     z, q, p = gaussian_product_arg(H1.z, H1.q, H1.p, H2.z, H2.q, H2.p)
     Hr = HermiteFct(H1.Λ, real.(H1.z), H1.q) * HermiteFct(H2.Λ, real.(H2.z), H2.q)
-    G1 = GaussianWavePacket(true, im * imag.(H1.z), H1.q, H1.p)
-    G2 = GaussianWavePacket(true, im * imag.(H2.z), H2.q, H2.p)
+    G1 = GaussianWavePacket(true, im * imagz.(H1.z), H1.q, H1.p)
+    G2 = GaussianWavePacket(true, im * imagz.(H2.z), H2.q, H2.p)
     λ = G1(q) * G2(q) * cis(-dot(q, p))
     return HermiteWavePacket(λ * Hr.Λ, z, q, p)
 end
@@ -260,13 +256,13 @@ end
     M = SArray{N}((Complex{Int8}((-im)^sum(j)) for j in Iterators.product((0:n-1 for n in N.parameters)...))...)
     code =
         quote
-            zf, qf, pf = complex_gaussian_fourier_arg(H.z, H.q, H.p)
+            zf, qf, pf = gaussian_fourier_arg(H.z, H.q, H.p)
             return HermiteWavePacket(($T((2π)^($D/2)) * cis(dot(H.p, H.q))) .* $M .* H.Λ, zf, qf, pf)
         end
     return code
 end
 # Complex variance
-@generated function fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz<:Number}
+@generated function fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz}
     T = fitting_float(H)
     zs = zeros(SVector{D, Bool})
     expr_d = [(:( α[$k]^$j ) for j in 0:n-1) for (n, k) in zip(N.parameters, eachindex(zs))]
@@ -287,13 +283,13 @@ end
     M = SArray{N}((Complex{Int8}(im^sum(j)) for j in Iterators.product((0:n-1 for n in N.parameters)...))...)
     code =
         quote
-            zf, qf, pf = complex_gaussian_inv_fourier_arg(H.z, H.q, H.p)
+            zf, qf, pf = gaussian_inv_fourier_arg(H.z, H.q, H.p)
             return HermiteWavePacket(($T((2π)^(-$D/2)) * cis(dot(H.p, H.q))) .* $M .* H.Λ, zf, qf, pf)
         end
     return code
 end
 # Complex variance
-@generated function inv_fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz<:Number}
+@generated function inv_fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz}
     T = fitting_float(H)
     zs = zeros(SVector{D, Bool})
     expr_d = [(:( α[$k]^$j ) for j in 0:n-1) for (n, k) in zip(N.parameters, eachindex(zs))]

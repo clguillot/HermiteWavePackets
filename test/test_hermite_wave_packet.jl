@@ -152,6 +152,35 @@ function test_hermite_wave_packets()
             p = SVector{D}(4 * (rand(D) .- 0.5))
             H = HermiteWavePacket(Λ, z, q, p)
 
+            b = SVector{D}(4 * (rand(D) .- 0.5))
+            q2 = SVector{D}(4 * (rand(D) .- 0.5))
+            p2 = SVector{D}(4 * (rand(D) .- 0.5))
+
+            f(x) = H(x) * cis(-dot(x - q2, Diagonal(b/2), x - q2)) * cis(dot(p2, x))
+            @time H2 = unitary_product(H, b, q2, p2)
+
+            for _=1:100
+                x = SVector{D}(5 * (rand(D) .- 0.5))
+                err = max(err, abs(f(x) - H2(x)))
+            end
+        end
+
+        color = (err > tol) ? :red : :green
+        printstyled("Error unitary product = $err\n"; bold=true, color=color)
+    end
+
+    let
+        err = 0.0
+        D = 3
+        N = (5, 4, 6)
+        NP = (3, 7, 5)
+        for _=1:nb_reps
+            Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
+            z = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
+            q = SVector{D}(4 * (rand(D) .- 0.5))
+            p = SVector{D}(4 * (rand(D) .- 0.5))
+            H = HermiteWavePacket(Λ, z, q, p)
+
             Λ_P = SArray{Tuple{NP...}}(rand(NP...) + im * rand(NP...))
             q2 = SVector{D}(4 .* (rand(D) .- 0.5))
 
@@ -159,7 +188,7 @@ function test_hermite_wave_packets()
 
             f(x) = H(x) * dot(SArray{Tuple{NP...}}(prod((x-q2).^(k.-1); init=1.0) for k in Iterators.product((1:NP[j] for j in 1:D)...)), Λ_P)
 
-            for _=1:10
+            for _=1:100
                 x = 5 .* (SVector{D}(rand(D)) .- 0.5)
                 err = max(err, abs(f(x) - PH(x)) / norm_L2(PH))
             end
@@ -269,28 +298,82 @@ function test_hermite_wave_packets()
         printstyled("Error inverse Fourier (real variance) = $err\n"; bold=true, color=color)
     end
 
-    # let
-    #     err = 0.0
-    #     D = 2
-    #     N1 = (5, 2)
-    #     N2 = (3, 4)
-    #     for _=1:nb_reps
-    #         Λ1 = SArray{Tuple{N1...}}(rand(N1...) + im * rand(N1...))
-    #         a1 = SVector{D}(4 .* rand(D) .+ 0.5)
-    #         q1 = SVector{D}(4 .* (rand(D) .- 0.5))
-    #         H1 = HermiteFct(Λ1, a1, q1)
+    let
+        err = 0.0
+        D = 2
+        N1 = (5, 2)
+        N2 = (3, 4)
+        for _=1:nb_reps
+            Λ1 = SArray{Tuple{N1...}}(rand(N1...) + im * rand(N1...))
+            z1 = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
+            q1 = SVector{D}(4 * (rand(D) .- 0.5))
+            p1 = SVector{D}(4 * (rand(D) .- 0.5))
+            H1 = HermiteWavePacket(Λ1, z1, q1, p1)
 
-    #         Λ2 = SArray{Tuple{N2...}}(rand(N2...) + im * rand(N2...))
-    #         a2 = SVector{D}(4 .* rand(D) .+ 0.5)
-    #         q2 = SVector{D}(4 .* (rand(D) .- 0.5))
-    #         H2 = HermiteFct(Λ2, a2, q2)
+            Λ2 = SArray{Tuple{N2...}}(rand(N2...) + im * rand(N2...))
+            z2 = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
+            q2 = SVector{D}(4 * (rand(D) .- 0.5))
+            p2 = SVector{D}(4 * (rand(D) .- 0.5))
+            H2 = HermiteWavePacket(Λ2, z2, q2, p2)
 
-    #         @time μ1 = dot_L2(H1, H2)
-    #         μ2 = complex_cubature(y -> conj(H1(y)) * H2(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
-    #         err = max(err, abs(μ1 - μ2))
-    #     end
+            @time μ1 = dot_L2(H1, H2)
+            μ2 = complex_cubature(y -> conj(H1(y)) * H2(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
+            err = max(err, abs(μ1 - μ2))
+        end
 
-    #     color = (err > tol) ? :red : :green
-    #     printstyled("Error dot L2 = $err\n"; bold=true, color=color)
-    # end
+        color = (err > tol) ? :red : :green
+        printstyled("Error dot L2 = $err\n"; bold=true, color=color)
+    end
+
+    let
+        D = 3
+        N = (5, 9, 10)
+        err = 0.0
+        for _=1:nb_reps
+            Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
+            z = SVector{D}(4 * rand(D) .+ 0.5)
+            q = SVector{D}(4 * (rand(D) .- 0.5))
+            p = SVector{D}(4 * (rand(D) .- 0.5))
+            H = HermiteWavePacket(Λ, z, q, p)
+
+            @time μ1 = norm_L2(H)
+            μ2 = sqrt(dot_L2(H, H))
+            err = max(err, abs(μ1 - μ2))
+        end
+
+        color = (err > tol) ? :red : :green
+        printstyled("Error norm L² = $err\n"; bold=true, color=color)
+    end
+
+    let
+        D = 3
+        N1 = (3, 2, 6)
+        N2 = (4, 7, 6)
+        N3 = (3, 2, 4)
+
+        Λ1 = SArray{Tuple{N1...}}(rand(Float32, N1...) + im * rand(Float32, N1...))
+        z1 = SVector{D}(4 * rand(Float32, D) .+ 0.5f0 + im * (4 * rand(Float32, D) .- 2))
+        q1 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
+        p1 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
+        H1 = HermiteWavePacket(Λ1, z1, q1, p1)
+
+        Λ2 = SArray{Tuple{N2...}}(rand(Float32, N2...) + im * rand(Float32, N2...))
+        z2 = SVector{D}(4 * rand(Float32, D) .+ 0.5f0 + im * (4 * rand(Float32, D) .- 2))
+        q2 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
+        p2 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
+        H2 = HermiteWavePacket(Λ2, z2, q2, p2)
+
+        Λ3 = SArray{Tuple{N1...}}(rand(Float32, N1...) + im * rand(Float32, N1...))
+        z3 = SVector{D}(4 * rand(Float32, D) .+ 0.5f0 + im * (4 * rand(Float32, D) .- 2))
+        q3 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
+        p3 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
+        H3 = HermiteWavePacket(Λ3, z3, q3, p3)
+
+        H = convolution(H1 * H2, H3)
+        res = H(rand(Float32, D)) + integral(H) + norm_L2(H)
+        T_type = typeof(res)
+
+        color = (T_type != ComplexF32) ? :red : :green
+        printstyled("Expecting $ComplexF32 and got $T_type\n"; bold=true, color=color)
+    end
 end

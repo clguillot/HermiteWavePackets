@@ -29,8 +29,12 @@ struct HermiteWavePacket{D, N<:Tuple, TΛ<:Number, Tz<:Number, Tq<:Union{Real, N
 
     function HermiteWavePacket(Λ::SArray{N, TΛ, D, L}, z::SVector{D, Tz},
                     q::SVector{D, Tq} = zeros(SVector{D, NullNumber}),
-                    p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, N<:Tuple, TΛ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}, L}
+                    p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, N, TΛ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}, L}
         return new{D, N, TΛ, Tz, Tq, Tp, L}(Λ, z, q, p)
+    end
+
+    function HermiteWavePacket(Λ::SVector{N, TΛ}, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{N, TΛ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+        return HermiteWavePacket(Λ, SVector(z), SVector(q), SVector(p))
     end
 end
 
@@ -66,10 +70,13 @@ end
 =#
 const HermiteFct{D, N<:Tuple, TΛ<:Number, Tz<:Real, Tq<:Union{Real, NullNumber}, L} =
         HermiteWavePacket{D, N, TΛ, Tz, Tq, NullNumber, L}
-
 function HermiteFct(Λ::SArray{N, <:Number, D}, z::SVector{D, <:Real},
                 q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where{D, N}
     return HermiteWavePacket(Λ, z, q, zeros(SVector{D, NullNumber}))
+end
+function HermiteFct(Λ::SVector{N, <:Number}, z::Real,
+                q::Union{Real, NullNumber}=NullNumber()) where N
+    return HermiteFct(Λ, SVector(z), SVector(q))
 end
 
 function HermiteFct(G::Gaussian)
@@ -173,6 +180,9 @@ end
 function (H::HermiteWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D
     xs = SVector{D}(x)
     return first(evaluate_grid(H, tuple((SVector{1}(y) for y in xs)...)))
+end
+function (H::HermiteWavePacket{1})(x::Union{Number, NullNumber})
+    return H(SVector(x))
 end
 
 #=

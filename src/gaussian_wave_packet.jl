@@ -14,6 +14,10 @@ struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber
                 p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
         return new{D, Tλ, Tz, Tq, Tp}(λ, z, q, p)
     end
+
+    function GaussianWavePacket(λ::Tλ, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+        return GaussianWavePacket(λ, SVector(z), SVector(q), SVector(p))
+    end
 end
 
 #=
@@ -22,10 +26,13 @@ end
 =#
 const Gaussian{D, Tλ<:Number, Tz<:Real, Tq<:Union{Real, NullNumber}} =
             GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}
-
 function Gaussian(λ::Number, z::SVector{D, <:Real},
                 q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
     return GaussianWavePacket(λ, z, q, zeros(SVector{D, NullNumber}))
+end
+function Gaussian(λ::Number, z::Real,
+                q::Union{Real, NullNumber} = NullNumber())
+    return Gaussian(λ, SVector(z), SVector(q))
 end
 
 #=
@@ -96,6 +103,9 @@ end
 function (G::GaussianWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D
     xs = SVector{D}(x)
     return G.λ * exp(-sum(z/2 * (y - q)^2 for (z, q, y) in zip(G.z, G.q, xs))) * cis(dot(G.p, xs))
+end
+function (G::GaussianWavePacket{1})(x::Union{Number, NullNumber})
+    return G(SVector(x))
 end
 
 #=

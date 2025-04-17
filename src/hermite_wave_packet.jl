@@ -350,7 +350,7 @@ end
 function dot_L2(G1::GaussianWavePacket{D}, G2::HermiteWavePacket{D}) where D
     return dot_L2(HermiteWavePacket(G1), G2)
 end
-function dot_L2(G1::HermiteWavePackets{D}, G2::GaussianWavePacket{D}) where D
+function dot_L2(G1::HermiteWavePacket{D}, G2::GaussianWavePacket{D}) where D
     return dot_L2(G1, HermiteWavePacket(G2))
 end
 

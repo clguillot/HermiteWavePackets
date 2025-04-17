@@ -3,7 +3,7 @@
     Represents the complex gaussian function
         λ*exp(-∑ₖ zₖ/2*(xₖ-qₖ)²)*exp(i∑ₖpₖxₖ)
 =#
-struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}} <: AbstractWavePacket{D}
+struct GaussianWavePacket{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}} <: AbstractWavePacket{D}
     λ::Tλ
     z::SVector{D, Tz}
     q::SVector{D, Tq}
@@ -11,11 +11,11 @@ struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber
 
     function GaussianWavePacket(λ::Tλ, z::SVector{D, Tz},
                 q::SVector{D, Tq} = zeros(SVector{D, NullNumber}),
-                p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+                p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
         return new{D, Tλ, Tz, Tq, Tp}(λ, z, q, p)
     end
 
-    function GaussianWavePacket(λ::Tλ, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+    function GaussianWavePacket(λ::Tλ, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
         return GaussianWavePacket(λ, SVector(z), SVector(q), SVector(p))
     end
 end
@@ -24,13 +24,13 @@ end
     Represents the gaussian function
         λ*exp(-∑ₖ aₖ/2*(xₖ-qₖ)²)
 =#
-const Gaussian{D, Tλ<:Number, Tz<:Real, Tq<:Union{Real, NullNumber}} =
+const Gaussian{D, Tλ<:Number, Tz<:Union{Real, NullNumber}, Tq<:Union{Real, NullNumber}} =
             GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}
-function Gaussian(λ::Number, z::SVector{D, <:Real},
+function Gaussian(λ::Number, z::SVector{D, <:Union{Real, NullNumber}},
                 q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
     return GaussianWavePacket(λ, z, q, zeros(SVector{D, NullNumber}))
 end
-function Gaussian(λ::Number, z::Real,
+function Gaussian(λ::Number, z::Union{Real, NullNumber},
                 q::Union{Real, NullNumber} = NullNumber())
     return Gaussian(λ, SVector(z), SVector(q))
 end
@@ -65,7 +65,7 @@ end
 =#
 
 # Returns a null gaussian
-function Base.zero(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}) where{D, Tλ, Tz, Tq, Tp}
+function Base.zero(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}) where{D, Tλ, Tz<:Number, Tq, Tp}
     return GaussianWavePacket(zero(Tλ), ones(SVector{D, Tz}), zeros(SVector{D, Tq}), zeros(SVector{D, Tp}))
 end
 
@@ -132,7 +132,7 @@ function Base.:*(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
 end
 
 # Computes the integral of a gaussian
-function integral(G::GaussianWavePacket{D}) where D
+function integral(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
     T = fitting_float(G)
     return T((2π)^(D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q)) * exp(-sum(p^2 / (2*z) for (z, p) in zip(G.z, G.p)))
 end
@@ -142,7 +142,7 @@ end
     The Fourier transform is defined as
         TF(ψ)(ξ) = ∫dx e^(-ixξ) ψ(x)
 =#
-function fourier(G::GaussianWavePacket{D}) where D
+function fourier(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
     T = fitting_float(G)
     z_tf, q_tf, p_tf = gaussian_fourier_arg(G.z, G.q, G.p)
     λ_tf = T((2π)^(D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
@@ -154,7 +154,7 @@ end
     The inverse Fourier transform is defined as
         ITF(ψ)(x) = (2π)⁻ᴰ∫dξ e^(ixξ) ψ(ξ)
 =#
-function inv_fourier(G::GaussianWavePacket{D}) where D
+function inv_fourier(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
     T = fitting_float(G)
     z_tf, q_tf, p_tf = gaussian_inv_fourier_arg(G.z, G.q, G.p)
     λ_tf = T((2π)^(-D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
@@ -162,11 +162,11 @@ function inv_fourier(G::GaussianWavePacket{D}) where D
 end
 
 # Computes the convolution product of two gaussians
-function convolution(G1::Gaussian{D, Tλ1}, G2::Gaussian{D, Tλ2}) where{D, Tλ1<:Real, Tλ2<:Real}
+function convolution(G1::Gaussian{D, Tλ1, Tz1}, G2::Gaussian{D, Tλ2, Tz2}) where{D, Tλ1<:Real, Tz1<:Number, Tλ2<:Real, Tz2<:Number}
     G = inv_fourier(fourier(G1) * fourier(G2))
     return Gaussian(real(G.λ), G.z, G.q)
 end
-function convolution(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
+function convolution(G1::GaussianWavePacket{D, Tλ1, Tz1}, G2::GaussianWavePacket{D, Tλ2, Tz2}) where{D, Tλ1, Tz1<:Number, Tλ2, Tz2<:Number}
     return inv_fourier(fourier(G1) * fourier(G2))
 end
 
@@ -180,7 +180,7 @@ function dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
 end
 
 # Computes the square L² norm of a gaussian wave packet
-function norm2_L2(G::GaussianWavePacket{D}) where D
+function norm2_L2(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
     T = fitting_float(G)
     return T(π^(D/2)) * abs2(G.λ) * prod(real.(G.z))^T(-1/2)
 end

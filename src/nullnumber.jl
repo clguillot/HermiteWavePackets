@@ -19,6 +19,8 @@ struct NullNumber end  # Struct to represent the fully absorbing zero number
 @inline Base.:/(::NullNumber, ::Number) = NullNumber()
 # Power
 @inline Base.:^(::NullNumber, x::Number) = NullNumber()
+# Conjufate
+@inline Base.conj(::NullNumber) = NullNumber()
 
 # Special imag
 @inline imagz(::Real) = NullNumber()

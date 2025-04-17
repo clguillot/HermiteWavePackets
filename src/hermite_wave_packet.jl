@@ -347,7 +347,7 @@ end
 function dot_L2(H1::HermiteWavePacket, H2::HermiteWavePacket)
     return integral(conj(H1) * H2)
 end
-function dot_L2(G1::GaussianWavePacket{D}, G2::HermiteWavePackets{D}) where D
+function dot_L2(G1::GaussianWavePacket{D}, G2::HermiteWavePacket{D}) where D
     return dot_L2(HermiteWavePacket(G1), G2)
 end
 function dot_L2(G1::HermiteWavePackets{D}, G2::GaussianWavePacket{D}) where D

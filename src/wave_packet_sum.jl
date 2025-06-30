@@ -4,14 +4,14 @@
 
 =#
 
-struct WavePacketSum{D, Ctype} <: AbstractWavePacket{D}
+struct WavePacketSum{D, Ctype<:Tuple{Vararg{AbstractWavePacket{D}}}} <: AbstractWavePacket{D}
     g::Ctype
 
     # Constrain Ctype using an inner constructor
-    function WavePacketSum{D}(g::Ctype) where{D, Ctype<:Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}}
+    function WavePacketSum{D}(g::Ctype) where{D, Ctype<:Tuple{Vararg{AbstractWavePacket{D}}}}
         new{D, Ctype}(g)
     end
-    function WavePacketSum(g::Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}) where D
+    function WavePacketSum(g::Ctype) where{D, Ctype<:Tuple{Vararg{AbstractWavePacket{D}}}}
         return WavePacketSum{D}(g)
     end
 end
@@ -34,9 +34,6 @@ end
 =#
 
 #
-function core_type(::Type{WavePacketSum{D, Ctype}}) where{D, Ctype<:AbstractArray}
-    return core_type(eltype(Ctype))
-end
 function core_type(::Type{WavePacketSum{D, Ctype}}) where{D, Ctype<:Tuple}
     return promote_type(core_type.(fieldtypes(Ctype))...)
 end
@@ -69,20 +66,34 @@ function Base.:*(w::Number, G::WavePacketSum)
 end
 
 #
-function Base.:*(G1::AbstractWavePacket, G2::WavePacketSum)
-    return WavePacketSum(G1 .* G2.g)
+function Base.:*(G1::WavePacketSum, G2::WavePacketSum)
+    return WavePacketSum(tuple((g1 * g2 for (g1, g2) in Iterators.product(G1.g, G2.g))...))
 end
-@inline function Base.:*(G1::WavePacketSum, G2::AbstractWavePacket)
+function Base.:*(G1::AbstractWavePacket, G2::WavePacketSum)
+    return WavePacketSum(tuple((G1 * g2 for g2 in G2.g)...))
+end
+function Base.:*(G1::WavePacketSum, G2::AbstractWavePacket)
     return G2 * G1
 end
 
 #
-function convolution(G1::AbstractWavePacket, G2::WavePacketSum)
-    return WavePacketSum(convolution.(G1, G2.g))
+function unitary_product(G::WavePacketSum, b::SVector{D, <:Union{Real, NullNumber}},
+            q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
+            p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
+    return WavePacketSum(tuple((unitary_product(g, b, q, p) for g in G.g)...))
 end
-@inline function convolution(G1::WavePacketSum, G2::AbstractWavePacket)
+
+#
+function convolution(G1::WavePacketSum, G2::WavePacketSum)
+    return WavePacketSum(tuple((convolution(g1, g2) for (g1, g2) in Iterators.product(G1.g, G2.g))...))
+end
+function convolution(G1::AbstractWavePacket, G2::WavePacketSum)
+    return WavePacketSum(tuple((convolution(G1, g2) for g2 in G2.g)...))
+end
+function convolution(G1::WavePacketSum, G2::AbstractWavePacket)
     return convolution(G2, G1)
 end
+
 
 #=
     Computes the integral
@@ -126,6 +137,15 @@ function norm2_L2(G::WavePacketSum)
     S1 = sum(norm2_L2(g) for g in G.g; init=s)
     S2 = sum(real(dot_L2(G.g[k], G.g[l])) for k in eachindex(G.g) for l in Iterators.drop(eachindex(G.g), k); init=s)
     return S1 + 2 * S2
+end
+
+# Fourier transform
+function fourier(G::WavePacketSum)
+    return WavePacketSum(fourier.(G.g))
+end
+# Inverse Fourier transgorm
+function inv_fourier(G::WavePacketSum)
+    return WavePacketSum(fourier.(G.g))
 end
 
 #=

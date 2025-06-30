@@ -115,7 +115,7 @@ end
         ∑ₖ dot_L2(G1[k], G2)
 =#
 @inline function dot_L2(G1::WavePacketSum, G2::AbstractWavePacket)
-    return dot_L2(G2, G1)
+    return conj(dot_L2(G2, G1))
 end
 
 #=

@@ -4,14 +4,14 @@
 
 =#
 
-struct WavePacketSum{D, Ctype<:Tuple{Vararg{AbstractWavePacket{D}}}} <: AbstractWavePacket{D}
+struct WavePacketSum{D, Ctype} <: AbstractWavePacket{D}
     g::Ctype
 
     # Constrain Ctype using an inner constructor
-    function WavePacketSum{D}(g::Ctype) where{D, Ctype<:Tuple{Vararg{AbstractWavePacket{D}}}}
+    function WavePacketSum{D}(g::Ctype) where{D, Ctype<:Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}}
         new{D, Ctype}(g)
     end
-    function WavePacketSum(g::Ctype) where{D, Ctype<:Tuple{Vararg{AbstractWavePacket{D}}}}
+    function WavePacketSum(g::Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}) where D
         return WavePacketSum{D}(g)
     end
 end
@@ -34,6 +34,9 @@ end
 =#
 
 #
+function core_type(::Type{WavePacketSum{D, Ctype}}) where{D, Ctype<:AbstractArray}
+    return core_type(eltype(Ctype))
+end
 function core_type(::Type{WavePacketSum{D, Ctype}}) where{D, Ctype<:Tuple}
     return promote_type(core_type.(fieldtypes(Ctype))...)
 end

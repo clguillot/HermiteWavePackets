@@ -148,7 +148,7 @@ function fourier(G::WavePacketSum)
 end
 # Inverse Fourier transgorm
 function inv_fourier(G::WavePacketSum)
-    return WavePacketSum(fourier.(G.g))
+    return WavePacketSum(inv_fourier.(G.g))
 end
 
 #=

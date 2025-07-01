@@ -3,7 +3,7 @@
 **HermiteWavePackets.jl** is a Julia package designed to handle elementary computations involving Hermite and Gaussian-type functions. The package supports the following classes of functions:
 
 1. **Real Gaussian Polynomials**  
-   Functions of the form:  
+   Functions of the form:  $`a^2`$
    ```latex
    P(x) e^{-\frac{a}{2} (x - q)^2},
    ``` 

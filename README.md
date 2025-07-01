@@ -5,7 +5,7 @@
 1. **Real Gaussian Polynomials**  
    Functions of the form:
    ```math
-   P(x) e^{-\frac{a}{2} (x - q)^2},
+    P(x) e^{-\frac{a}{2} (x - q)^2},
    ``` 
    where:
    - $`a \in \mathbb R_+^*`$,

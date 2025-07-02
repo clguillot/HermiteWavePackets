@@ -2,6 +2,7 @@ module HermiteWavePackets
 
 using LinearAlgebra
 using StaticArrays
+using IrrationalConstants
 using FastGaussQuadrature
 
 # Abtract types

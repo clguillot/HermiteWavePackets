@@ -133,8 +133,7 @@ end
 
 # Computes the integral of a gaussian
 function integral(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
-    T = fitting_float(G)
-    return T((2π)^(D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q)) * exp(-sum(p^2 / (2*z) for (z, p) in zip(G.z, G.p)))
+    return G.λ / prod(invsqrt2π * sqrt.(G.z)) * cis(dot(G.p, G.q)) * exp(-sum(p^2 / (2*z) for (z, p) in zip(G.z, G.p)))
 end
 
 #=
@@ -142,10 +141,9 @@ end
     The Fourier transform is defined as
         TF(ψ)(ξ) = ∫dx e^(-ixξ) ψ(x)
 =#
-function fourier(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
-    T = fitting_float(G)
+function fourier(G::GaussianWavePacket)
     z_tf, q_tf, p_tf = gaussian_fourier_arg(G.z, G.q, G.p)
-    λ_tf = T((2π)^(D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
+    λ_tf = G.λ / prod(invsqrt2π * sqrt.(G.z)) * cis(dot(G.p, G.q))
     return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
 
@@ -154,10 +152,9 @@ end
     The inverse Fourier transform is defined as
         ITF(ψ)(x) = (2π)⁻ᴰ∫dξ e^(ixξ) ψ(ξ)
 =#
-function inv_fourier(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
-    T = fitting_float(G)
+function inv_fourier(G::GaussianWavePacket)
     z_tf, q_tf, p_tf = gaussian_inv_fourier_arg(G.z, G.q, G.p)
-    λ_tf = T((2π)^(-D/2)) * G.λ / prod(sqrt.(G.z)) * cis(dot(G.p, G.q))
+    λ_tf = G.λ / prod(sqrt2π * sqrt.(G.z)) * cis(dot(G.p, G.q))
     return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
 
@@ -181,6 +178,5 @@ end
 
 # Computes the square L² norm of a gaussian wave packet
 function norm2_L2(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
-    T = fitting_float(G)
-    return T(π^(D/2)) * abs2(G.λ) * prod(real.(G.z))^T(-1/2)
+    return abs2(G.λ) * prod(invπ * real.(G.z))^Rational(-1, 2)
 end

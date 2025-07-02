@@ -88,15 +88,13 @@ end
 =#
 
 function Base.convert(::Type{<:HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket{D}) where{D, N, TΛ, Tz, Tq, Tp}
-    T = fitting_float(G)
-    λ = convert(TΛ, T(π^(D/4)) * G.λ * prod(real.(G.z))^T(-1/4))
+    λ = convert(TΛ, G.λ * prod(invπ * real.(G.z))^Rational(-1, 4))
     Λ = SArray{N}(ifelse(all(k -> k==1, n), λ, zero(TΛ)) for n in Iterators.product((1:Nj for Nj in N.parameters)...))
     return HermiteWavePacket(Λ, convert.(Tz, G.z), convert.(Tq, G.q), convert.(Tp, G.p))
 end
 
 function truncate_to_gaussian(H::HermiteWavePacket{D}) where D
-    T = fitting_float(H)
-    return GaussianWavePacket(T(π^(-D/4)) * prod(real.(H.z))^T(1/4) * first(H.Λ), H.z, H.q, H.p)
+    return GaussianWavePacket(prod(invπ * real.(H.z))^Rational(1, 4) * first(H.Λ), H.z, H.q, H.p)
 end
 
 #=
@@ -161,8 +159,6 @@ end
             throw(ArgumentError("All elements of `x` must be `SVector`"))
         end
     end
-
-    T = fitting_float(H, eltype.(x.parameters)...)
     
     zs = zero(SVector{D, Bool})
     zt = tuple((nothing for _ in 1:D)...)
@@ -173,7 +169,7 @@ end
     expr_x = [:( x[$k] .- $(Hq_broad[k]) ) for k in eachindex(zt)]
     expr_α = [:( exp.(.-H.z[$k]./2 .* (x[$k] .- $(Hq_broad[k])).^2 .+ im .* x[$k] .* $(Hp_broad[k])) ) for k in eachindex(zt)]
     μ = SVector{D}((true for _ in 1:D)...)
-    return :( ($T(π^(-$D/4)) * prod(real.(H.z))^$T(1/4)) .* clenshaw_hermite_transform_grid(H.Λ, (@. sqrt(2 * real(H.z))), tuple($(expr_x...)), $μ, tuple($(expr_α...))))
+    return :( (prod(invπ * real.(H.z))^Rational(1, 4)) .* clenshaw_hermite_transform_grid(H.Λ, (@. sqrt(2 * real(H.z))), tuple($(expr_x...)), $μ, tuple($(expr_α...))))
 end
 
 # Evaluates a hermite function at x using Clenshaw's algorithm
@@ -248,13 +244,12 @@ end
 
 # Computes the integral of a hermite function
 function integral(H::HermiteFct{D}) where D
-    T = fitting_float(H)
     z = zeros(SVector{D, NullNumber})
     x = tuple((SVector(NullNumber()) for _ in 1:D)...)
     μ = SVector{D}((-1 for _ in 1:D)...)
     α0 = tuple((SVector(true) for _ in 1:D)...)
     val = first(clenshaw_hermite_transform_grid(H.Λ, z, x, μ, α0))
-    return prod(H.z)^T(-1/4) * T((4π)^(D/4)) * val
+    return prod(inv4π * H.z)^Rational(-1, 4) * val
 end
 function integral(H::HermiteWavePacket{D}) where D
     return fourier(H)(zeros(SVector{D, NullNumber}))
@@ -273,16 +268,15 @@ end
 end
 # Complex variance
 @generated function fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz}
-    T = fitting_float(H)
     zs = zeros(SVector{D, Bool})
     expr_d = [(:( α[$k]^$j ) for j in 0:n-1) for (n, k) in zip(N.parameters, eachindex(zs))]
     expr_D = [:( Diagonal(SVector{$n}($(d...))) ) for (n, d) in zip(N.parameters, expr_d)]
     code =
         quote
-            Gf = fourier(GaussianWavePacket(prod(real.(H.z))^$T(1/4), H.z, H.q, H.p))            
+            Gf = fourier(GaussianWavePacket(prod(real.(H.z))^Rational(1, 4), H.z, H.q, H.p))            
             α = @. - im * conj(H.z) / abs(H.z)
             Λf = static_tensor_transform(H.Λ, tuple($(expr_D...)))
-            return HermiteWavePacket((Gf.λ * prod(real.(Gf.z))^$T(-1/4)) .* Λf, Gf.z, Gf.q, Gf.p)
+            return HermiteWavePacket((Gf.λ * prod(real.(Gf.z))^Rational(-1, 4)) .* Λf, Gf.z, Gf.q, Gf.p)
         end
     return code
 end
@@ -300,16 +294,15 @@ end
 end
 # Complex variance
 @generated function inv_fourier(H::HermiteWavePacket{D, N, TΛ, Tz}) where{D, N, TΛ, Tz}
-    T = fitting_float(H)
     zs = zeros(SVector{D, Bool})
     expr_d = [(:( α[$k]^$j ) for j in 0:n-1) for (n, k) in zip(N.parameters, eachindex(zs))]
     expr_D = [:( Diagonal(SVector{$n}($(d...))) ) for (n, d) in zip(N.parameters, expr_d)]
     code =
         quote
-            Gf = inv_fourier(GaussianWavePacket(prod(real.(H.z))^$T(1/4), H.z, H.q, H.p))            
+            Gf = inv_fourier(GaussianWavePacket(prod(real.(H.z))^Rational(1, 4), H.z, H.q, H.p))            
             α = @. im * conj(H.z) / abs(H.z)
             Λf = static_tensor_transform(H.Λ, tuple($(expr_D...)))
-            return HermiteWavePacket((Gf.λ * prod(real.(Gf.z))^$T(-1/4)) .* Λf, Gf.z, Gf.q, Gf.p)
+            return HermiteWavePacket((Gf.λ * prod(real.(Gf.z))^Rational(-1, 4)) .* Λf, Gf.z, Gf.q, Gf.p)
         end
     return code
 end

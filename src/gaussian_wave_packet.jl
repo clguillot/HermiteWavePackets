@@ -22,7 +22,7 @@ end
 
 #=
     Represents the gaussian function
-        λ*exp(-∑ₖ aₖ/2*(xₖ-qₖ)²)
+        λ*exp(-∑ₖ zₖ/2*(xₖ-qₖ)²)
 =#
 const Gaussian{D, Tλ<:Number, Tz<:Union{Real, NullNumber}, Tq<:Union{Real, NullNumber}} =
             GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}

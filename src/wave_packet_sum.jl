@@ -8,10 +8,13 @@ struct WavePacketSum{D, Ctype} <: AbstractWavePacket{D}
     g::Ctype
 
     # Constrain Ctype using an inner constructor
-    function WavePacketSum{D}(g::Ctype) where{D, Ctype<:Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}}
-        new{D, Ctype}(g)
+    function WavePacketSum{D}(g::Ctype) where{D, Ctype}
+        if !all(G -> typeof(G) <: AbstractWavePacket{D}, g)
+            throw(ArgumentError("All elements of g must be subtypes of AbstractWavePacket{$D}"))
+        end
+        return new{D, Ctype}(g)
     end
-    function WavePacketSum(g::Union{AbstractArray{<:AbstractWavePacket{D}}, Tuple{Vararg{AbstractWavePacket{D}}}}) where D
+    function WavePacketSum(g::AbstractWavePacket{D}...) where D
         return WavePacketSum{D}(g)
     end
 end
@@ -21,12 +24,12 @@ end
     CREATION
 =#
 
-function Base.:+(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D
-    return WavePacketSum((G1, G2))
+function Base.:+(G::AbstractWavePacket{D}...) where D
+    return WavePacketSum{D}(G)
 end
 
 function Base.:-(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D
-    return WavePacketSum((G1, -G2))
+    return WavePacketSum(G1, -G2)
 end
 
 #=
@@ -69,31 +72,31 @@ function Base.:*(w::Number, G::WavePacketSum)
 end
 
 #
-function Base.:*(G1::WavePacketSum, G2::WavePacketSum)
+function Base.:*(G1::WavePacketSum{D}, G2::WavePacketSum{D}) where D
     return WavePacketSum(tuple((g1 * g2 for (g1, g2) in Iterators.product(G1.g, G2.g))...))
 end
-function Base.:*(G1::AbstractWavePacket, G2::WavePacketSum)
+function Base.:*(G1::AbstractWavePacket{D}, G2::WavePacketSum{D}) where D
     return WavePacketSum(tuple((G1 * g2 for g2 in G2.g)...))
 end
-function Base.:*(G1::WavePacketSum, G2::AbstractWavePacket)
+function Base.:*(G1::WavePacketSum{D}, G2::AbstractWavePacket{D}) where D
     return G2 * G1
 end
 
 #
-function unitary_product(G::WavePacketSum, b::SVector{D, <:Union{Real, NullNumber}},
+function unitary_product(G::WavePacketSum{D}, b::SVector{D, <:Union{Real, NullNumber}},
             q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
             p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
     return WavePacketSum(tuple((unitary_product(g, b, q, p) for g in G.g)...))
 end
 
 #
-function convolution(G1::WavePacketSum, G2::WavePacketSum)
+function convolution(G1::WavePacketSum{D}, G2::WavePacketSum{D}) where D
     return WavePacketSum(tuple((convolution(g1, g2) for (g1, g2) in Iterators.product(G1.g, G2.g))...))
 end
-function convolution(G1::AbstractWavePacket, G2::WavePacketSum)
+function convolution(G1::AbstractWavePacket{D}, G2::WavePacketSum{D}) where D
     return WavePacketSum(tuple((convolution(G1, g2) for g2 in G2.g)...))
 end
-function convolution(G1::WavePacketSum, G2::AbstractWavePacket)
+function convolution(G1::WavePacketSum{D}, G2::AbstractWavePacket{D}) where D
     return convolution(G2, G1)
 end
 
@@ -107,29 +110,18 @@ function integral(G::WavePacketSum)
     return sum(integral(g) for g in G.g; init=s)
 end
 
-#=
-    Computes the dot product
-        ∑ₖ,ₗ dot_L2(G1[k], G2[l])
-=#
-function dot_L2(G1::WavePacketSum, G2::WavePacketSum)
+#
+function dot_L2(G1::WavePacketSum{D}, G2::WavePacketSum{D}) where D
     s = zero(promote_type(core_type(G1), core_type(G2)))
     return sum(dot_L2(g1, g2) for g1 in G1.g for g2 in G2.g; init=s)
 end
-
-#=
-    Computes the dot product
-        ∑ₗ dot_L2(G1, G2[l])
-=#
-function dot_L2(G1::AbstractWavePacket, G2::WavePacketSum)
+function dot_L2(G1::AbstractWavePacket{D}, G2::WavePacketSum{D}) where D
     s = zero(promote_type(core_type(G1), core_type(G2)))
     return sum(dot_L2(G1, g2) for g2 in G2.g; init=s)
 end
-#=
-    Computes the dot product
-        ∑ₖ dot_L2(G1[k], G2)
-=#
-@inline function dot_L2(G1::WavePacketSum, G2::AbstractWavePacket)
-    return conj(dot_L2(G2, G1))
+function dot_L2(G1::WavePacketSum{D}, G2::AbstractWavePacket{D}) where D
+    s = zero(promote_type(core_type(G1), core_type(G2)))
+    return sum(dot_L2(g1, G2) for g1 in G1.g; init=s)
 end
 
 #=

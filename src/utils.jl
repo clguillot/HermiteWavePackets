@@ -155,6 +155,7 @@ end
 #=
     STATIC TENSOR TRANSFORM
 =#
+# Applies M[k] along the k-th dimension of A
 @generated function static_tensor_transform(A::SArray{N, Ta, D}, M::Tuple) where{N, Ta, D}
     if length(M.parameters) != D
         throw(DimensionMismatch("Expecting the length of M to be $D, but got $(length(M.parameters)) instead"))

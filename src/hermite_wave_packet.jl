@@ -32,15 +32,18 @@ struct HermiteWavePacket{D, N<:Tuple, TΛ<:Number, Tz<:Number, Tq<:Union{Real, N
                     p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, N, TΛ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}, L}
         return new{D, N, TΛ, Tz, Tq, Tp, L}(Λ, z, q, p)
     end
-
+    @generated function HermiteWavePacket(λ::TΛ, z::SVector{D, Tz},
+                    q::SVector{D, Tq} = zeros(SVector{D, NullNumber}),
+                    p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, TΛ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+        N = Tuple{fill(1, D)...}
+        return :( HermiteWavePacket(SArray{$N}(λ), z, q, p) )
+    end
     function HermiteWavePacket(Λ::SVector{N, TΛ}, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{N, TΛ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
         return HermiteWavePacket(Λ, SVector(z), SVector(q), SVector(p))
     end
-end
-
-@generated function HermiteWavePacket(G::GaussianWavePacket{D, Tλ, Tz, Tq, Tp}) where{D, Tλ, Tz, Tq, Tp}
-    N = Tuple{fill(1, D)...}
-    return :( return convert(HermiteWavePacket{D, $N, Tλ, Tz, Tq, Tp}, G) )
+    function HermiteWavePacket(λ::TΛ, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{TΛ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+        return HermiteWavePacket(SVector(λ), z, q, p)
+    end
 end
 
 #=
@@ -74,11 +77,18 @@ function HermiteFct(Λ::SArray{N, <:Number, D}, z::SVector{D, <:Real},
                 q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where{D, N}
     return HermiteWavePacket(Λ, z, q, zeros(SVector{D, NullNumber}))
 end
+function HermiteFct(λ::Number, z::SVector{D, <:Real},
+                q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where{D}
+    return HermiteWavePacket(λ, z, q, zeros(SVector{D, NullNumber}))
+end
 function HermiteFct(Λ::SVector{N, <:Number}, z::Real,
                 q::Union{Real, NullNumber}=NullNumber()) where N
     return HermiteFct(Λ, SVector(z), SVector(q))
 end
-
+function HermiteFct(λ::Number, z::Real,
+                q::Union{Real, NullNumber}=NullNumber())
+    return HermiteFct(SVector(λ), SVector(z), SVector(q))
+end
 function HermiteFct(G::Gaussian)
     return HermiteWavePacket(G)
 end
@@ -86,12 +96,6 @@ end
 #=
     CONVERSIONS
 =#
-
-function Base.convert(::Type{<:HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket{D}) where{D, N, TΛ, Tz, Tq, Tp}
-    λ = convert(TΛ, G.λ * prod(invπ * real.(G.z))^Rational(-1, 4))
-    Λ = SArray{N}(ifelse(all(k -> k==1, n), λ, zero(TΛ)) for n in Iterators.product((1:Nj for Nj in N.parameters)...))
-    return HermiteWavePacket(Λ, convert.(Tz, G.z), convert.(Tq, G.q), convert.(Tp, G.p))
-end
 
 function truncate_to_gaussian(H::HermiteWavePacket{D}) where D
     return GaussianWavePacket(prod(invπ * real.(H.z))^Rational(1, 4) * first(H.Λ), H.z, H.q, H.p)
@@ -105,9 +109,11 @@ end
 function Base.promote_rule(::Type{<:HermiteWavePacket}, ::Type{HermiteWavePacket})
     return HermiteWavePacket
 end
-function promote_rule(::Type{HermiteWavePacket{D, N, TΛ1, Tz1, Tq1, Tp1, L}},
-                      ::Type{HermiteWavePacket{D, N, TΛ2, Tz2, Tq2, Tp2, L}}) where{D, N, TΛ1, Tz1, Tq1, Tp1, TΛ2, Tz2, Tq2, Tp2, L}
-    return HermiteWavePacket{D, N, promote_type(TΛ1, TΛ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2), L}
+@generated function Base.promote_rule(::Type{HermiteWavePacket{D, N1, TΛ1, Tz1, Tq1, Tp1, L1}},
+                      ::Type{HermiteWavePacket{D, N2, TΛ2, Tz2, Tq2, Tp2, L2}}) where{D, N1, TΛ1, Tz1, Tq1, Tp1, L1, N2, TΛ2, Tz2, Tq2, Tp2, L2}
+    N = Tuple{max.(N1.parameters, N2.parameters)...}
+    L = prod(N.parameters)
+    return :( HermiteWavePacket{D, $N, promote_type(TΛ1, TΛ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2), $L} )
 end
 
 #=
@@ -119,7 +125,7 @@ function Base.zero(::Type{<:HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp, L}}) where{
     return HermiteWavePacket(zeros(SArray{N, TΛ}), ones(SVector{D, Tz}), zeros(SVector{D, Tq}), zeros(SVector{D, Tp}))
 end
 
-# Creates a copy of a gaussian
+# Creates a copy of a hermite wave packet
 function Base.copy(H::HermiteWavePacket)
     return HermiteWavePacket(H.Λ, H.z, H.q, H.p)
 end
@@ -150,7 +156,7 @@ function Base.:/(H::HermiteWavePacket, w::Number)
 end
 
 # 
-@generated function evaluate_grid(H::HermiteWavePacket{D}, x::Tuple) where D
+@generated function evaluate_grid(H::HermiteWavePacket{D, N}, x::Tuple) where{D, N}
     if length(x.parameters) != D
         throw(DimensionMismatch("Expecting the length of x to be $D, but got $(length(x.parameters)) instead"))
     end
@@ -167,15 +173,15 @@ end
     Hp_broad_tuple = [fill(:(H.p[$k]), length(y)) for (y, k) in zip(x.parameters, eachindex(zs))]
     Hp_broad = [:( SVector{$(length(y))}($(h...)) ) for (y, h) in zip(x.parameters, Hp_broad_tuple)]
     expr_x = [:( x[$k] .- $(Hq_broad[k]) ) for k in eachindex(zt)]
-    expr_α = [:( exp.(.-H.z[$k]./2 .* (x[$k] .- $(Hq_broad[k])).^2 .+ im .* x[$k] .* $(Hp_broad[k])) ) for k in eachindex(zt)]
+    expr_α = [:( exp.(.-H.z[$k]./2 .* (x[$k] .- $(Hq_broad[k])).^2) .* cis.(x[$k] .* $(Hp_broad[k])) ) for k in eachindex(zt)]
     μ = SVector{D}((true for _ in 1:D)...)
     return :( (prod(invπ * real.(H.z))^Rational(1, 4)) .* clenshaw_hermite_transform_grid(H.Λ, (@. sqrt(2 * real(H.z))), tuple($(expr_x...)), $μ, tuple($(expr_α...))))
 end
 
 # Evaluates a hermite function at x using Clenshaw's algorithm
-function (H::HermiteWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D
+function (H::HermiteWavePacket{D, N})(x::AbstractVector{<:Union{Number, NullNumber}}) where{D, N}
     xs = SVector{D}(x)
-    return first(evaluate_grid(H, tuple((SVector{1}(y) for y in xs)...)))
+    return first(evaluate_grid(H, tuple((SVector(y) for y in xs)...)))
 end
 function (H::HermiteWavePacket{1})(x::Union{Number, NullNumber})
     return H(SVector(x))
@@ -189,8 +195,12 @@ end
 function unitary_product(H::HermiteWavePacket{D}, b::SVector{D, <:Union{Real, NullNumber}},
                 q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
                 p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
-    G = unitary_product(GaussianWavePacket(true, H.z, H.q, H.p), b, q, p)
-    return HermiteWavePacket(G.λ .* H.Λ, G.z, G.q, G.p)
+    u = @. b * (H.q + q) * (H.q - q)
+    Λ_ = cis(sum(u) / 2) .* H.Λ
+    z_ = @. real(H.z) + im * (imagz(H.z) + b)
+    q_ = H.q
+    p_ = @. H.p + p - b * (H.q - q)
+    return HermiteWavePacket(Λ_, z_, q_, p_)
 end
 
 # Computes the product of two hermite functions
@@ -212,10 +222,8 @@ end
 function Base.:*(H1::HermiteWavePacket{D, N1, TΛ1, Tz1}, H2::HermiteWavePacket{D, N2, TΛ2, Tz2}) where{D, N1, TΛ1, Tz1, N2, TΛ2, Tz2}
     z, q, p = gaussian_product_arg(H1.z, H1.q, H1.p, H2.z, H2.q, H2.p)
     Hr = HermiteFct(H1.Λ, real.(H1.z), H1.q) * HermiteFct(H2.Λ, real.(H2.z), H2.q)
-    G1 = GaussianWavePacket(true, im * imagz.(H1.z), H1.q, H1.p)
-    G2 = GaussianWavePacket(true, im * imagz.(H2.z), H2.q, H2.p)
-    λ = G1(q) * G2(q) * cis(-dot(q, p))
-    return HermiteWavePacket(λ * Hr.Λ, z, q, p)
+    μ = cis(-(sum(@. imagz.(H1.z) * (q - H1.q)^2) + sum(@. imagz.(H2.z) * (q - H2.q)^2)) / 2 + dot(H1.p + H2.p - p, q))
+    return HermiteWavePacket(μ .* Hr.Λ, z, q, p)
 end
 
 #=
@@ -273,10 +281,11 @@ end
     expr_D = [:( Diagonal(SVector{$n}($(d...))) ) for (n, d) in zip(N.parameters, expr_d)]
     code =
         quote
-            Gf = fourier(GaussianWavePacket(prod(real.(H.z))^Rational(1, 4), H.z, H.q, H.p))            
+            z_tf, q_tf, p_tf = gaussian_fourier_arg(H.z, H.q, H.p)
+            μ = prod(abs2.(H.z))^Rational(1, 4) / prod(invsqrt2π * sqrt.(H.z)) * cis(dot(H.p, H.q))
             α = @. - im * conj(H.z) / abs(H.z)
             Λf = static_tensor_transform(H.Λ, tuple($(expr_D...)))
-            return HermiteWavePacket((Gf.λ * prod(real.(Gf.z))^Rational(-1, 4)) .* Λf, Gf.z, Gf.q, Gf.p)
+            return HermiteWavePacket(μ .* Λf, z_tf, q_tf, p_tf)
         end
     return code
 end
@@ -299,10 +308,11 @@ end
     expr_D = [:( Diagonal(SVector{$n}($(d...))) ) for (n, d) in zip(N.parameters, expr_d)]
     code =
         quote
-            Gf = inv_fourier(GaussianWavePacket(prod(real.(H.z))^Rational(1, 4), H.z, H.q, H.p))            
+            z_tf, q_tf, p_tf = gaussian_inv_fourier_arg(H.z, H.q, H.p)
+            μ = prod(abs2.(H.z))^Rational(1, 4) / prod(sqrt2π * sqrt.(H.z)) * cis(dot(H.p, H.q))
             α = @. im * conj(H.z) / abs(H.z)
             Λf = static_tensor_transform(H.Λ, tuple($(expr_D...)))
-            return HermiteWavePacket((Gf.λ * prod(real.(Gf.z))^Rational(-1, 4)) .* Λf, Gf.z, Gf.q, Gf.p)
+            return HermiteWavePacket(μ .* Λf, z_tf, q_tf, p_tf)
         end
     return code
 end
@@ -340,14 +350,40 @@ end
 function dot_L2(H1::HermiteWavePacket, H2::HermiteWavePacket)
     return integral(conj(H1) * H2)
 end
-function dot_L2(G1::GaussianWavePacket{D}, G2::HermiteWavePacket{D}) where D
-    return dot_L2(HermiteWavePacket(G1), G2)
-end
-function dot_L2(G1::HermiteWavePacket{D}, G2::GaussianWavePacket{D}) where D
-    return dot_L2(G1, HermiteWavePacket(G2))
-end
 
 # Computes the square L² norm of a hermite function
 function norm2_L2(H::HermiteWavePacket)
     return sum(abs2, H.Λ; init=zero(real(eltype(H.Λ))))
 end
+
+
+
+
+#=
+
+    Interface with GaussianWavePacket
+
+=#
+
+@generated function HermiteWavePacket(G::GaussianWavePacket{D, Tλ, Tz, Tq, Tp}) where{D, Tλ, Tz, Tq, Tp}
+    N = Tuple{fill(1, D)...}
+    return :( return convert(HermiteWavePacket{D, $N, Tλ, Tz, Tq, Tp}, G) )
+end
+
+function Base.convert(::Type{<:HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket{D}) where{D, N, TΛ, Tz, Tq, Tp}
+    λ = convert(TΛ, G.λ * prod(invπ * real.(G.z))^Rational(-1, 4))
+    Λ = SArray{N}(ifelse(all(k -> k==1, n), λ, zero(TΛ)) for n in Iterators.product((1:Nj for Nj in N.parameters)...))
+    return HermiteWavePacket(Λ, convert.(Tz, G.z), convert.(Tq, G.q), convert.(Tp, G.p))
+end
+
+function Base.promote_rule(::Type{GaussianWavePacket{D, Tλ1, Tz1, Tq1, Tp1}},
+                      ::Type{HermiteWavePacket{D, N, TΛ2, Tz2, Tq2, Tp2, L}}) where{D, N, Tλ1, Tz1, Tq1, Tp1, TΛ2, Tz2, Tq2, Tp2, L}
+    return HermiteWavePacket{D, N, promote_type(Tλ1, TΛ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2), L}
+end
+
+Base.:*(G1::GaussianWavePacket{D}, H2::HermiteWavePacket{D}) where D = HermiteWavePacket(G1) * H2
+Base.:*(H1::HermiteWavePacket{D}, G2::GaussianWavePacket{D}) where D = H1 * HermiteWavePacket(G2)
+convolution(G1::GaussianWavePacket{D}, H2::HermiteWavePacket{D}) where D = dot_L2(HermiteWavePacket(G1), H2)
+convolution(H1::HermiteWavePacket{D}, G2::GaussianWavePacket{D}) where D = dot_L2(H1, HermiteWavePacket(G2))
+dot_L2(G1::GaussianWavePacket{D}, H2::HermiteWavePacket{D}) where D = dot_L2(HermiteWavePacket(G1), H2)
+dot_L2(H1::HermiteWavePacket{D}, G2::GaussianWavePacket{D}) where D = dot_L2(H1, HermiteWavePacket(G2))

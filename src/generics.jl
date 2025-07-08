@@ -48,7 +48,7 @@ function Base.iterate(::AbstractWavePacket, ::Nothing)
     return nothing
 end
 
-Base.:*(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D = *(promote(G1, G2)...)
-convolution(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D = convolution(promote(G1, G2)...)
-dot_L2(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D = dot_L2(promote(G1, G2)...)
-norm_L2(G::AbstractWavePacket) = sqrt(norm2_L2(G))
+# Base.:*(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D = *(promote(G1, G2)...)
+# convolution(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D = convolution(promote(G1, G2)...)
+# dot_L2(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D = dot_L2(promote(G1, G2)...)
+# norm_L2(G::AbstractWavePacket) = sqrt(norm2_L2(G))

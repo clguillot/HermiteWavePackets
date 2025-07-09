@@ -95,7 +95,7 @@ end
 function unitary_product(G::WavePacketSum{D}, b::SVector{D, <:Union{Real, NullNumber}},
             q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
             p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
-    return broadcast(g -> unitary_product(g, b, q, p), G.g)
+    return WavePacketSum{D}(broadcast(g -> unitary_product(g, b, q, p), G.g))
 end
 
 #

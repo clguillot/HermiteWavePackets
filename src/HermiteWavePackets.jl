@@ -23,6 +23,7 @@ export hermite_discrete_transform
 export hermite_quadrature
 export truncate_to_gaussian
 export integral
+export ∫
 export evaluate
 export unitary_product
 export polynomial_product

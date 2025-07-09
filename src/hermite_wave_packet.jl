@@ -383,6 +383,10 @@ end
 
 Base.:*(G1::GaussianWavePacket{D}, H2::HermiteWavePacket{D}) where D = HermiteWavePacket(G1) * H2
 Base.:*(H1::HermiteWavePacket{D}, G2::GaussianWavePacket{D}) where D = H1 * HermiteWavePacket(G2)
+function polynomial_product(G::GaussianWavePacket{D}, P::SArray{NP, <:Number, D},
+                q::SVector{D, <:Union{Real, NullNumber}}=zeros(SVector{D, NullNumber})) where{D, NP}
+    return polynomial_product(HermiteWavePacket(G), P, q)
+end
 convolution(G1::GaussianWavePacket{D}, H2::HermiteWavePacket{D}) where D = dot_L2(HermiteWavePacket(G1), H2)
 convolution(H1::HermiteWavePacket{D}, G2::GaussianWavePacket{D}) where D = dot_L2(H1, HermiteWavePacket(G2))
 dot_L2(G1::GaussianWavePacket{D}, H2::HermiteWavePacket{D}) where D = dot_L2(HermiteWavePacket(G1), H2)

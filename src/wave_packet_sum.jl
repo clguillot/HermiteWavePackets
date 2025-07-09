@@ -45,8 +45,8 @@ function core_type(::Type{WavePacketSum{D, Ctype}}) where{D, Ctype<:Tuple}
 end
 
 #
-function Base.conj(G::WavePacketSum)
-    return WavePacketSum(conj.(G.g))
+function Base.conj(G::WavePacketSum{D}) where D
+    return WavePacketSum{D}(conj.(G.g))
 end
 
 #=
@@ -62,43 +62,50 @@ end
 =#
 
 #
-function Base.:-(G1::WavePacketSum)
-    return WavePacketSum(.- G1.g)
+function Base.:-(G1::WavePacketSum{D}) where D
+    return WavePacketSum{D}(.- G1.g)
 end
 
 #
-function Base.:*(w::Number, G::WavePacketSum)
-    return WavePacketSum(w .* G.g)
+function Base.:*(w::Number, G::WavePacketSum{D}) where D
+    return WavePacketSum{D}(w .* G.g)
 end
 
 #
 function Base.:*(G1::WavePacketSum{D}, G2::WavePacketSum{D}) where D
-    return WavePacketSum(tuple((g1 * g2 for (g1, g2) in Iterators.product(G1.g, G2.g))...))
+    return WavePacketSum{D}(broadcast(g1 -> g1 * G2, G1.g))
 end
 function Base.:*(G1::AbstractWavePacket{D}, G2::WavePacketSum{D}) where D
-    return WavePacketSum(tuple((G1 * g2 for g2 in G2.g)...))
+    return WavePacketSum{D}(broadcast(g2 -> G1 * g2, G2.g))
 end
 function Base.:*(G1::WavePacketSum{D}, G2::AbstractWavePacket{D}) where D
     return G2 * G1
 end
 
 #
+function polynomial_product(G::WavePacketSum{D}, P::SArray{NP, <:Number, D},
+                q::SVector{D, <:Union{Real, NullNumber}}=zeros(SVector{D, NullNumber})) where{D, NP}
+    return WavePacketSum{D}(broadcast(g -> polynomial_product(g, P, q), G.g))
+end
+
+#
 function unitary_product(G::WavePacketSum{D}, b::SVector{D, <:Union{Real, NullNumber}},
             q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
             p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
-    return WavePacketSum(tuple((unitary_product(g, b, q, p) for g in G.g)...))
+    return broadcast(g -> unitary_product(g, b, q, p), G.g)
 end
 
 #
 function convolution(G1::WavePacketSum{D}, G2::WavePacketSum{D}) where D
-    return WavePacketSum(tuple((convolution(g1, g2) for (g1, g2) in Iterators.product(G1.g, G2.g))...))
+    return WavePacketSum{D}(broadcast(g1 -> convolution(g1, G2), G1.g))
 end
 function convolution(G1::AbstractWavePacket{D}, G2::WavePacketSum{D}) where D
-    return WavePacketSum(tuple((convolution(G1, g2) for g2 in G2.g)...))
+    return WavePacketSum{D}(broadcast(g2 -> convolution(G1, g2), G2.g))
 end
 function convolution(G1::WavePacketSum{D}, G2::AbstractWavePacket{D}) where D
-    return convolution(G2, G1)
+    return G2 * G1
 end
+
 
 
 #=

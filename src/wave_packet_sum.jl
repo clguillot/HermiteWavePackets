@@ -14,6 +14,9 @@ struct WavePacketSum{D, Ctype} <: AbstractWavePacket{D}
         end
         return new{D, Ctype}(g)
     end
+    function WavePacketSum{D}(g::AbstractWavePacket{D}...) where D
+        return WavePacketSum{D}(g)
+    end
     function WavePacketSum(g::AbstractWavePacket{D}...) where D
         return WavePacketSum{D}(g)
     end
@@ -29,7 +32,7 @@ function Base.:+(G::AbstractWavePacket{D}...) where D
 end
 
 function Base.:-(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D
-    return WavePacketSum(G1, -G2)
+    return WavePacketSum{D}(G1, -G2)
 end
 
 #=
@@ -143,11 +146,11 @@ end
 
 # Fourier transform
 function fourier(G::WavePacketSum)
-    return WavePacketSum(fourier.(G.g))
+    return WavePacketSum{D}(fourier.(G.g))
 end
 # Inverse Fourier transgorm
 function inv_fourier(G::WavePacketSum)
-    return WavePacketSum(inv_fourier.(G.g))
+    return WavePacketSum{D}(inv_fourier.(G.g))
 end
 
 #=

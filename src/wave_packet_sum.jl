@@ -145,11 +145,11 @@ function norm2_L2(G::WavePacketSum)
 end
 
 # Fourier transform
-function fourier(G::WavePacketSum)
+function fourier(G::WavePacketSum{D}) where D
     return WavePacketSum{D}(fourier.(G.g))
 end
 # Inverse Fourier transgorm
-function inv_fourier(G::WavePacketSum)
+function inv_fourier(G::WavePacketSum{D}) where D
     return WavePacketSum{D}(inv_fourier.(G.g))
 end
 

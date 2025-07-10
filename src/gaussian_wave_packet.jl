@@ -104,8 +104,8 @@ function (G::GaussianWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber
     xs = SVector{D}(x)
     return G.λ * exp(-sum(z/2 * (y - q)^2 for (z, q, y) in zip(G.z, G.q, xs))) * cis(dot(G.p, xs))
 end
-function (G::GaussianWavePacket{1})(x::Union{Number, NullNumber})
-    return G(SVector(x))
+@inline function (G::GaussianWavePacket{D})(x::T...) where{D, T<:Union{Number, NullNumber}}
+    return G(SVector{D}(x...))
 end
 
 #=

@@ -28,6 +28,9 @@ struct NullNumber end  # Struct to represent the fully absorbing zero number
 
 # Defines special operations with SArray
 @inline Base.:*(::NullNumber, ::SArray{N, <:Union{Number, NullNumber}}) where N = zeros(SArray{N, NullNumber})
+@inline Base.:\(::SDiagonal{D, <:Number}, ::SVector{D, NullNumber}) where D = zeros(SVector{D, NullNumber})
+@inline Base.:\(::UpperTriangular{<:Number, <:SMatrix{Dx, Dy}}, ::SVector{Dy, NullNumber}) where{Dx, Dy} = zeros(SVector{Dx, NullNumber})
+@inline Base.:\(::LowerTriangular{<:Number, <:SMatrix{Dx, Dy}}, ::SVector{Dy, NullNumber}) where{Dx, Dy} = zeros(SVector{Dx, NullNumber})
 @inline LinearAlgebra.dot(::SArray{N, NullNumber}, ::SArray{N, <:Union{Number, NullNumber}}) where N = NullNumber()
 @inline LinearAlgebra.dot(::SArray{N, <:Number}, ::SArray{N, NullNumber}) where N = NullNumber()
 

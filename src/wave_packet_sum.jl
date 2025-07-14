@@ -141,7 +141,7 @@ end
 function norm2_L2(G::WavePacketSum)
     s = zero(real(core_type(G)))
     S1 = sum(g -> norm2_L2(g), G.g; init=s)
-    f(k, l) = ifelse(k < l, real(dot_L2(G.g[k], G.g[l])), s)
+    f(k, l) = k < l ? real(dot_L2(G.g[k], G.g[l])) : s
     S2 = sum(i -> f(i...), Iterators.product(eachindex(G.g), eachindex(G.g)); init=s)
     return S1 + 2 * S2
 end

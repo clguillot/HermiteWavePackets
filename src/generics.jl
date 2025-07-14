@@ -52,4 +52,5 @@ end
 # convolution(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D = convolution(promote(G1, G2)...)
 # dot_L2(G1::AbstractWavePacket{D}, G2::AbstractWavePacket{D}) where D = dot_L2(promote(G1, G2)...)
 norm_L2(G::AbstractWavePacket) = sqrt(norm2_L2(G))
+norm_∇(G::AbstractWavePacket) = sqrt(norm_∇(G))
 ∫(G::AbstractWavePacket) = integral(G)

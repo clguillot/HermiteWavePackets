@@ -1,54 +1,62 @@
 
 #=
     Represents the complex gaussian function
-        λ*exp(-∑ₖ zₖ/2*(xₖ-qₖ)²)*exp(i∑ₖpₖxₖ)
+        λ*exp(-z(x-q)⋅(x-q)/2)*exp(ip⋅x)
 =#
-struct GaussianWavePacket{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}} <: AbstractWavePacket{D}
+struct GaussianWavePacket{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Cz<:Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}, SDiagonal{D, Tz}}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}} <: AbstractWavePacket{D}
     λ::Tλ
-    z::SVector{D, Tz}
+    z::Cz
     q::SVector{D, Tq}
     p::SVector{D, Tp}
 
-    function GaussianWavePacket(λ::Tλ, z::SVector{D, Tz},
-                q::SVector{D, Tq} = zeros(SVector{D, NullNumber}),
-                p::SVector{D, Tp} = zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
-        return new{D, Tλ, Tz, Tq, Tp}(λ, z, q, p)
+    function GaussianWavePacket(λ::Tλ, z::Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}, SDiagonal{D, Tz}},
+                q::SVector{D, Tq}=zeros(SVector{D, NullNumber}),
+                p::SVector{D, Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+        return new{D, Tλ, Tz, typeof(z), Tq, Tp}(λ, z, q, p)
     end
-    function GaussianWavePacket{D}(λ::Tλ, z::AbstractVector{Tz},
-                q::AbstractVector{Tq} = zeros(SVector{D, NullNumber}),
-                p::AbstractVector{Tp} = zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
-        return GaussianWavePacket(λ, SVector{D}(z), SVector{D}(q), SVector{D}(p))
+    function GaussianWavePacket{D}(λ::Tλ, z::Symmetric{Tz},
+                q::AbstractVector{Tq}=zeros(SVector{D, NullNumber}),
+                p::AbstractVector{Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+        return GaussianWavePacket(λ, Symmetric(SMatrix{D, D}(z)), SVector{D}(q), SVector{D}(p))
+    end
+    function GaussianWavePacket{D}(λ::Tλ, z::Diagonal{Tz},
+                q::AbstractVector{Tq}=zeros(SVector{D, NullNumber}),
+                p::AbstractVector{Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+        return GaussianWavePacket(λ, Diagonal(SVector{D}(z.diag)), SVector{D}(q), SVector{D}(p))
     end
     function GaussianWavePacket(λ::Tλ, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
-        return GaussianWavePacket(λ, SVector(z), SVector(q), SVector(p))
+        return GaussianWavePacket(λ, Diagonal(SVector(z)), SVector(q), SVector(p))
     end
 end
 
 #=
     Represents the gaussian function
-        λ*exp(-∑ₖ zₖ/2*(xₖ-qₖ)²)
+        λ*exp(-z(x-q)⋅(x-q)/2)
 =#
-const Gaussian{D, Tλ<:Number, Tz<:Union{Real, NullNumber}, Tq<:Union{Real, NullNumber}} =
-            GaussianWavePacket{D, Tλ, Tz, Tq, NullNumber}
-function Gaussian(λ::Number, z::SVector{D, <:Union{Real, NullNumber}},
-                q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
-    return GaussianWavePacket(λ, z, q, zeros(SVector{D, NullNumber}))
+const Gaussian{D, Tλ<:Number, Tz<:Union{Real, NullNumber}, Cz<:Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}}, Tq<:Union{Real, NullNumber}} =
+            GaussianWavePacket{D, Tλ, Tz, Cz, Tq, NullNumber}
+function Gaussian(λ::Tλ, z::Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}, SDiagonal{D, Tz}},
+                q::SVector{D, Tq}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}}
+    return GaussianWavePacket(λ, z, q)
 end
-function Gaussian{D}(λ::Number, z::AbstractVector{<:Union{Real, NullNumber}},
-                q::AbstractVector{<:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
-    return Gaussian(λ, SVector{D}(z), SVector{D}(q))
+function Gaussian{D}(λ::Number, z::AbstractMatrix{Tz},
+                q::AbstractVector{Tq}=zeros(SVector{D, NullNumber})) where{D, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}}
+    return GaussianWavePacket(λ, z, q)
 end
 function Gaussian(λ::Number, z::Union{Real, NullNumber},
                 q::Union{Real, NullNumber} = NullNumber())
-    return Gaussian(λ, SVector(z), SVector(q))
+    return Gaussian(λ, Diagonal(SVector(z)), SVector(q))
 end
 
 #=
     CONVERSIONS
 =#
 
-function Base.convert(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}, G::GaussianWavePacket{D}) where {D, Tλ, Tz, Tq, Tp}
-    return GaussianWavePacket(convert(Tλ, G.λ), convert.(Tz, G.z), convert.(Tq, G.q), convert.(Tp, G.p))
+function Base.convert(::Type{GaussianWavePacket{D, Tλ, Tz, Cz, Tq, Tp}}, G::GaussianWavePacket{D}) where {D, Tλ, Tz, Cz<:Diagonal, Tq, Tp}
+    return GaussianWavePacket(convert(Tλ, G.λ), Diagonal(convert.(Tz, diag(G.z))), convert.(Tq, G.q), convert.(Tp, G.p))
+end
+function Base.convert(::Type{GaussianWavePacket{D, Tλ, Tz, Cz, Tq, Tp}}, G::GaussianWavePacket{D}) where {D, Tλ, Tz, Cz<:Symmetric, Tq, Tp}
+    return GaussianWavePacket(convert(Tλ, G.λ), Symmetric(convert.(Tz, G.z.data)), convert.(Tq, G.q), convert.(Tp, G.p))
 end
 
 function truncate_to_gaussian(G::GaussianWavePacket)
@@ -63,8 +71,8 @@ end
 function Base.promote_rule(::Type{<:GaussianWavePacket}, ::Type{GaussianWavePacket})
     return GaussianWavePacket
 end
-function Base.promote_rule(::Type{GaussianWavePacket{D, Tλ1, Tz1, Tq1, Tp1}}, ::Type{GaussianWavePacket{D, Tλ2, Tz2, Tq2, Tp2}}) where{D, Tλ1, Tz1, Tq1, Tp1, Tλ2, Tz2, Tq2, Tp2}
-    return GaussianWavePacket{D, promote_type(Tλ1, Tλ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2)}
+function Base.promote_rule(::Type{GaussianWavePacket{D, Tλ1, Tz1, Cz1, Tq1, Tp1}}, ::Type{GaussianWavePacket{D, Tλ2, Tz2, Cz2, Tq2, Tp2}}) where{D, Tλ1, Tz1, Cz1, Tq1, Tp1, Tλ2, Tz2, Cz2, Tq2, Tp2}
+    return GaussianWavePacket{D, promote_type(Tλ1, Tλ2), promote_type(Tz1, Tz2), promote_type(Cz1, Cz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2)}
 end
 
 
@@ -73,8 +81,8 @@ end
 =#
 
 # Returns a null gaussian
-function Base.zero(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}) where{D, Tλ, Tz<:Number, Tq, Tp}
-    return GaussianWavePacket(zero(Tλ), ones(SVector{D, Tz}), zeros(SVector{D, Tq}), zeros(SVector{D, Tp}))
+function Base.zero(::Type{GaussianWavePacket{D, Tλ, Tz, Cz, Tq, Tp}}) where{D, Tλ, Tz, Cz, Tq, Tp}
+    return GaussianWavePacket(zero(Tλ), zero(Cz), zeros(SVector{D, Tq}), zeros(SVector{D, Tp}))
 end
 
 # Creates a copy of a gaussian
@@ -83,13 +91,13 @@ function Base.copy(G::GaussianWavePacket)
 end
 
 #
-function core_type(::Type{GaussianWavePacket{D, Tλ, Tz, Tq, Tp}}) where{D, Tλ, Tz, Tq, Tp}
+function core_type(::Type{GaussianWavePacket{D, Tλ, Tz, Cz, Tq, Tp}}) where{D, Tλ, Tz, Cz, Tq, Tp}
     return promote_type(Tλ, Tz, Tq, Tp)
 end
 
 # Returns the complex conjugate of a gaussian
 function Base.conj(G::GaussianWavePacket)
-    return GaussianWavePacket(conj(G.λ), conj.(G.z), G.q, .- G.p)
+    return GaussianWavePacket(conj(G.λ), conj(G.z), G.q, -G.p)
 end
 
 # 
@@ -108,50 +116,133 @@ function Base.:/(G::GaussianWavePacket, w::Number)
 end
 
 # Evaluates a gaussian at x
-function (G::GaussianWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D
+function evaluate(G::GaussianWavePacket{D},x::AbstractVector{<:Union{Number, NullNumber}}) where D
     xs = SVector{D}(x)
-    return G.λ * exp(-sum(z/2 * (y - q)^2 for (z, q, y) in zip(G.z, G.q, xs))) * cis(dot(G.p, xs))
+    ys = xs - G.q
+    return G.λ * exp(- sum(ys .* (G.z * ys)) / 2) * cis(dot(G.p, xs))
 end
-@inline function (G::GaussianWavePacket{D})(x::T...) where{D, T<:Union{Number, NullNumber}}
-    return G(SVector{D}(x...))
+# Evaluates a gaussian at x along the dimensions contained in N
+# Preserves the order of the variables
+@generated function evaluate(G::GaussianWavePacket{D, Tλ, Tz, Cz}, x::AbstractVector{<:Union{Number, NullNumber}}, ::Type{N}) where{D, Tλ, Tz, Cz, N}
+    if !all(n -> n ∈ eachindex(zeros(SVector{D, Bool})), N.parameters)
+        throw(DimensionMismatch("Cannot integrate over a dimension which does not exist"))
+    end
+    
+    D2 = length(N.parameters)
+    I1 = SVector((n for n ∈ eachindex(zeros(SVector{D, Bool})) if n ∉ N.parameters)...)
+    I2 = SVector(N.parameters...)
+
+    if length(N.parameters) == 0
+        return :( G )
+    elseif length(N.parameters) == D
+        return :( evaluate(G, x) )
+    elseif Cz <: Diagonal
+        code = quote
+            x2 = SVector{$D2}(x)
+            z1 = Diagonal(diag(G.z)[$I1])
+            z2 = Diagonal(diag(G.z)[$I2])
+            G2 = GaussianWavePacket(G.λ, z2, G.q[$I2], G.p[$I2])
+            return GaussianWavePacket(evaluate(G2, x2), z1, G.q[$I1], G.p[$I1])
+        end
+        return code
+    else
+        code = quote
+            x2 = SVector{$D2}(x)
+            z1 = Symmetric(G.z[$I1, $I1])
+            z2 = Symmetric(G.z[$I2, $I2])
+            q1 = G.q[$I1]
+            q2 = G.q[$I2]
+            w = G.z[$I1, $I2]
+            U = special_cholesky(real(z1))
+            y2 = x2 - q2
+            y1 = real(w) * y2
+            y1_ = U \ (transpose(U) \ y1)
+            p0 = _imagz(w) * y2 - _imagz(z1) * y1_
+            G2 = GaussianWavePacket(exp(dot(y1_, z1, y1_) / 2), z2, q2, G.p[$I2])
+            λ = G.λ * evaluate(G2, x2) * cis(dot(p0, q1))
+            return GaussianWavePacket(λ, z1, q1 - y1_, G.p[$I1] - p0)
+        end
+        return code
+    end
 end
+# Evaluates a gaussian at x
+(G::GaussianWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D = evaluate(G, x)
+(G::GaussianWavePacket{D})(x::T...) where{D, T<:Union{Number, NullNumber}} = G(SVector{D}(x...))
 
 #=
     TRANSFORMATIONS
 =#
 
-# Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(G::GaussianWavePacket{D}, b::SVector{D, <:Union{Real, NullNumber}},
+# Multiplies a gaussian wave packet by exp(-ib/2(x-q)⋅(x-q)) * exp(ipx)
+function unitary_product(G::GaussianWavePacket{D}, b::Union{Symmetric{<:Union{Real, NullNumber}, <:SMatrix{D, D}}, SDiagonal{D, <:Union{Real, NullNumber}}},
             q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
             p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
-    u = @. b * (G.q + q) * (G.q - q)
-    λ_ = G.λ * cis(sum(u) / 2)
-    z_ = @. real(G.z) + im * (imagz(G.z) + b)
+    z_ = G.z + im * b
     q_ = G.q
-    p_ = @. G.p + p - b * (G.q - q)
+    p_ = G.p + p + b * (q - G.q)
+    λ_ = G.λ * cis(dot(G.q - q, b, G.q + q) / 2)
     return GaussianWavePacket(λ_, z_, q_, p_)
 end
 
 # Computes the product of two gaussians
 function Base.:*(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
-    z, q, p = gaussian_product_arg(G1.z, G1.q, G1.p, G2.z, G2.q, G2.p)
+    z = G1.z + G2.z
+    U = special_cholesky(real(z))
+    q = U \ (transpose(U) \ (real(G1.z) * G1.q + real(G2.z) * G2.q))
+    p0 = (_imagz(G1.z) * G1.q + _imagz(G2.z) * G2.q) - (_imagz(G1.z) + _imagz(G2.z)) * q
+    p = G1.p + G2.p + p0
     λ = G1(q) * G2(q) * cis(-dot(p, q))
     return GaussianWavePacket(λ, z, q, p)
 end
 
+# Computes |G(x)|^2
+_abs(G::GaussianWavePacket) = Gaussian(abs(G.λ), real(G.z), G.q)
+_abs2(G::GaussianWavePacket) = Gaussian(abs2(G.λ), 2*real(G.z), G.q)
+
 # Computes the integral of a gaussian
-function integral(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
-    return G.λ / prod(invsqrt2π * sqrt.(G.z)) * cis(dot(G.p, G.q)) * exp(-sum(p^2 / (2*z) for (z, p) in zip(G.z, G.p)))
+function integral(G::GaussianWavePacket)
+    U = special_cholesky(G.z)
+    r = transpose(U) \ G.p
+    return G.λ / prod(invsqrt2π * diag(U)) * cis(dot(G.p, G.q)) * exp(-sum(r.^2) / 2)
 end
+# Integrate over all variables with indices contained in N,
+#   while preserving the order of the other variables
+# @generated function integral(G::GaussianWavePacket{D}, ::Type{N}) where{D, N}
+#     if !all(n -> n ∈ eachindex(G.q), N.parameters)
+#         throw(DimensionMismatch("Cannot integrate over a dimension which does not exist"))
+#     end
+#     if length(N.parameters == 0)
+#         return :( G )
+#     elseif lengt(N.parameters == D)
+#         return :( integral(G) )
+#     else
+#         I1 = SVector((n for n ∈ eachindex(G.q) if n ∉ N.parameters)...)
+#         I2 = SVector(N.parameters...)
+#         code = quote
+#             w = G.z[$I1, $I2]
+#             z1 = G.z[$I1, $I1]
+#             q1 = G.q[$I1]
+#             p1 = G.p[$I1]
+#             z2 = G.z[$I2, $I2]
+#             q2 = G.q[$I2]
+#             p2 = G.p[$I2]
+#         end
+#         return code
+#     end
+# end
 
 #=
     Computes the Fourier transform of a gaussian
     The Fourier transform is defined as
         TF(ψ)(ξ) = ∫dx e^(-ixξ) ψ(x)
 =#
-function fourier(G::GaussianWavePacket)
-    z_tf, q_tf, p_tf = gaussian_fourier_arg(G.z, G.q, G.p)
-    λ_tf = G.λ / prod(invsqrt2π * sqrt.(G.z)) * cis(dot(G.p, G.q))
+function fourier(G::GaussianWavePacket{D}) where D
+    U = special_cholesky(G.z)
+    U_inv = _upper_tri(U \ Diagonal(ones(SVector{D, Bool})))
+    z_tf = _symmetric(U_inv * transpose(U_inv))
+    q_tf = G.p
+    p_tf = -G.q
+    λ_tf = G.λ / prod(invsqrt2π * diag(U)) * cis(dot(G.p, G.q))
     return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
 
@@ -160,31 +251,77 @@ end
     The inverse Fourier transform is defined as
         ITF(ψ)(x) = (2π)⁻ᴰ∫dξ e^(ixξ) ψ(ξ)
 =#
-function inv_fourier(G::GaussianWavePacket)
-    z_tf, q_tf, p_tf = gaussian_inv_fourier_arg(G.z, G.q, G.p)
-    λ_tf = G.λ / prod(sqrt2π * sqrt.(G.z)) * cis(dot(G.p, G.q))
+function inv_fourier(G::GaussianWavePacket{D}) where D
+    U = special_cholesky(G.z)
+    U_inv = _upper_tri(U \ Diagonal(ones(SVector{D, Bool})))
+    z_tf = _symmetric(U_inv * transpose(U_inv))
+    q_tf = -G.p
+    p_tf = G.q
+    λ_tf = G.λ / prod(sqrt2π * diag(U)) * cis(dot(G.p, G.q))
     return GaussianWavePacket(λ_tf, z_tf, q_tf, p_tf)
 end
 
 # Computes the convolution product of two gaussians
-function convolution(G1::Gaussian{D, Tλ1, Tz1}, G2::Gaussian{D, Tλ2, Tz2}) where{D, Tλ1<:Real, Tz1<:Number, Tλ2<:Real, Tz2<:Number}
+function convolution(G1::Gaussian{D, Tλ1}, G2::Gaussian{D, Tλ2}) where{D, Tλ1<:Real, Tλ2<:Real}
     G = inv_fourier(fourier(G1) * fourier(G2))
     return Gaussian(real(G.λ), G.z, G.q)
 end
-function convolution(G1::GaussianWavePacket{D, Tλ1, Tz1}, G2::GaussianWavePacket{D, Tλ2, Tz2}) where{D, Tλ1, Tz1<:Number, Tλ2, Tz2<:Number}
+function convolution(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     return inv_fourier(fourier(G1) * fourier(G2))
 end
 
-# Computes the L² product of two real gaussians
-function dot_L2(G1::Gaussian{D, Tλ1}, G2::Gaussian{D}) where{D, Tλ1<:Real}
-    return integral(G1 * G2)
-end
 # Computes the L² product of two gaussian wave packets
-function dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
-    return integral(conj(G1) * G2)
+dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D = integral(conj(G1) * G2)
+# Computes the square L² norm of a gaussian wave packet
+norm2_L2(G::GaussianWavePacket) = integral(_abs2(G))
+
+# Computes ∫conj(∇G1)∇G2
+dot_∇(G1::Gaussian{D, Tλ1}, G2::Gaussian{D, Tλ2}) where{D, Tλ1<:Real, Tλ2<:Real} = real(_dot_∇(G1, G2))
+dot_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D = _dot_∇(G1, G2)
+@generated function _dot_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
+    block = Expr(:block)
+    deriv = Expr(:tuple)
+    dim_list = eachindex(zeros(SVector{D, Bool}))
+    for j in dim_list
+        Rj = tuple(k for k in dim_list if k != j)
+        block_j = quote
+            Gj = evaluate(G, zeros(SVector{D-1, NullNumber}), Tuple{$Rj...})
+            zj = first(Gj.z)
+            qj = first(Gj.q)
+            pj = first(Gj.p)
+            Dj = sqrt2π * Gj.λ / sqrt(zj) * (inv(zj) - (p / z + im*q)^2) * exp(-p^2/(2*z)) * cis(-q*p)
+        end
+        push!(block, block_j)
+        push!(deriv, Symbol(:(D$j)))
+    end
+    code = quote
+        G = conj(fourier(G1)) * fourier(G2)
+        $block
+        return sum($deriv)
+    end
+    return code
 end
 
-# Computes the square L² norm of a gaussian wave packet
-function norm2_L2(G::GaussianWavePacket{D, Tλ, Tz}) where{D, Tλ, Tz<:Number}
-    return abs2(G.λ) * prod(invπ * real.(G.z))^Rational(-1, 2)
+# Computes ∫|∇G|^2
+@generated function norm2_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
+    block = Expr(:block)
+    deriv = Expr(:tuple)
+    dim_list = eachindex(zeros(SVector{D, Bool}))
+    for j in dim_list
+        Rj = tuple(k for k in dim_list if k != j)
+        block_j = quote
+            Gj = evaluate(G, zeros(SVector{D-1, NullNumber}), Tuple{$Rj...})
+            aj = first(Gj.z)
+            qj = first(Gj.q)
+            Dj = sqrt2π * Gj.λ * aj^Rational(-3, 2) * (aj*qj^2 + 1)
+        end
+        push!(block, block_j)
+        push!(deriv, Symbol(:(D$j)))
+    end
+    code = quote
+        G = _abs2(fourier(G))
+        $block
+        return sum($deriv)
+    end
+    return code
 end

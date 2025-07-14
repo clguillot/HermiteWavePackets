@@ -18,6 +18,7 @@ export WavePacketSum
 
 # Functions
 export hermite_grid
+export evaluate
 export evaluate_grid
 export hermite_discrete_transform
 export hermite_quadrature
@@ -33,9 +34,13 @@ export convolution
 export dot_L2
 export norm2_L2
 export norm_L2
+export dot_∇
+export norm2_∇
+export norm_∇
 export core_type
 
 include("utils.jl")
+include("special_cholesky.jl")
 include("nullnumber.jl")
 
 include("gaussian_arg.jl")

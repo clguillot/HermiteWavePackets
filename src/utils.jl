@@ -1,3 +1,13 @@
+#
+_upper_tri(A::Diagonal) = A
+_upper_tri(A::AbstractMatrix) = UpperTriangular(A)
+_symmetric(A::Diagonal) = A
+_symmetric(A::AbstractMatrix) = Symmetric(A)
+
+_imagz(A::AbstractArray{<:Real}) = similar(A, NullNumber)
+_imagz(A::AbstractArray{<:Number}) = imag(A)
+
+
 
 #=
     Computes the clenshaw algorithm along dimension dim:

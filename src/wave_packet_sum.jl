@@ -57,7 +57,7 @@ end
 =#
 function (G::WavePacketSum)(x)
     s = zero(promote_type(core_type(G), eltype(x)))
-    return sum(g(x) for g in G.g; init=s)
+    return sum(g -> g(x), G.g; init=s)
 end
 
 #=
@@ -117,21 +117,22 @@ end
 =#
 function integral(G::WavePacketSum)
     s = zero(core_type(G))
-    return sum(integral(g) for g in G.g; init=s)
+    return sum(g -> integral(g), G.g; init=s)
 end
 
 #
 function dot_L2(G1::WavePacketSum{D}, G2::WavePacketSum{D}) where D
     s = zero(promote_type(core_type(G1), core_type(G2)))
-    return sum(dot_L2(g1, g2) for g1 in G1.g for g2 in G2.g; init=s)
+    f(g1, g2) = dot_L2(g1, g2)
+    return sum(gg -> f(gg...), Iterators.product(G1.g, G2.g); init=s)
 end
 function dot_L2(G1::AbstractWavePacket{D}, G2::WavePacketSum{D}) where D
     s = zero(promote_type(core_type(G1), core_type(G2)))
-    return sum(dot_L2(G1, g2) for g2 in G2.g; init=s)
+    return sum(g2 -> dot_L2(G1, g2), G2.g; init=s)
 end
 function dot_L2(G1::WavePacketSum{D}, G2::AbstractWavePacket{D}) where D
     s = zero(promote_type(core_type(G1), core_type(G2)))
-    return sum(dot_L2(g1, G2) for g1 in G1.g; init=s)
+    return sum(g1 -> dot_L2(g1, G2), G1.g; init=s)
 end
 
 #=
@@ -139,8 +140,9 @@ end
 =#
 function norm2_L2(G::WavePacketSum)
     s = zero(real(core_type(G)))
-    S1 = sum(norm2_L2(g) for g in G.g; init=s)
-    S2 = sum(real(dot_L2(G.g[k], G.g[l])) for k in eachindex(G.g) for l in Iterators.drop(eachindex(G.g), k); init=s)
+    S1 = sum(g -> norm2_L2(g), G.g; init=s)
+    f(k, l) = ifelse(k < l, real(dot_L2(G.g[k], G.g[l])), s)
+    S2 = sum(i -> f(i...), Iterators.product(eachindex(G.g), eachindex(G.g)); init=s)
     return S1 + 2 * S2
 end
 

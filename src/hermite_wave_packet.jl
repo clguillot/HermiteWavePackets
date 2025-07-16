@@ -365,19 +365,19 @@ end
 
 =#
 
-@generated function HermiteWavePacket(G::GaussianWavePacket{D, Tλ, Tz, Tq, Tp}) where{D, Tλ, Tz, Tq, Tp}
+@generated function HermiteWavePacket(G::GaussianWavePacket{D, Tλ, Tz, Cz, Tq, Tp}) where{D, Tλ, Tz, Cz<:Diagonal, Tq, Tp}
     N = Tuple{fill(1, D)...}
     return :( return convert(HermiteWavePacket{D, $N, Tλ, Tz, Tq, Tp}, G) )
 end
 
-function Base.convert(::Type{<:HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket{D}) where{D, N, TΛ, Tz, Tq, Tp}
-    λ = convert(TΛ, G.λ * prod(invπ * real.(G.z))^Rational(-1, 4))
+function Base.convert(::Type{<:HermiteWavePacket{D, N, TΛ, Tz, Tq, Tp}}, G::GaussianWavePacket{D, Sλ, Sz, Cz}) where{D, N, TΛ, Tz, Tq, Tp, Sλ, Sz, Cz<:Diagonal}
+    λ = convert(TΛ, G.λ * prod(invπ * real.(diag(G.z)))^Rational(-1, 4))
     Λ = SArray{N}(ifelse(all(k -> k==1, n), λ, zero(TΛ)) for n in Iterators.product((1:Nj for Nj in N.parameters)...))
-    return HermiteWavePacket(Λ, convert.(Tz, G.z), convert.(Tq, G.q), convert.(Tp, G.p))
+    return HermiteWavePacket(Λ, convert.(Tz, diag(G.z)), convert.(Tq, G.q), convert.(Tp, G.p))
 end
 
-function Base.promote_rule(::Type{GaussianWavePacket{D, Tλ1, Tz1, Tq1, Tp1}},
-                      ::Type{HermiteWavePacket{D, N, TΛ2, Tz2, Tq2, Tp2, L}}) where{D, N, Tλ1, Tz1, Tq1, Tp1, TΛ2, Tz2, Tq2, Tp2, L}
+function Base.promote_rule(::Type{GaussianWavePacket{D, Tλ1, Tz1, Cz1, Tq1, Tp1}},
+                      ::Type{HermiteWavePacket{D, N, TΛ2, Tz2, Tq2, Tp2, L}}) where{D, N, Tλ1, Tz1, Cz1<:Diagonal, Tq1, Tp1, TΛ2, Tz2, Tq2, Tp2, L}
     return HermiteWavePacket{D, N, promote_type(Tλ1, TΛ2), promote_type(Tz1, Tz2), promote_type(Tq1, Tq2), promote_type(Tp1, Tp2), L}
 end
 

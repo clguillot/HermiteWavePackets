@@ -74,7 +74,7 @@ function test_hermite_wave_packets()
             z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
             q = SVector{D}(4 * (rand(D) .- 0.5))
             p = SVector{D}(4 * (rand(D) .- 0.5))
-            G = GaussianWavePacket(λ, z, q, p)
+            G = GaussianWavePacket(λ, Diagonal(z), q, p)
 
             @time H = HermiteWavePacket(G)
             @time G_ = truncate_to_gaussian(H)

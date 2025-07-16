@@ -208,7 +208,7 @@ end
 # Integrate over all variables with indices contained in N,
 #   while preserving the order of the other variables
 function integral(G::GaussianWavePacket{D}, ::Type{N}) where{D, N}
-    return inv_fourier(evaluate(fourier(G), zeros(SVector{D-1, NullNumber}), N))
+    return inv_fourier(evaluate(fourier(G), zeros(SVector{length(N.parameters), NullNumber}), N))
 end
 
 #=

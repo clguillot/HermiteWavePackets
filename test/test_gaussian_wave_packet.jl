@@ -64,7 +64,7 @@ function test_gaussian_wave_packet()
             p = SVector{D}(4 * (rand(D) .- 0.5))
             G = GaussianWavePacket(λ, z, q, p)
 
-            G_ = evaluate(G, x[I2], Tuple{I2...})
+            alloc += @allocated G_ = evaluate(G, x[I2], Tuple{I2...})
 
             μ = G(x)
             err = max(err, abs(G_(x[I1]) - μ) / abs(μ))
@@ -181,6 +181,33 @@ function test_gaussian_wave_packet()
 
         color = (err > tol || alloc != 0) ? :red : :green
         printstyled("Error integral = $err ($alloc bytes allocated)\n"; bold=true, color=color)
+    end
+    let
+        D = 5
+        d = 2
+        err = 0.0
+        alloc = 0
+        for _=1:nb_reps
+            I1 = SVector(1, 3, 4)
+            I2 = SVector(2, 5)
+            x = SVector{D-d}(rand(D-d))
+            λ = rand() + 1im * rand()
+            A = SMatrix{D, D}(rand(D*D))
+            B = SMatrix{D, D}(rand(D*D))
+            z = Symmetric(A'*A + 0.5*idN(Val(D)) + im*(B'+B))
+            q = SVector{D}(4 * (rand(D) .- 0.5))
+            p = SVector{D}(4 * (rand(D) .- 0.5))
+            G = GaussianWavePacket(λ, z, q, p)
+            
+            G_ = evaluate(G, x, Tuple{I1...})
+
+            I1 = complex_cubature(y -> G_(y), [-M for _ in 1:d], [M for _ in 1:d]; abstol=int_tol)        
+            alloc += @allocated I2 = integral(G, Tuple{I2...})(x)
+            err = max(err, abs(I1 - I2))
+        end
+
+        color = (err > tol || alloc != 0) ? :red : :green
+        printstyled("Error restricted integral = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let

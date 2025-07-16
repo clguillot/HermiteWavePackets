@@ -192,9 +192,10 @@ end
 =#
 
 # Multiplies a gaussian wave packet by exp(-i∑ₖbₖ/2 * (xₖ - qₖ)^2) * exp(ipx)
-function unitary_product(H::HermiteWavePacket{D}, b::SVector{D, <:Union{Real, NullNumber}},
+function unitary_product(H::HermiteWavePacket{D}, b::SDiagonal{D, <:Union{Real, NullNumber}},
                 q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
                 p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
+    b = diag(b)
     u = @. b * (H.q + q) * (H.q - q)
     Λ_ = cis(sum(u) / 2) .* H.Λ
     z_ = @. real(H.z) + im * (imagz(H.z) + b)

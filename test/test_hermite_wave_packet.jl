@@ -157,7 +157,7 @@ function test_hermite_wave_packets()
             p2 = SVector{D}(4 * (rand(D) .- 0.5))
 
             f(x) = H(x) * cis(-dot(x - q2, Diagonal(b/2), x - q2)) * cis(dot(p2, x))
-            @time H2 = unitary_product(H, b, q2, p2)
+            @time H2 = unitary_product(H, Diagonal(b), q2, p2)
 
             for _=1:100
                 x = SVector{D}(5 * (rand(D) .- 0.5))

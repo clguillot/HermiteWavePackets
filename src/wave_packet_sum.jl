@@ -92,9 +92,7 @@ function polynomial_product(G::WavePacketSum{D}, P::SArray{NP, <:Number, D},
 end
 
 #
-function unitary_product(G::WavePacketSum{D}, b::SVector{D, <:Union{Real, NullNumber}},
-            q::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber}),
-            p::SVector{D, <:Union{Real, NullNumber}} = zeros(SVector{D, NullNumber})) where D
+function unitary_product(G::WavePacketSum{D}, b, q=zeros(SVector{D, NullNumber}), p=zeros(SVector{D, NullNumber})) where D
     return WavePacketSum{D}(broadcast(g -> unitary_product(g, b, q, p), G.g))
 end
 

@@ -33,19 +33,27 @@ struct NullNumber end  # Struct to represent the fully absorbing zero number
 @inline Base.:\(::LowerTriangular{<:Number, <:SMatrix{Dx, Dy}}, ::SVector{Dy, NullNumber}) where{Dx, Dy} = zeros(SVector{Dx, NullNumber})
 @inline LinearAlgebra.dot(::SArray{N, NullNumber}, ::SArray{N, <:Union{Number, NullNumber}}) where N = NullNumber()
 @inline LinearAlgebra.dot(::SArray{N, <:Number}, ::SArray{N, NullNumber}) where N = NullNumber()
+@inline LinearAlgebra.dot(::NullNumber, ::Union{Number, NullNumber}) = NullNumber()
+@inline LinearAlgebra.dot(::Number, ::NullNumber) = NullNumber()
 
 # Special functions
 @inline Base.exp(::NullNumber) = true
 @inline Base.cis(::NullNumber) = true
 
 # Define promotion rules
-@inline Base.promote_rule(::Type{NullNumber}, ::Type{T}) where{T<:Number} = T
-@inline Base.promote_rule(::Type{T}, ::Type{NullNumber}) where{T<:Number} = T
+LinearAlgebra.symmetric_type(::Type{NullNumber}) = NullNumber
+LinearAlgebra.symmetric(A::NullNumber, uplo::Symbol=:U) = NullNumber()
+Base.promote_rule(::Type{NullNumber}, ::Type{T}) where{T<:Number} = T
+Base.promote_rule(::Type{T}, ::Type{NullNumber}) where{T<:Number} = T
 
 # 
 @inline Base.zero(::Type{NullNumber}) = NullNumber()
 @inline Base.zero(::NullNumber) = NullNumber()
 @inline Base.convert(::Type{T}, ::NullNumber) where{T<:Number} = zero(T)
+
+# Iterate
+Base.iterate(::NullNumber) = (NullNumber(), nothing)
+Base.iterate(::NullNumber, ::Any) = nothing
 
 # Define printing
 @inline Base.show(io::IO, ::NullNumber) = print(io, "NullNumber()")

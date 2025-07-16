@@ -98,7 +98,7 @@ end
 =#
 
 function truncate_to_gaussian(H::HermiteWavePacket{D}) where D
-    return GaussianWavePacket(prod(invπ * real.(H.z))^Rational(1, 4) * first(H.Λ), H.z, H.q, H.p)
+    return GaussianWavePacket(prod(invπ * real.(H.z))^Rational(1, 4) * first(H.Λ), Diagonal(H.z), H.q, H.p)
 end
 
 #=

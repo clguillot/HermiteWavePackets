@@ -207,29 +207,9 @@ function integral(G::GaussianWavePacket)
 end
 # Integrate over all variables with indices contained in N,
 #   while preserving the order of the other variables
-# @generated function integral(G::GaussianWavePacket{D}, ::Type{N}) where{D, N}
-#     if !all(n -> n ∈ eachindex(G.q), N.parameters)
-#         throw(DimensionMismatch("Cannot integrate over a dimension which does not exist"))
-#     end
-#     if length(N.parameters == 0)
-#         return :( G )
-#     elseif lengt(N.parameters == D)
-#         return :( integral(G) )
-#     else
-#         I1 = SVector((n for n ∈ eachindex(G.q) if n ∉ N.parameters)...)
-#         I2 = SVector(N.parameters...)
-#         code = quote
-#             w = G.z[$I1, $I2]
-#             z1 = G.z[$I1, $I1]
-#             q1 = G.q[$I1]
-#             p1 = G.p[$I1]
-#             z2 = G.z[$I2, $I2]
-#             q2 = G.q[$I2]
-#             p2 = G.p[$I2]
-#         end
-#         return code
-#     end
-# end
+function integral(G::GaussianWavePacket{D}, ::Type{N}) where{D, N}
+    return inv_fourier(evaluate(fourier(G), zeros(SVector{D-1, NullNumber}), N))
+end
 
 #=
     Computes the Fourier transform of a gaussian
@@ -262,10 +242,6 @@ function inv_fourier(G::GaussianWavePacket{D}) where D
 end
 
 # Computes the convolution product of two gaussians
-function convolution(G1::Gaussian{D, Tλ1}, G2::Gaussian{D, Tλ2}) where{D, Tλ1<:Real, Tλ2<:Real}
-    G = inv_fourier(fourier(G1) * fourier(G2))
-    return Gaussian(real(G.λ), G.z, G.q)
-end
 function convolution(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     return inv_fourier(fourier(G1) * fourier(G2))
 end
@@ -275,27 +251,26 @@ dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D = integral(
 # Computes the square L² norm of a gaussian wave packet
 norm2_L2(G::GaussianWavePacket) = integral(_abs2(G))
 
-# Computes ∫conj(∇G1)∇G2
-dot_∇(G1::Gaussian{D, Tλ1}, G2::Gaussian{D, Tλ2}) where{D, Tλ1<:Real, Tλ2<:Real} = real(_dot_∇(G1, G2))
-dot_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D = _dot_∇(G1, G2)
-@generated function _dot_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
+# Computes ∫<∇G1,∇G2> (where <,> is the hermitian product in ℂᴰ)
+@generated function dot_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     block = Expr(:block)
     deriv = Expr(:tuple)
     dim_list = eachindex(zeros(SVector{D, Bool}))
     for j in dim_list
-        Rj = tuple(k for k in dim_list if k != j)
+        Rj = tuple((k for k in dim_list if k != j)...)
+        Dj_symb = Symbol(:D, j)
         block_j = quote
-            Gj = evaluate(G, zeros(SVector{D-1, NullNumber}), Tuple{$Rj...})
+            Gj = inv_fourier(evaluate(G, zeros(SVector{D-1, NullNumber}), Tuple{$Rj...}))
             zj = first(Gj.z)
             qj = first(Gj.q)
             pj = first(Gj.p)
-            Dj = sqrt2π * Gj.λ / sqrt(zj) * (inv(zj) - (p / z + im*q)^2) * exp(-p^2/(2*z)) * cis(-q*p)
+            $Dj_symb = sqrt2π * Gj.λ / sqrt(zj) * (inv(zj) + (im*pj / zj + qj)^2) * exp(-pj^2/(2*zj)) * cis(qj*pj)
         end
-        push!(block, block_j)
-        push!(deriv, Symbol(:(D$j)))
+        push!(block.args, block_j)
+        push!(deriv.args, Dj_symb)
     end
     code = quote
-        G = conj(fourier(G1)) * fourier(G2)
+        G = fourier(inv_fourier(conj(G1)) * fourier(G2))
         $block
         return sum($deriv)
     end
@@ -303,25 +278,30 @@ dot_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D = _dot_∇
 end
 
 # Computes ∫|∇G|^2
-@generated function norm2_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
+@generated function norm2_∇(G::GaussianWavePacket{D}) where D
     block = Expr(:block)
     deriv = Expr(:tuple)
     dim_list = eachindex(zeros(SVector{D, Bool}))
     for j in dim_list
-        Rj = tuple(k for k in dim_list if k != j)
+        Rj = tuple((k for k in dim_list if k != j)...)
+        Dj_symb = Symbol(:D, j)
         block_j = quote
-            Gj = evaluate(G, zeros(SVector{D-1, NullNumber}), Tuple{$Rj...})
+            Gj = inv_fourier(evaluate(G, zeros(SVector{D-1, NullNumber}), Tuple{$Rj...}))
             aj = first(Gj.z)
             qj = first(Gj.q)
-            Dj = sqrt2π * Gj.λ * aj^Rational(-3, 2) * (aj*qj^2 + 1)
+            $Dj_symb = sqrt2π * Gj.λ * aj^Rational(-3, 2) * (aj*qj^2 + 1)
         end
-        push!(block, block_j)
-        push!(deriv, Symbol(:(D$j)))
+        push!(block.args, block_j)
+        push!(deriv.args, Dj_symb)
     end
     code = quote
-        G = _abs2(fourier(G))
+        G = fourier(_abs2(fourier(G)))
         $block
-        return sum($deriv)
+        I = sum($deriv)
+        for j in 1:D
+            I *= inv2π
+        end
+        return I
     end
     return code
 end

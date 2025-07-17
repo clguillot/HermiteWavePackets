@@ -167,6 +167,18 @@ function test_gaussian_wave_packet()
         alloc = 0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
+            z = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
+            q = SVector{D}(4 * (rand(D) .- 0.5))
+            p = SVector{D}(4 * (rand(D) .- 0.5))
+            G = GaussianWavePacket(λ, Diagonal(z), q, p)
+
+            I1 = complex_cubature(y -> G(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)        
+            alloc += @allocated I2 = integral(G)
+            err = max(err, abs(I1 - I2))
+        end
+
+        for _=1:nb_reps
+            λ = rand() + 1im * rand()
             A = SMatrix{D, D}(rand(D*D))
             B = SMatrix{D, D}(rand(D*D))
             z = Symmetric(A'*A + 0.5*idN(Val(D)) + im*(B'+B))

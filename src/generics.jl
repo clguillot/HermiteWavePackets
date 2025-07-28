@@ -54,3 +54,4 @@ end
 norm_L2(G::AbstractWavePacket) = sqrt(norm2_L2(G))
 norm_∇(G::AbstractWavePacket) = sqrt(norm2_∇(G))
 ∫(G::AbstractWavePacket) = integral(G)
+(G::AbstractWavePacket{D})(x::T...) where{D, T<:Number} = G(SVector{D}(x...))

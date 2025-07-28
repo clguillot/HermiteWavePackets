@@ -183,9 +183,6 @@ function (H::HermiteWavePacket{D, N})(x::AbstractVector{<:Union{Number, NullNumb
     xs = SVector{D}(x)
     return first(evaluate_grid(H, tuple((SVector(y) for y in xs)...)))
 end
-@inline function (H::HermiteWavePacket{D})(x::T...) where{D, T<:Union{Number, NullNumber}}
-    return H(SVector{D}(x...))
-end
 
 #=
     TRANSFORMATIONS

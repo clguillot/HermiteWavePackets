@@ -167,7 +167,6 @@ end
 end
 # Evaluates a gaussian at x
 (G::GaussianWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D = evaluate(G, x)
-(G::GaussianWavePacket{D})(x::T...) where{D, T<:Union{Number, NullNumber}} = G(SVector{D}(x...))
 
 #=
     TRANSFORMATIONS

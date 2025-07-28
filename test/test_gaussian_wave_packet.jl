@@ -260,6 +260,23 @@ function test_gaussian_wave_packet()
         alloc = 0
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
+            z1 = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
+            q1 = SVector{D}(4 * (rand(D) .- 0.5))
+            p1 = SVector{D}(4 * (rand(D) .- 0.5))
+            G1 = GaussianWavePacket(λ1, Diagonal(z1), q1, p1)
+
+            λ2 = rand() + 1im * rand()
+            z2 = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
+            q2 = SVector{D}(4 * (rand(D) .- 0.5))
+            p2 = SVector{D}(4 * (rand(D) .- 0.5))
+            G2 = GaussianWavePacket(λ2, Diagonal(z2), q2, p2)
+
+            I1 = complex_cubature(y -> conj(G1(y)) * G2(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
+            alloc += @allocated I2 = dot_L2(G1, G2)
+            err = max(err, abs(I1 - I2))
+        end
+        for _=1:nb_reps
+            λ1 = rand() + 1im * rand()
             A1 = SMatrix{D, D}(rand(D*D))
             B1 = SMatrix{D, D}(rand(D*D))
             z1 = Symmetric(A1'*A1 + 0.5*idN(Val(D)) + im*(B1'+B1))

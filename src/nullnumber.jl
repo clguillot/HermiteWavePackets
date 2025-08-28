@@ -19,8 +19,11 @@ Base.:/(::NullNumber, ::NullNumber) = throw(DivideError())
 Base.:/(::NullNumber, ::Number) = NullNumber()
 # Power
 Base.:^(::NullNumber, x::Number) = NullNumber()
-# Conjufate
+# Conjugate
 Base.conj(::NullNumber) = NullNumber()
+# Absolute value
+Base.abs(::NullNumber) = NullNumber()
+Base.abs2(::NullNumber) = NullNumber()
 
 # Special imag
 imagz(::Real) = NullNumber()

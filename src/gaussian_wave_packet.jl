@@ -311,10 +311,10 @@ function coulomb_integral(G::GaussianWavePacket{3, <:Number, <:Number, <:SDiagon
     if z0 != G.z[2, 2] || z0 != G.z[3, 3]
         throw(ArgumentError("Coulomb integral can only be computed for isotropic wave packets"))
     end
-    r = sqrt(sum(abs2, G.q))
+    r = sqrt(sum(x -> x^2, G.q + im * G.p / z0))
     if r == 0.0
-        return fourπ * G.λ / z0
+        return fourπ * G.λ * cis(dot(G.q, G.p)) * exp(-sum(abs2, G.p) / (2*z0)) / z0
     else
-        return G.λ * (twoπ/z0)^Rational(3, 2) * erf(sqrt(z0 / 2) * r) / r
+        return G.λ * (twoπ/z0)^Rational(3, 2) * cis(dot(G.q, G.p)) * exp(-sum(abs2, G.p) / (2*z0)) * erf(sqrt(z0 / 2) * r) / r
     end
 end

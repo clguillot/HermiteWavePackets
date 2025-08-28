@@ -4,6 +4,7 @@ using LinearAlgebra
 using StaticArrays
 using IrrationalConstants
 using FastGaussQuadrature
+using SpecialFunctions
 
 # Abtract types
 abstract type AbstractWavePacket{D} end
@@ -38,6 +39,7 @@ export dot_∇
 export norm2_∇
 export norm_∇
 export core_type
+export coulomb_integral
 
 include("utils.jl")
 include("special_cholesky.jl")

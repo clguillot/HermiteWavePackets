@@ -304,3 +304,17 @@ end
     end
     return code
 end
+
+# Computes ∫dx 1/|x| G(x) where G is an isotropic 3d gaussian wave packet
+function coulomb_integral(G::GaussianWavePacket{3, <:Number, <:Number, <:SDiagonal})
+    z0 = first(diag(G.z))
+    if z0 != G.z[2, 2] || z0 != G.z[3, 3]
+        throw(ArgumentError("Coulomb integral can only be computed for isotropic wave packets"))
+    end
+    r = sqrt(sum(abs2, G.q))
+    if r == 0.0
+        return fourπ * G.λ / z0
+    else
+        return G.λ * (twoπ/z0)^Rational(3, 2) * erf(sqrt(z0 / 2) * r) / r
+    end
+end

@@ -425,6 +425,29 @@ function test_gaussian_wave_packet()
         printstyled("Error Inverse Fourier = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
+    let 
+        D = 3
+        err = 0.0
+        alloc = 0
+        for _=1:nb_reps
+            λ = rand() #+ 1im * rand()
+            z0 = 1.0 + rand() + im * rand()
+            z = Diagonal(SVector(z0, z0, z0))
+            q = SVector{D}(4 .* (rand(D) .- 0.5))
+            # p = SVector{D}(4 .* (rand(D) .- 0.5))
+            G = GaussianWavePacket(λ, z, q)
+
+            alloc += @allocated I1 = coulomb_integral(G)
+            F(y) = G(y) * min(100, 1 / norm(y))
+            I2 = complex_cubature(y -> F(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=1e-5)
+            
+            err = max(err, abs(I1 - I2))
+        end
+
+        color = (err > tol || alloc != 0) ? :red : :green
+        printstyled("Error Coulomb integral = $err ($alloc bytes allocated)\n"; bold=true, color=color)
+    end
+
     let
         D = 3
         

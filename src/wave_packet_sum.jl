@@ -55,7 +55,7 @@ end
 #=
     Computes ∑ₖ G[k](x)
 =#
-function (G::WavePacketSum)(x)
+function (G::WavePacketSum)(x::AbstractVector{<:Union{Number, NullNumber}})
     s = zero(promote_type(core_type(G), eltype(x)))
     return sum(g -> g(x), G.g; init=s)
 end

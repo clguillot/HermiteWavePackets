@@ -144,6 +144,34 @@ function norm2_L2(G::WavePacketSum)
     return S1 + 2 * S2
 end
 
+
+
+#
+function dot_∇(G1::WavePacketSum{D}, G2::WavePacketSum{D}) where D
+    s = zero(promote_type(core_type(G1), core_type(G2)))
+    f(g1, g2) = dot_∇(g1, g2)
+    return sum(gg -> f(gg...), Iterators.product(G1.g, G2.g); init=s)
+end
+function dot_∇(G1::AbstractWavePacket{D}, G2::WavePacketSum{D}) where D
+    s = zero(promote_type(core_type(G1), core_type(G2)))
+    return sum(g2 -> dot_∇(G1, g2), G2.g; init=s)
+end
+function dot_∇(G1::WavePacketSum{D}, G2::AbstractWavePacket{D}) where D
+    s = zero(promote_type(core_type(G1), core_type(G2)))
+    return sum(g1 -> dot_∇(g1, G2), G1.g; init=s)
+end
+
+#=
+    Computes the squared homogeneous H1 norm of ∑ₖ G[k]
+=#
+function norm2_∇(G::WavePacketSum)
+    s = zero(real(core_type(G)))
+    S1 = sum(g -> norm2_∇(g), G.g; init=s)
+    f(k, l) = k < l ? real(dot_∇(G.g[k], G.g[l])) : s
+    S2 = sum(i -> f(i...), Iterators.product(eachindex(G.g), eachindex(G.g)); init=s)
+    return S1 + 2 * S2
+end
+
 # Fourier transform
 function fourier(G::WavePacketSum{D}) where D
     return WavePacketSum{D}(fourier.(G.g))

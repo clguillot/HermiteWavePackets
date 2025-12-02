@@ -14,7 +14,7 @@ function test_gaussian()
         for _=1:nb_reps
             x = SVector{D}(4.0 .* (rand(D) .- 0.5))
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5))
+            z = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q = SVector{D}(4 * (rand(D) .- 0.5))
             G = Gaussian(λ, z, q)
 
@@ -33,7 +33,7 @@ function test_gaussian()
         for _=1:nb_reps
             x = SVector{D}(4.0 .* (rand(D) .- 0.5))
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5))
+            z = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q = SVector{D}(4 * (rand(D) .- 0.5))
             G = Gaussian(λ, z, q)
 
@@ -51,12 +51,12 @@ function test_gaussian()
         err = 0.0
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
-            z1 = SVector{D}((4 * rand(D) .+ 0.5))
+            z1 = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q1 = SVector{D}(4 * (rand(D) .- 0.5))
             G1 = Gaussian(λ1, z1, q1)
 
             λ2 = rand() + 1im * rand()
-            z2 = SVector{D}((4 * rand(D) .+ 0.5))
+            z2 = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q2 = SVector{D}(4 * (rand(D) .- 0.5))
             G2 = Gaussian(λ2, z2, q2)
 
@@ -78,7 +78,7 @@ function test_gaussian()
         err = 0.0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5))
+            z = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q = SVector{D}(4 * (rand(D) .- 0.5))
             G = Gaussian(λ, z, q)
 
@@ -95,12 +95,12 @@ function test_gaussian()
         err = 0.0
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
-            z1 = SVector{D}((4 * rand(D) .+ 0.5))
+            z1 = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q1 = SVector{D}(4 * (rand(D) .- 0.5))
             G1 = Gaussian(λ1, z1, q1)
 
             λ2 = rand() + 1im * rand()
-            z2 = SVector{D}((4 * rand(D) .+ 0.5))
+            z2 = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q2 = SVector{D}(4 * (rand(D) .- 0.5))
             G2 = Gaussian(λ2, z2, q2)
 
@@ -120,12 +120,12 @@ function test_gaussian()
         err = 0.0
         for _=1:nb_reps
             λ1 = rand() + 1im * rand()
-            z1 = SVector{D}((4 * rand(D) .+ 0.5))
+            z1 = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q1 = SVector{D}(4 * (rand(D) .- 0.5))
             G1 = Gaussian(λ1, z1, q1)
 
             λ2 = rand() + 1im * rand()
-            z2 = SVector{D}((4 * rand(D) .+ 0.5))
+            z2 = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q2 = SVector{D}(4 * (rand(D) .- 0.5))
             G2 = Gaussian(λ2, z2, q2)
 
@@ -142,7 +142,7 @@ function test_gaussian()
         err = 0.0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5))
+            z = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q = SVector{D}(4 * (rand(D) .- 0.5))
             G = Gaussian(λ, z, q)
 
@@ -159,7 +159,7 @@ function test_gaussian()
         for _=1:nb_reps
             ξ = 5 * (rand(D) .- 0.5)
             λ = rand() + 1im * rand()
-            z = SVector{D}((4 * rand(D) .+ 0.5))
+            z = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
             q = SVector{D}(4 * (rand(D) .- 0.5))
             G = Gaussian(λ, z, q)
 
@@ -178,9 +178,9 @@ function test_gaussian()
         err = 0.0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
-            z = (4 .* rand(D) .+ 0.5)
-            q = 4 .* (rand(D) .- 0.5)
-            G = Gaussian(λ, SVector{D}(z), SVector{D}(q))
+            z = Diagonal(SVector{D}((4 * rand(D) .+ 0.5)))
+            q = SVector{D}(4 * (rand(D) .- 0.5))
+            G = Gaussian(λ, z, q)
             GF = fourier(G)
 
             G_ = inv_fourier(GF)
@@ -199,17 +199,17 @@ function test_gaussian()
         D = 3
 
         λ1 = rand(Float32)
-        z1 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
+        z1 = Diagonal(SVector{D}((4 * rand(Float32, D) .+ 0.5f0)))
         q1 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
         G1 = Gaussian(λ1, z1, q1)
 
         λ2 = rand(Float32)
-        z2 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
+        z2 = Diagonal(SVector{D}((4 * rand(Float32, D) .+ 0.5f0)))
         q2 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
         G2 = Gaussian(λ2, z2, q2)
 
         λ3 = rand(Float32)
-        z3 = SVector{D}((4 * rand(Float32, D) .+ 0.5f0))
+        z3 = Diagonal(SVector{D}((4 * rand(Float32, D) .+ 0.5f0)))
         q3 = SVector{D}(4 * (rand(Float32, D) .- 0.5f0))
         G3 = Gaussian(λ3, z3, q3)
 

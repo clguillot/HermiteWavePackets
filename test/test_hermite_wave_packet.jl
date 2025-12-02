@@ -17,6 +17,7 @@ function test_hermite_wave_packets()
         err = 0.0
         D = 3
         N = (5, 4, 6)
+        alloc = 0
         for _=1:nb_reps
             x = 4.0 * (rand(D) .- 0.5)
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
@@ -25,14 +26,14 @@ function test_hermite_wave_packets()
             p = SVector{D}(4 * (rand(D) .- 0.5))
             H = HermiteWavePacket(Λ, z, q, p)
 
-            @time μ1 = H(x)
+            alloc += @allocated μ1 = H(x)
             μ2 = sum(Λ[j...] * prod(ψ(real(H.z[k]), H.q[k], j[k]-1, x[k]) for k in 1:D) for j in Iterators.product(axes(Λ)...)) *
                     exp(sum(-im * imag(z) / 2 .* (x - q).^2) + im * dot(x, p))
             err = max(err, abs(μ1 - μ2) / abs(μ1))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error evaluate = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error evaluate = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -40,6 +41,7 @@ function test_hermite_wave_packets()
         D = 3
         N = (3, 5, 4)
         Ngrid = Tuple{3, 6, 5}
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
@@ -51,7 +53,7 @@ function test_hermite_wave_packets()
             qgrid = SVector{D}(4 .* (rand(D) .- 0.5))
             xgrid = hermite_grid(agrid, qgrid, Ngrid)
 
-            @time A = evaluate_grid(H, xgrid)
+            alloc += @allocated A = evaluate_grid(H, xgrid)
 
             for j in Iterators.product(eachindex.(xgrid)...)
                 x = SVector((xgrid[k][j[k]] for k in eachindex(xgrid))...)
@@ -61,14 +63,15 @@ function test_hermite_wave_packets()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error evaluate grid = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error evaluate grid = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 3
         N = (5, 4, 6)
+        alloc = 0
         for _=1:nb_reps
             λ = rand() + 1im * rand()
             z = SVector{D}((4 * rand(D) .+ 0.5) + 4im * (rand(D) .- 0.5))
@@ -76,8 +79,8 @@ function test_hermite_wave_packets()
             p = SVector{D}(4 * (rand(D) .- 0.5))
             G = GaussianWavePacket(λ, Diagonal(z), q, p)
 
-            @time H = HermiteWavePacket(G)
-            @time G_ = truncate_to_gaussian(H)
+            alloc += @allocated H = HermiteWavePacket(G)
+            alloc += @allocated G_ = truncate_to_gaussian(H)
 
             for _ in 1:100
                 x = SVector{D}(4.0 .* (rand(D) .- 0.5))
@@ -86,14 +89,15 @@ function test_hermite_wave_packets()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error convert from gaussian = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error convert from gaussian = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 2
         N = (5, 3)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
@@ -101,13 +105,13 @@ function test_hermite_wave_packets()
             p = SVector{D}(4 * (rand(D) .- 0.5))
             H = HermiteWavePacket(Λ, z, q, p)
 
-            @time μ1 = integral(H)
+            alloc += @allocated μ1 = integral(H)
             μ2 = complex_cubature(y -> H(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error integral = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error integral = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -115,6 +119,7 @@ function test_hermite_wave_packets()
         D = 3
         N1 = (5, 4, 6)
         N2 = (3, 5, 7)
+        alloc = 0
         for _=1:nb_reps
             Λ1 = SArray{Tuple{N1...}}(rand(N1...) + im * rand(N1...))
             z1 = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
@@ -128,7 +133,7 @@ function test_hermite_wave_packets()
             p2 = SVector{D}(4 * (rand(D) .- 0.5))
             H2 = HermiteWavePacket(Λ2, z2, q2, p2)
 
-            @time H = H1 * H2
+            alloc += @allocated H = H1 * H2
 
             for _=1:40
                 x = 5 .* (SVector{D}(rand(D)) .- 0.5)
@@ -136,8 +141,8 @@ function test_hermite_wave_packets()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error product = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error product = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -145,6 +150,7 @@ function test_hermite_wave_packets()
         D = 3
         N = (5, 4, 6)
         NP = (3, 7, 5)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
@@ -157,7 +163,7 @@ function test_hermite_wave_packets()
             p2 = SVector{D}(4 * (rand(D) .- 0.5))
 
             f(x) = H(x) * cis(-dot(x - q2, Diagonal(b/2), x - q2)) * cis(dot(p2, x))
-            @time H2 = unitary_product(H, Diagonal(b), q2, p2)
+            alloc += @allocated H2 = unitary_product(H, Diagonal(b), q2, p2)
 
             for _=1:100
                 x = SVector{D}(5 * (rand(D) .- 0.5))
@@ -165,8 +171,8 @@ function test_hermite_wave_packets()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error unitary product = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error unitary product = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -174,6 +180,7 @@ function test_hermite_wave_packets()
         D = 3
         N = (5, 4, 6)
         NP = (3, 7, 5)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
@@ -184,7 +191,7 @@ function test_hermite_wave_packets()
             Λ_P = SArray{Tuple{NP...}}(rand(NP...) + im * rand(NP...))
             q2 = SVector{D}(4 .* (rand(D) .- 0.5))
 
-            @time PH = polynomial_product(H, Λ_P, q2)
+            alloc += @allocated PH = polynomial_product(H, Λ_P, q2)
 
             f(x) = H(x) * dot(SArray{Tuple{NP...}}(prod((x-q2).^(k.-1); init=1.0) for k in Iterators.product((1:NP[j] for j in 1:D)...)), Λ_P)
 
@@ -194,14 +201,15 @@ function test_hermite_wave_packets()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error polynomial product = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error polynomial product = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 2
         N = (6, 5)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
@@ -209,7 +217,7 @@ function test_hermite_wave_packets()
             p = SVector{D}(4 * (rand(D) .- 0.5))
             H = HermiteWavePacket(Λ, z, q, p)
 
-            @time HF = fourier(H)
+            alloc += @allocated HF = fourier(H)
 
             ξ = SVector{D}(4.0 .* (rand(D) .- 0.5))
             μ1 = HF(ξ)
@@ -217,14 +225,15 @@ function test_hermite_wave_packets()
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error Fourier (complex variance) = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error Fourier (complex variance) = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 2
         N = (6, 5)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5)
@@ -233,7 +242,7 @@ function test_hermite_wave_packets()
             H = HermiteWavePacket(Λ, z, q, p)
             Hc = HermiteWavePacket(Λ, complex.(z), q, p)
 
-            @time HF = fourier(H)
+            alloc += @allocated HF = fourier(H)
             HFc = fourier(Hc)
 
             for _ in 1:100
@@ -244,14 +253,15 @@ function test_hermite_wave_packets()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error Fourier (real variance) = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error Fourier (real variance) = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 3
         N = (5, 4, 7)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
@@ -260,7 +270,7 @@ function test_hermite_wave_packets()
             H = HermiteWavePacket(Λ, z, q, p)
             HF = fourier(H)
 
-            @time H_ = inv_fourier(HF)
+            alloc += @allocated H_ = inv_fourier(HF)
             for _ in 1:100
                 x = SVector{D}(4.0 .* (rand(D) .- 0.5))
                 μ1 = H_(x)
@@ -269,14 +279,15 @@ function test_hermite_wave_packets()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error inverse Fourier (complex variance) = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error inverse Fourier (complex variance) = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 3
         N = (5, 4, 7)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5)
@@ -285,7 +296,7 @@ function test_hermite_wave_packets()
             H = HermiteWavePacket(Λ, z, q, p)
             HF = fourier(H)
 
-            @time H_ = inv_fourier(HF)
+            alloc += @allocated H_ = inv_fourier(HF)
             for _ in 1:100
                 x = SVector{D}(4.0 .* (rand(D) .- 0.5))
                 μ1 = H_(x)
@@ -294,8 +305,8 @@ function test_hermite_wave_packets()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error inverse Fourier (real variance) = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error inverse Fourier (real variance) = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -303,6 +314,7 @@ function test_hermite_wave_packets()
         D = 2
         N1 = (5, 2)
         N2 = (3, 4)
+        alloc = 0
         for _=1:nb_reps
             Λ1 = SArray{Tuple{N1...}}(rand(N1...) + im * rand(N1...))
             z1 = SVector{D}(4 * rand(D) .+ 0.5 + im * (4 * rand(D) .- 2))
@@ -316,19 +328,20 @@ function test_hermite_wave_packets()
             p2 = SVector{D}(4 * (rand(D) .- 0.5))
             H2 = HermiteWavePacket(Λ2, z2, q2, p2)
 
-            @time μ1 = dot_L2(H1, H2)
+            alloc += @allocated μ1 = dot_L2(H1, H2)
             μ2 = complex_cubature(y -> conj(H1(y)) * H2(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error dot L2 = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error dot L2 = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         D = 3
         N = (5, 9, 10)
         err = 0.0
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             z = SVector{D}(4 * rand(D) .+ 0.5)
@@ -336,13 +349,13 @@ function test_hermite_wave_packets()
             p = SVector{D}(4 * (rand(D) .- 0.5))
             H = HermiteWavePacket(Λ, z, q, p)
 
-            @time μ1 = norm_L2(H)
+            alloc += @allocated μ1 = norm_L2(H)
             μ2 = sqrt(dot_L2(H, H))
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error norm L² = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error norm L² = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let

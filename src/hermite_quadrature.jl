@@ -68,7 +68,7 @@ function hermite_discrete_transform!(Λ::AbstractVector{TΛ}, U::AbstractVector{
     T = fitting_float(promote_type(TΛ, TU, Ta, Tq))
     _, _, M0 = hermite_primitive_discrete_transform(T, Val(N))
 
-    mul!(Λ, M0, U, a^T(-1/4), zero(TΛ))
+    mul!(Λ, M0, U, a^Rational(-1,4), zero(TΛ))
 
     return Λ
 end
@@ -78,7 +78,7 @@ function hermite_discrete_transform(U::AbstractVector{TU}, a::Ta, q::Tq, ::Val{N
     T = fitting_float(TΛ)
     _, _, M0 = hermite_primitive_discrete_transform(T, Val(N))
 
-    return a^T(-1/4) .* (M0 * U)
+    return a^Rational(-1,4) .* (M0 * U)
 end
 
 #
@@ -86,7 +86,7 @@ function hermite_grid(a::Real, q::Union{Real, NullNumber}, ::Val{N}) where N
     T = fitting_float(typeof(a), typeof(q))  
     x0, _, _ = hermite_primitive_discrete_transform(T, Val(N))
     q_broad = @SVector fill(q, N)
-    return x0 .* a^T(-1/2) .+ q_broad
+    return x0 .* a^Rational(-1,2) .+ q_broad
 end
 @generated function hermite_grid(a::SVector{D, <:Number}, q::SVector{D, <:Union{Real, NullNumber}}, ::Type{N}) where{D, N<:Tuple}
     if length(N.parameters) != D
@@ -108,7 +108,7 @@ end
 # 
 function hermite_discrete_transform(Λ::SArray{N, TΛ, D}, a::SVector{D, Ta}) where{N, D, TΛ<:Number, Ta<:Number}
     T = fitting_float(TΛ, Ta)
-    return prod(a)^T(-1/4) .* hermite_discrete_transform(Λ)
+    return prod(a)^Rational(-1,4) .* hermite_discrete_transform(Λ)
 end
 
 
@@ -127,7 +127,7 @@ function hermite_quadrature(a::Real, q::Union{Real, NullNumber}, ::Val{N}) where
     T = fitting_float(typeof(a), typeof(q))    
     x0, w0, _ = hermite_primitive_discrete_transform(T, Val(N))
 
-    c = a^T(-1/2)
+    c = a^Rational(-1,2)
     q_broad = SVector{N}(ntuple(_ -> q, N)...)
     return c.*x0.+q_broad, c.*w0
 end

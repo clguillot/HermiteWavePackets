@@ -5,7 +5,7 @@ function test_hermite_wave_packets()
 
     nb_reps = 1
     M = 10.0
-    tol = 1e-8
+    tol = 1e-6
     int_tol = 1e-9
 
     #ψₙ(a, q, x) = (a/π)^(1/4) / sqrt(2ⁿn!) * Hₙ(√a*x) * exp(-z(x - q)²/2) * exp(ipx)

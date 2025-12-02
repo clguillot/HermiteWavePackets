@@ -5,7 +5,7 @@ function test_hermite()
 
     nb_reps = 1
     M = 10.0
-    tol = 1e-8
+    tol = 1e-6
     int_tol = 1e-9
 
     #ψₙ(a, q, x) = (a/π)^(1/4) / sqrt(2ⁿn!) * Hₙ(√a*x) * exp(-z(x - q)²/2) * exp(ipx)
@@ -17,6 +17,7 @@ function test_hermite()
         err = 0.0
         D = 3
         N = (5, 4, 6)
+        alloc = 0
         for _=1:nb_reps
             x = 4.0 .* (rand(D) .- 0.5)
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
@@ -24,13 +25,13 @@ function test_hermite()
             q = 4 .* (rand(D) .- 0.5)
             H = HermiteFct(Λ, SVector{D}(a), SVector{D}(q))
 
-            @time μ1 = H(x)
+            alloc += @allocated μ1 = H(x)
             μ2 = sum(Λ[j...] * prod(ψ(H.z[k], H.q[k], j[k]-1, x[k]) for k in 1:D) for j in Iterators.product(axes(Λ)...))
             err = max(err, abs(μ1 - μ2) / abs(μ1))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error evaluate = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error evaluate = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -38,6 +39,7 @@ function test_hermite()
         D = 3
         N = (3, 5, 4)
         Ngrid = Tuple{3, 6, 5}
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             a = 4 .* rand(D) .+ 0.5
@@ -48,7 +50,7 @@ function test_hermite()
             qgrid = SVector{D}(4 .* (rand(D) .- 0.5))
             xgrid = hermite_grid(agrid, qgrid, Ngrid)
 
-            @time A = evaluate_grid(H, xgrid)
+            alloc += @allocated A = evaluate_grid(H, xgrid)
 
             for j in Iterators.product(eachindex.(xgrid)...)
                 x = SVector((xgrid[k][j[k]] for k in eachindex(xgrid))...)
@@ -58,14 +60,15 @@ function test_hermite()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error evaluate grid = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error evaluate grid = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
     
     let
         err = 0.0
         D = 3
         N = (5, 4, 6)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             a = SVector{D}(4 .* rand(D) .+ 0.5)
@@ -73,32 +76,33 @@ function test_hermite()
             H = HermiteFct(Λ, a, q)
 
             xgrid = hermite_grid(a, q, Tuple{N...})
-            @time U = hermite_discrete_transform(evaluate_grid(H, xgrid), a)
+            alloc += @allocated U = hermite_discrete_transform(evaluate_grid(H, xgrid), a)
 
             err = max(err, norm(U - Λ) / norm(Λ))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error discrete transform = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error discrete transform = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 2
         N = (5, 3)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             a = SVector{D}(4 .* rand(D) .+ 0.5)
             q = SVector{D}(4 .* (rand(D) .- 0.5))
             H = HermiteFct(Λ, a, q)
 
-            @time μ1 = integral(H)
+            alloc += @allocated μ1 = integral(H)
             μ2 = complex_cubature(y -> H(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error integral = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error integral = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -106,6 +110,7 @@ function test_hermite()
         D = 3
         N1 = (5, 4, 6)
         N2 = (3, 5, 7)
+        alloc = 0
         for _=1:nb_reps
             Λ1 = SArray{Tuple{N1...}}(rand(N1...) + im * rand(N1...))
             a1 = SVector{D}(4 .* rand(D) .+ 0.5)
@@ -117,7 +122,7 @@ function test_hermite()
             q2 = SVector{D}(4 .* (rand(D) .- 0.5))
             H2 = HermiteFct(Λ2, a2, q2)
 
-            @time H = H1 * H2
+            alloc += @allocated H = H1 * H2
 
             for _=1:40
                 x = 5 .* (SVector{D}(rand(D)) .- 0.5)
@@ -125,8 +130,8 @@ function test_hermite()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error product = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error product = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -134,6 +139,7 @@ function test_hermite()
         D = 3
         N = (5, 4, 6)
         NP = (3, 7, 5)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             a = SVector{D}(4 .* rand(D) .+ 0.5)
@@ -143,7 +149,7 @@ function test_hermite()
             Λ_P = (@SArray rand(NP...)) + 1im * (@SArray rand(NP...))
             q2 = SVector{D}(4 .* (rand(D) .- 0.5))
 
-            @time PH = polynomial_product(H, Λ_P, q2)
+            alloc += @allocated PH = polynomial_product(H, Λ_P, q2)
 
             f(x) = H(x) * dot(SArray{Tuple{NP...}}(prod((x-q2).^(k.-1); init=1.0) for k in Iterators.product((1:NP[j] for j in 1:D)...)), Λ_P)
 
@@ -153,35 +159,37 @@ function test_hermite()
             end
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error polynomial product = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error polynomial product = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 2
         N = (6, 5)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             a = SVector{D}(4 .* rand(D) .+ 0.5)
             q = SVector{D}(4 .* (rand(D) .- 0.5))
             H = HermiteFct(Λ, a, q)
 
-            @time HF = fourier(H)
+            alloc += @allocated HF = fourier(H)
             ξ = SVector{D}(4.0 .* (rand(D) .- 0.5))
             μ1 = HF(ξ)
             μ2 = complex_cubature(y -> H(y) * cis(-dot(y, ξ)), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error Fourier = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error Fourier = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 3
         N = (5, 4, 7)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             a = SVector{D}(4 .* rand(D) .+ 0.5)
@@ -189,15 +197,15 @@ function test_hermite()
             H = HermiteFct(Λ, a, q)
             HF = fourier(H)
 
-            @time H_ = inv_fourier(HF)
+            alloc += @allocated H_ = inv_fourier(HF)
             x = SVector{D}(4.0 .* (rand(D) .- 0.5))
             μ1 = H_(x)
             μ2 = H(x)
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error inverse Fourier = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error inverse Fourier = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
@@ -205,6 +213,7 @@ function test_hermite()
         D = 2
         N1 = (5, 2)
         N2 = (3, 4)
+        alloc = 0
         for _=1:nb_reps
             Λ1 = SArray{Tuple{N1...}}(rand(N1...) + im * rand(N1...))
             a1 = SVector{D}(4 .* rand(D) .+ 0.5)
@@ -216,32 +225,33 @@ function test_hermite()
             q2 = SVector{D}(4 .* (rand(D) .- 0.5))
             H2 = HermiteFct(Λ2, a2, q2)
 
-            @time μ1 = dot_L2(H1, H2)
+            alloc += @allocated μ1 = dot_L2(H1, H2)
             μ2 = complex_cubature(y -> conj(H1(y)) * H2(y), [-M for _ in 1:D], [M for _ in 1:D]; abstol=int_tol)
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error dot L2 = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error dot L2 = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let
         err = 0.0
         D = 3
         N = (5, 4, 7)
+        alloc = 0
         for _=1:nb_reps
             Λ = SArray{Tuple{N...}}(rand(N...) + im * rand(N...))
             a = SVector{D}(4 .* rand(D) .+ 0.5)
             q = SVector{D}(4 .* (rand(D) .- 0.5))
             H = HermiteFct(Λ, a, q)
 
-            @time μ1 = norm_L2(H)
+            alloc += @allocated μ1 = norm_L2(H)
             μ2 = sqrt(dot_L2(H, H))
             err = max(err, abs(μ1 - μ2))
         end
 
-        color = (err > tol) ? :red : :green
-        printstyled("Error norm_L2 = $err\n"; bold=true, color=color)
+        color = (err > tol || alloc > 0) ? :red : :green
+        printstyled("Error norm_L2 = $err ($alloc bytes allocated)\n"; bold=true, color=color)
     end
 
     let

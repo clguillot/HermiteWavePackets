@@ -195,8 +195,8 @@ function Base.:*(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
 end
 
 # Computes |G(x)|^2
-_abs(G::GaussianWavePacket) = Gaussian(abs(G.λ), real(G.z), G.q)
-_abs2(G::GaussianWavePacket) = Gaussian(abs2(G.λ), 2*real(G.z), G.q)
+Base.abs(G::GaussianWavePacket) = Gaussian(abs(G.λ), real(G.z), G.q)
+Base.abs2(G::GaussianWavePacket) = Gaussian(abs2(G.λ), 2*real(G.z), G.q)
 
 # Computes the integral of a gaussian
 function integral(G::GaussianWavePacket)
@@ -248,7 +248,7 @@ end
 # Computes the L² product of two gaussian wave packets
 dot_L2(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D = integral(conj(G1) * G2)
 # Computes the square L² norm of a gaussian wave packet
-norm2_L2(G::GaussianWavePacket) = integral(_abs2(G))
+norm2_L2(G::GaussianWavePacket) = integral(abs2(G))
 
 # Computes ∫<∇G1,∇G2> (where <,> is the hermitian product in ℂᴰ)
 @generated function dot_∇(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
@@ -294,7 +294,7 @@ end
         push!(deriv.args, Dj_symb)
     end
     code = quote
-        G = fourier(_abs2(fourier(G)))
+        G = fourier(abs2(fourier(G)))
         $block
         I = sum($deriv)
         for j in 1:D

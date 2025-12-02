@@ -5,6 +5,7 @@ using StaticArrays
 using IrrationalConstants
 using FastGaussQuadrature
 using SpecialFunctions
+using NullNumbers
 
 # Abtract types
 abstract type AbstractWavePacket{D} end
@@ -43,7 +44,6 @@ export coulomb_integral
 
 include("utils.jl")
 include("special_cholesky.jl")
-include("nullnumber.jl")
 
 include("gaussian_arg.jl")
 include("hermite_quadrature.jl")

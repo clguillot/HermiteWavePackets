@@ -195,7 +195,7 @@ function unitary_product(H::HermiteWavePacket{D}, b::SDiagonal{D, <:Union{Real, 
     b = diag(b)
     u = @. b * (H.q + q) * (H.q - q)
     Λ_ = cis(sum(u) / 2) .* H.Λ
-    z_ = @. real(H.z) + im * (imagz(H.z) + b)
+    z_ = @. real(H.z) + im * (imagz.(H.z) + b)
     q_ = H.q
     p_ = @. H.p + p - b * (H.q - q)
     return HermiteWavePacket(Λ_, z_, q_, p_)

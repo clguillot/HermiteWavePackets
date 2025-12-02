@@ -157,7 +157,7 @@ end
             y2 = x2 - q2
             y1 = real(w) * y2
             y1_ = U \ (transpose(U) \ y1)
-            p0 = _imagz(w) * y2 - _imagz(z1) * y1_
+            p0 = imagz.(w) * y2 - imagz.(z1) * y1_
             G2 = GaussianWavePacket(exp(dot(y1_, z1, y1_) / 2), z2, q2, G.p[$I2])
             λ = G.λ * evaluate(G2, x2) * cis(dot(p0, q1))
             return GaussianWavePacket(λ, z1, q1 - y1_, G.p[$I1] - p0)
@@ -188,7 +188,7 @@ function Base.:*(G1::GaussianWavePacket{D}, G2::GaussianWavePacket{D}) where D
     z = G1.z + G2.z
     U = special_cholesky(real(z))
     q = U \ (transpose(U) \ (real(G1.z) * G1.q + real(G2.z) * G2.q))
-    p0 = (_imagz(G1.z) * G1.q + _imagz(G2.z) * G2.q) - (_imagz(G1.z) + _imagz(G2.z)) * q
+    p0 = (imagz.(G1.z) * G1.q + imagz.(G2.z) * G2.q) - (imagz.(G1.z) + imagz.(G2.z)) * q
     p = G1.p + G2.p + p0
     λ = G1(q) * G2(q) * cis(-dot(p, q))
     return GaussianWavePacket(λ, z, q, p)

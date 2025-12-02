@@ -4,11 +4,6 @@ _upper_tri(A::AbstractMatrix) = UpperTriangular(A)
 _symmetric(A::Diagonal) = A
 _symmetric(A::AbstractMatrix) = Symmetric(A)
 
-_imagz(A::AbstractArray{<:Real}) = similar(A, NullNumber)
-_imagz(A::AbstractArray{<:Number}) = imag(A)
-
-
-
 #=
     Computes the clenshaw algorithm along dimension dim:
         ∑ₙ λₙ αₙ(z, x)
@@ -34,7 +29,7 @@ _imagz(A::AbstractArray{<:Number}) = imag(A)
             v = zero(SArray{$sub_size, $TC})
             for (n, k) in zip($t_size-1:-1:0, reverse(axes(Λ, $dim)))
                 (u, v) =
-                    ($TC.($array_access_drop .+ (x / sqrt($T(n+1))) * u .- (μ * sqrt($T(n+1) / $T(n+2))) * v), u)
+                    ($TC.($array_access_drop .+ (x / sqrt($T(n+1))) * u - (μ * sqrt($T(n+1) / $T(n+2))) * v), u)
             end
             return α * u
         end

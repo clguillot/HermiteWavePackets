@@ -179,7 +179,7 @@ end
 end
 
 # Evaluates a hermite function at x using Clenshaw's algorithm
-function (H::HermiteWavePacket{D, N})(x::AbstractVector{<:Union{Number, NullNumber}}) where{D, N}
+function (H::HermiteWavePacket{D, N})(x::AbstractVector{<:Number}) where{D, N}
     xs = SVector{D}(x)
     return first(evaluate_grid(H, tuple((SVector(y) for y in xs)...)))
 end

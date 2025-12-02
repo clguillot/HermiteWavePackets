@@ -116,14 +116,14 @@ function Base.:/(G::GaussianWavePacket, w::Number)
 end
 
 # Evaluates a gaussian at x
-function evaluate(G::GaussianWavePacket{D},x::AbstractVector{<:Union{Number, NullNumber}}) where D
+function evaluate(G::GaussianWavePacket{D},x::AbstractVector{<:Number}) where D
     xs = SVector{D}(x)
     ys = xs - G.q
     return G.λ * exp(- sum(ys .* (G.z * ys)) / 2) * cis(dot(G.p, xs))
 end
 # Evaluates a gaussian at x along the dimensions contained in N
 # Preserves the order of the variables
-@generated function evaluate(G::GaussianWavePacket{D, Tλ, Tz, Cz}, x::AbstractVector{<:Union{Number, NullNumber}}, ::Type{N}) where{D, Tλ, Tz, Cz, N}
+@generated function evaluate(G::GaussianWavePacket{D, Tλ, Tz, Cz}, x::AbstractVector{<:Number}, ::Type{N}) where{D, Tλ, Tz, Cz, N}
     if !all(n -> n ∈ eachindex(zeros(SVector{D, Bool})), N.parameters)
         throw(DimensionMismatch("Cannot integrate over a dimension which does not exist"))
     end
@@ -166,7 +166,7 @@ end
     end
 end
 # Evaluates a gaussian at x
-(G::GaussianWavePacket{D})(x::AbstractVector{<:Union{Number, NullNumber}}) where D = evaluate(G, x)
+(G::GaussianWavePacket{D})(x::AbstractVector{<:Number}) where D = evaluate(G, x)
 
 #=
     TRANSFORMATIONS

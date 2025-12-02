@@ -7,10 +7,10 @@ function core_type(::T) where{T<:AbstractWavePacket}
     return core_type(T)
 end
 
-function core_type(::Type{T}) where{T<:Union{Number, NullNumber}}
+function core_type(::Type{T}) where{T<:Number}
     return T
 end
-function core_type(::T) where{T<:Union{Number, NullNumber}}
+function core_type(::T) where{T<:Number}
     return core_type(T)
 end
 

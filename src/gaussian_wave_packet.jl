@@ -41,7 +41,7 @@ function Gaussian(λ::Tλ, z::Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}, SDiagona
 end
 function Gaussian{D}(λ::Number, z::AbstractMatrix{Tz},
                 q::AbstractVector{Tq}=zeros(SVector{D, NullNumber})) where{D, Tz<:Number, Tq<:Union{Real, NullNumber}}
-    return GaussianWavePacket(λ, z, q)
+    return GaussianWavePacket{D}(λ, z, q)
 end
 function Gaussian(λ::Number, z::Union{Real, NullNumber},
                 q::Union{Real, NullNumber} = NullNumber())

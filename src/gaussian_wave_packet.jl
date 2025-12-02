@@ -3,7 +3,7 @@
     Represents the complex gaussian function
         λ*exp(-z(x-q)⋅(x-q)/2)*exp(ip⋅x)
 =#
-struct GaussianWavePacket{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Cz<:Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}, SDiagonal{D, Tz}}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}} <: AbstractWavePacket{D}
+struct GaussianWavePacket{D, Tλ<:Number, Tz<:Number, Cz<:Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}, SDiagonal{D, Tz}}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}} <: AbstractWavePacket{D}
     λ::Tλ
     z::Cz
     q::SVector{D, Tq}
@@ -11,20 +11,20 @@ struct GaussianWavePacket{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Cz<:Uni
 
     function GaussianWavePacket(λ::Tλ, z::Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}, SDiagonal{D, Tz}},
                 q::SVector{D, Tq}=zeros(SVector{D, NullNumber}),
-                p::SVector{D, Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+                p::SVector{D, Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
         return new{D, Tλ, Tz, typeof(z), Tq, Tp}(λ, z, q, p)
     end
     function GaussianWavePacket{D}(λ::Tλ, z::Symmetric{Tz},
                 q::AbstractVector{Tq}=zeros(SVector{D, NullNumber}),
-                p::AbstractVector{Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+                p::AbstractVector{Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
         return GaussianWavePacket(λ, Symmetric(SMatrix{D, D}(z)), SVector{D}(q), SVector{D}(p))
     end
     function GaussianWavePacket{D}(λ::Tλ, z::Diagonal{Tz},
                 q::AbstractVector{Tq}=zeros(SVector{D, NullNumber}),
-                p::AbstractVector{Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+                p::AbstractVector{Tp}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
         return GaussianWavePacket(λ, Diagonal(SVector{D}(z.diag)), SVector{D}(q), SVector{D}(p))
     end
-    function GaussianWavePacket(λ::Tλ, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
+    function GaussianWavePacket(λ::Tλ, z::Tz, q::Tq=NullNumber(), p::Tp=NullNumber()) where{Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}, Tp<:Union{Real, NullNumber}}
         return GaussianWavePacket(λ, Diagonal(SVector(z)), SVector(q), SVector(p))
     end
 end
@@ -36,7 +36,7 @@ end
 const Gaussian{D, Tλ<:Number, Tz<:Union{Real, NullNumber}, Cz<:Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}}, Tq<:Union{Real, NullNumber}} =
             GaussianWavePacket{D, Tλ, Tz, Cz, Tq, NullNumber}
 function Gaussian(λ::Tλ, z::Union{Symmetric{Tz, <:SMatrix{D, D, Tz}}, SDiagonal{D, Tz}},
-                q::SVector{D, Tq}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Union{Number, NullNumber}, Tq<:Union{Real, NullNumber}}
+                q::SVector{D, Tq}=zeros(SVector{D, NullNumber})) where{D, Tλ<:Number, Tz<:Number, Tq<:Union{Real, NullNumber}}
     return GaussianWavePacket(λ, z, q)
 end
 function Gaussian{D}(λ::Number, z::AbstractMatrix{Tz},
